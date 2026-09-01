@@ -4,13 +4,11 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import './playerLab.css';
 
 const CHARACTER_URLS = [
-  'https://cdn.jsdelivr.net/gh/Seyamalam/blood-league-kickoff@main/public/assets/vendor/quaternius/night-striker.glb',
-  'https://raw.githubusercontent.com/Seyamalam/blood-league-kickoff/main/public/assets/vendor/quaternius/night-striker.glb',
+  '/assets/vendor/quaternius/humanoid-base.glb',
 ];
 
 const ANIMATION_URLS = [
-  'https://cdn.jsdelivr.net/gh/Seyamalam/blood-league-kickoff@main/public/assets/vendor/quaternius/universal-animation-library.glb',
-  'https://raw.githubusercontent.com/Seyamalam/blood-league-kickoff/main/public/assets/vendor/quaternius/universal-animation-library.glb',
+  '/assets/vendor/quaternius/universal-animation-library.glb',
 ];
 
 const TARGET_HEIGHT = 1.88;
@@ -322,7 +320,7 @@ function setAnimation(clip, fade = 0.22) {
 
 function updateDiagnostics() {
   const bones = state.character ? getBones(state.character) : [];
-  diagnostics.character.textContent = state.character ? 'Quaternius Superhero Male baseline' : 'not loaded';
+  diagnostics.character.textContent = state.character ? 'Quaternius humanoid rig baseline' : 'not loaded';
   diagnostics.height.textContent = state.normalizedHeight ? `${state.normalizedHeight.toFixed(2)} m normalized` : 'waiting';
   diagnostics.bones.textContent = bones.length ? String(bones.length) : 'waiting';
   diagnostics.animations.textContent = state.clips.length ? String(state.clips.length) : 'waiting';

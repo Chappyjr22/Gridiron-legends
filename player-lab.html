@@ -33,7 +33,7 @@
       <aside class="controls-panel">
         <section class="control-card">
           <h2>Animation test</h2>
-          <p class="muted">These buttons are matched automatically against the loaded Quaternius animation library. The full discovered clip list is available below.</p>
+          <p class="muted">These buttons are matched automatically against the loaded Quaternius animation library. Generic clips are only being used to validate the rig, locomotion, and blending pipeline. Football-specific QB motion will come from football mocap or offline-retargeted motion.</p>
           <div id="quickAnimations" class="quick-grid">
             <button data-animation="idle" disabled>Idle</button>
             <button data-animation="jog" disabled>Jog</button>
@@ -84,7 +84,7 @@
           <h2>Phase 1 asset sources</h2>
           <p><strong>Character:</strong> Quaternius Universal Base Characters, CC0.</p>
           <p><strong>Animations:</strong> Quaternius Universal Animation Library, CC0.</p>
-          <p class="muted">The lab currently streams audited GLB mirrors of those free assets so we can validate the pipeline without checking large binary files into this repository. Production assets will be vendored from the official packs after approval.</p>
+          <p class="muted">The lab loads the audited GLBs vendored inside this repository under <code>public/assets/vendor/quaternius/</code>. These assets are a canonical-rig and generic-locomotion baseline only, not the final football player or football-specific motion set.</p>
         </section>
       </aside>
     </main>
