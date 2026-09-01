@@ -1,0 +1,62 @@
+name: 3D Player Lab QA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'player-lab.html'
+      - 'src/playerLab.js'
+      - 'src/playerLab.css'
+      - 'tools/player-lab-qa.mjs'
+      - 'vite.config.js'
+      - '.github/workflows/player-lab-qa.yml'
+  workflow_dispatch:
+
+jobs:
+  player-lab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install app dependencies
+        run: npm install
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.57.0
+          CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$CHROME_PATH" ]; then
+            echo "No system Chrome/Chromium found on runner"
+            exit 1
+          fi
+          echo "CHROME_PATH=$CHROME_PATH" >> "$GITHUB_ENV"
+          "$CHROME_PATH" --version
+
+      - name: Build
+        run: npm run build
+
+      - name: Start preview server
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/gridiron-player-lab-preview.log 2>&1 &
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/player-lab.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/gridiron-player-lab-preview.log
+          exit 1
+
+      - name: Run 3D Player Lab QA
+        run: node tools/player-lab-qa.mjs
+
+      - name: Upload Player Lab captures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: player-lab-${{ github.sha }}
+          path: artifacts/visual-qa/player-lab-*.png
+          retention-days: 7
