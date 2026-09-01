@@ -13,15 +13,8 @@ const RUN_FPS = 10;
 function loadImage(src) {
   return new Promise((resolve, reject) => {
     const image = new Image();
-    let objectUrl = null;
-    image.onload = () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-      resolve(image);
-    };
-    image.onerror = (event) => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-      reject(event);
-    };
+    image.onload = () => resolve(image);
+    image.onerror = reject;
 
     if (src.startsWith('data:image/png;base64,')) {
       try {
@@ -29,8 +22,10 @@ function loadImage(src) {
         const binary = atob(encoded);
         const bytes = new Uint8Array(binary.length);
         for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-        objectUrl = URL.createObjectURL(new Blob([bytes], { type: 'image/png' }));
-        image.src = objectUrl;
+        // Keep the Blob URL alive for the lifetime of the HTMLImageElement.
+        // Three.js may defer GPU upload until an animation sheet is first shown.
+        image.__gridironObjectUrl = URL.createObjectURL(new Blob([bytes], { type: 'image/png' }));
+        image.src = image.__gridironObjectUrl;
       } catch (error) {
         reject(error);
       }
@@ -117,6 +112,7 @@ export function attachPixelQB(qbGroup, fallbackRig) {
     sprite: null,
     material: null,
     textures: {},
+    images: [],
     group: qbGroup,
     fallbackRig,
     action: 'idle',
@@ -134,6 +130,7 @@ export function attachPixelQB(qbGroup, fallbackRig) {
     loadImage(QB_AUTHORED_PASS_ATLAS),
     loadImage(QB_AUTHORED_RUN_RIGHT_ATLAS),
   ]).then(([baseImage, passImage, runRightImage]) => {
+    controller.images = [baseImage, passImage, runRightImage];
     controller.textures.base = makeTexture(baseImage);
     controller.textures.pass = makeTexture(passImage);
     controller.textures.runRight = makeTexture(runRightImage);
