@@ -45,7 +45,11 @@ if (pageErrors.length) throw new Error(`Page errors: ${pageErrors.join('; ')}`);
 await page.locator('#playPause').click();
 const duration = await page.evaluate(() => window.__gridironPlayerLab.currentClip.duration);
 for (const [label, ratio] of [['start', 0.08], ['middle', 0.5], ['finish', 0.86]]) {
-  await page.locator('#timelineRange').fill(String(duration * ratio));
+  await page.locator('#timelineRange').evaluate((slider, value) => {
+    slider.value = String(value);
+    slider.dispatchEvent(new Event('input', { bubbles: true }));
+    slider.dispatchEvent(new Event('change', { bubbles: true }));
+  }, duration * ratio);
   await page.waitForTimeout(250);
   await page.screenshot({ path: `${outDir}/player-lab-qb-${label}.png`, fullPage: true });
 }
