@@ -12,8 +12,29 @@ const RUN_FPS = 10;
 function loadImage(src) {
   return new Promise((resolve, reject) => {
     const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = reject;
+    let objectUrl = null;
+    image.onload = () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      resolve(image);
+    };
+    image.onerror = (event) => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      reject(event);
+    };
+
+    if (src.startsWith('data:image/png;base64,')) {
+      try {
+        const encoded = src.slice(src.indexOf(',') + 1);
+        const binary = atob(encoded);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        objectUrl = URL.createObjectURL(new Blob([bytes], { type: 'image/png' }));
+        image.src = objectUrl;
+      } catch (error) {
+        reject(error);
+      }
+      return;
+    }
     image.src = src;
   });
 }
@@ -172,7 +193,6 @@ export function updatePixelQB(controller, dt, { state, moving = false, aiming = 
   }
 
   if (action === 'aim') {
-    // Complete authored frames 0-3: set -> load -> cock -> hold.
     const frame = Math.min(3, Math.floor(controller.elapsed * AIM_FPS));
     controller.direction = 'N';
     setFrame(controller, 'pass', frame, PASS_FRAMES);
@@ -180,7 +200,6 @@ export function updatePixelQB(controller, dt, { state, moving = false, aiming = 
   }
 
   if (action === 'throw') {
-    // Complete authored frames 4-6: stride -> release -> follow-through.
     const releaseFrame = Math.min(2, Math.floor(controller.elapsed * RELEASE_FPS));
     controller.direction = 'N';
     setFrame(controller, 'pass', 4 + releaseFrame, PASS_FRAMES);
@@ -196,30 +215,22 @@ export function updatePixelQB(controller, dt, { state, moving = false, aiming = 
   if (action === 'run') {
     const candidate = speed > 0.3 ? directionFromVelocity(vx, vz, controller.direction) : controller.direction;
     controller.direction = stabilizeDirection(controller, candidate, dt);
-
-    // First production run sequence: right-facing. It is six complete sprites,
-    // so there is no neighboring-pose bleed and no detached #12 fragments.
     if (controller.direction === 'E') {
       const frame = Math.floor(controller.elapsed * RUN_FPS) % RUN_RIGHT_FRAMES;
       setFrame(controller, 'runRight', frame, RUN_RIGHT_FRAMES);
       return;
     }
-
-    // Other directions remain clean static source poses until their authored
-    // full-frame run sheets are completed. No procedural limb animation here.
     showBaseDirection(controller, controller.direction);
     return;
   }
 
   if (action === 'slide') {
-    // Intentional temporary fallback. Slide will receive its own authored sheet.
     const direction = ['W','NW','SW'].includes(controller.direction) ? 'W' : 'E';
     showBaseDirection(controller, direction);
     return;
   }
 
   if (action === 'power') {
-    // Intentional temporary fallback. Power will receive its own authored sheet.
     showBaseDirection(controller, 'N');
     return;
   }
