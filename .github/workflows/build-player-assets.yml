@@ -1,0 +1,63 @@
+name: Build Player Assets
+
+on:
+  push:
+    paths:
+      - 'tools/build_qb_glb.py'
+      - '.github/workflows/build-player-assets.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-qb:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install asset dependencies
+        run: pip install trimesh==4.11.1 numpy==2.3.5 pillow==12.3.0
+
+      - name: Build QB GLB
+        run: python tools/build_qb_glb.py
+
+      - name: Verify asset
+        run: |
+          test -s public/assets/models/players/qb_v1.glb
+          python - <<'PY'
+          import json, struct
+          path='public/assets/models/players/qb_v1.glb'
+          with open(path,'rb') as f:
+              magic,version,total=struct.unpack('<III',f.read(12))
+              assert magic == 0x46546C67 and version == 2
+              json_len,json_type=struct.unpack('<II',f.read(8))
+              doc=json.loads(f.read(json_len).decode().rstrip())
+          clips=[a['name'] for a in doc.get('animations',[])]
+          required={'idle','dropback','throw','run','slide'}
+          assert required.issubset(clips), clips
+          names={n.get('name') for n in doc.get('nodes',[])}
+          for node in ['root','pelvis','chest','upperarm_r','football_socket_r']:
+              assert node in names, node
+          print('validated',path,total,'bytes',clips)
+          PY
+
+      - name: Commit generated GLB
+        run: |
+          if git diff --quiet -- public/assets/models/players/qb_v1.glb; then
+            echo 'QB asset is already current.'
+            exit 0
+          fi
+          git config user.name 'gridiron-assets-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add public/assets/models/players/qb_v1.glb
+          git commit -m 'Build QB model v1 asset'
+          git push
