@@ -1,7 +1,7 @@
 import { attachPixelQB, updatePixelQB } from './qbSprite.js';
 
 const THROW_RELEASE_MS = 365;
-const THROW_VISUAL_MS = 650;
+const THROW_VISUAL_MS = 575;
 const LEGACY_THROW_SUPPRESS_MS = 1000;
 const BASE_SPRITE_W = 3.72;
 const BASE_SPRITE_H = 4.96;
@@ -70,6 +70,17 @@ function installReleaseSync(controller) {
   controller.releaseSyncHandler = intercept;
 }
 
+function installPowerSync(controller) {
+  const button = document.querySelector('#powerBtn');
+  if (!button || controller.powerSyncInstalled) return;
+
+  const on = () => { controller.powerHeld = true; };
+  const off = () => { controller.powerHeld = false; };
+  button.addEventListener('pointerdown', on, true);
+  for (const type of ['pointerup','pointercancel','pointerleave']) button.addEventListener(type, off, true);
+  controller.powerSyncInstalled = true;
+}
+
 function applyPresentationPose(controller) {
   const sprite = controller?.sprite;
   if (!sprite) return;
@@ -81,35 +92,31 @@ function applyPresentationPose(controller) {
   const frame = controller.frame || 0;
   switch (controller.action) {
     case 'dropback': {
-      const bob = [0, .025, .01, .035][frame % 4];
-      sprite.position.y += bob;
-      if (controller.direction === 'NW') sprite.position.x += .025;
-      if (controller.direction === 'NE') sprite.position.x -= .025;
+      sprite.position.y += [0,.012,.004,.018][frame % 4];
       break;
     }
     case 'run': {
-      const bob = [0, .035, .07, .035, 0, .045][frame % 6];
-      sprite.position.y += bob;
+      sprite.position.y += [0,.015,.03,.01,0,.02][frame % 6];
       break;
     }
     case 'throw': {
-      const lean = [0, .006, .012, .018, .01, 0][Math.min(frame, 5)];
-      sprite.position.x += lean;
-      sprite.position.y += [0, .01, .025, .02, .005, 0][Math.min(frame, 5)];
+      sprite.position.y += [0,.004,.01,.012,.004,0][Math.min(frame,5)];
       break;
     }
     case 'jukeL': {
-      sprite.position.x -= [0, .05, .14, .06][Math.min(frame, 3)];
-      sprite.position.y += [0, .015, .025, .01][Math.min(frame, 3)];
+      sprite.position.x -= [0,.02,.05,.02][Math.min(frame,3)];
       break;
     }
     case 'jukeR': {
-      sprite.position.x += [0, .05, .14, .06][Math.min(frame, 3)];
-      sprite.position.y += [0, .015, .025, .01][Math.min(frame, 3)];
+      sprite.position.x += [0,.02,.05,.02][Math.min(frame,3)];
       break;
     }
     case 'slide': {
-      sprite.position.y -= [.01, .06, .14, .21][Math.min(frame, 3)];
+      sprite.position.y -= [0,.04,.10,.17][Math.min(frame,3)];
+      break;
+    }
+    case 'power': {
+      sprite.scale.set(BASE_SPRITE_W*1.025,BASE_SPRITE_H*.985,1);
       break;
     }
     default:
@@ -120,8 +127,6 @@ function applyPresentationPose(controller) {
 // Compatibility wrapper: main.js already calls these names. Keeping this API
 // lets gameplay stay unchanged while the player visual pipeline evolves.
 export function attachAuthoredQB(qbGroup, fallbackRig) {
-  // The procedural QB is useful as an emergency fallback, but it should never
-  // peek through the production sprite while the atlas is loading.
   if (fallbackRig) fallbackRig.visible = false;
 
   const controller = attachPixelQB(qbGroup, fallbackRig);
@@ -132,7 +137,9 @@ export function attachAuthoredQB(qbGroup, fallbackRig) {
   controller.manualThrowUntil = 0;
   controller.suppressLegacyThrowUntil = 0;
   controller.throwStartedAt = 0;
+  controller.powerHeld = false;
   installReleaseSync(controller);
+  installPowerSync(controller);
   return controller;
 }
 
@@ -141,14 +148,14 @@ export function updateAuthoredQB(controller, dt, { state, moving, throwing, slid
   controller.lastState = state;
 
   if (!controller.releaseSyncInstalled) installReleaseSync(controller);
+  if (!controller.powerSyncInstalled) installPowerSync(controller);
 
   if ((state === 'PRE_SNAP' || state === 'DEAD') && controller.releaseTimer) {
     cancelPendingRelease(controller);
   }
+  if (state !== 'SCRAMBLE') controller.powerHeld = false;
 
   if (controller.ready && !controller.visualCleanupApplied) {
-    // The sprite is the complete player visual. Hide every other child on the
-    // QB gameplay group so no old rig or helper mesh can peek through.
     for (const child of controller.qbGroup?.children || []) {
       child.visible = child === controller.sprite;
     }
@@ -169,6 +176,7 @@ export function updateAuthoredQB(controller, dt, { state, moving, throwing, slid
     moving,
     throwing: effectiveThrowing,
     sliding,
+    power: controller.powerHeld && state === 'SCRAMBLE',
   });
 
   applyPresentationPose(controller);
