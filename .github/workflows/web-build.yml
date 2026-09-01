@@ -6,6 +6,8 @@ on:
     paths:
       - 'src/**'
       - 'index.html'
+      - 'sprite-studio.html'
+      - 'vite.config.js'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/web-build.yml'
