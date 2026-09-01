@@ -30,9 +30,14 @@ ui.viewport.appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xc8ddf2,0x11140f,1.8));
 const sun=new THREE.DirectionalLight(0xffefc7,2.2); sun.position.set(-35,55,-30); sun.castShadow=true; scene.add(sun);
 
-const material=(color)=>new THREE.MeshStandardMaterial({color,roughness:.84,metalness:.02});
-const M={turf:material(0x365f31),turf2:material(0x31582d),white:material(0xeee7d5),black:material(0x111317),
-  lv:material(0x151515),rust:material(0xa53d22),den:material(0x1f503b),skin:material(0xc78c63),ball:material(0x73411f),concrete:material(0x34393d)};
+const material=(color,roughness=.84,metalness=.02)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
+const M={
+  turf:material(0x365f31), turf2:material(0x31582d), white:material(0xeee7d5), black:material(0x111317),
+  lv:material(0x151515), rust:material(0xa53d22), den:material(0x1f503b), skin:material(0xc78c63),
+  ball:material(0x73411f), concrete:material(0x34393d), ivory:material(0xe9dec6), cream:material(0xe7dfc9),
+  gold:material(0xd3a73a), steel:material(0x626a70,.56,.25), darkSteel:material(0x272c30,.58,.2),
+  sockBlack:material(0x0d0f11), sockGreen:material(0x173e2f), glove:material(0xe9e5d9), shoe:material(0x0b0d0f)
+};
 function mesh(g,m,x=0,y=0,z=0,parent=scene){const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o;}
 
 function field(){
@@ -54,19 +59,112 @@ function field(){
 }
 field();
 
+function barBetween(parent,a,b,r=.045,mat=M.steel){
+  const start=new THREE.Vector3(...a), end=new THREE.Vector3(...b), dir=end.clone().sub(start), len=dir.length();
+  const bar=mesh(new THREE.CylinderGeometry(r,r,len,6),mat,0,0,0,parent);
+  bar.position.copy(start).add(end).multiplyScalar(.5);
+  bar.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.clone().normalize());
+  return bar;
+}
+
+const numberTextures=new Map();
+function numberMaterial(number,team,back=false){
+  const key=`${team}-${number}-${back?'b':'f'}`;
+  if(numberTextures.has(key)) return numberTextures.get(key);
+  const canvas=document.createElement('canvas');canvas.width=128;canvas.height=128;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,128,128);
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.font='900 76px Arial Black, Arial';
+  ctx.lineJoin='round';ctx.lineWidth=12;
+  ctx.strokeStyle=team==='LV'?'#9f3a22':'#d3a73a';
+  ctx.strokeText(number,64,67);
+  ctx.lineWidth=5;ctx.strokeStyle='#111';
+  ctx.strokeText(number,64,67);
+  ctx.fillStyle=team==='LV'?'#f1e6d0':'#f5efdf';
+  ctx.fillText(number,64,67);
+  const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;tex.magFilter=THREE.NearestFilter;tex.minFilter=THREE.NearestFilter;
+  const mat=new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,side:THREE.DoubleSide});
+  numberTextures.set(key,mat);return mat;
+}
+
+function teamKit(team){
+  if(team==='LV') return {jersey:M.lv,pants:M.ivory,helmet:M.black,helmetStripe:M.rust,trim:M.rust,sock:M.sockBlack,facemask:M.darkSteel};
+  return {jersey:M.den,pants:M.cream,helmet:M.cream,helmetStripe:M.gold,trim:M.gold,sock:M.sockGreen,facemask:M.den};
+}
+function bodySpec(role){
+  if(role==='OL'||role==='DL') return {torsoW:1.78,torsoD:.9,torsoH:1.42,shoulderW:2.18,armX:.92,legX:.42,thighW:.54,head:.49,hipW:1.12};
+  if(role==='LB') return {torsoW:1.48,torsoD:.82,torsoH:1.38,shoulderW:1.86,armX:.77,legX:.38,thighW:.48,head:.47,hipW:.98};
+  if(role==='QB') return {torsoW:1.34,torsoD:.76,torsoH:1.38,shoulderW:1.72,armX:.7,legX:.35,thighW:.43,head:.46,hipW:.9};
+  return {torsoW:1.24,torsoD:.72,torsoH:1.34,shoulderW:1.6,armX:.66,legX:.34,thighW:.41,head:.45,hipW:.86};
+}
+
 const allPlayers=[];
-function player({team='LV',number='00',x=0,z=0,scale=SKILL_SCALE,role=''}){
-  const g=new THREE.Group(); g.position.set(x,0,z); g.userData={number,role,team,stun:0,prev:new THREE.Vector3(x,0,z),phase:Math.random()*Math.PI*2}; scene.add(g); allPlayers.push(g);
-  const jersey=team==='LV'?M.lv:M.white, accent=team==='LV'?M.rust:M.den;
-  const torso=mesh(new THREE.BoxGeometry(1.35,1.55,.75),jersey,0,2.35,0,g);
-  mesh(new THREE.BoxGeometry(1.7,.42,.88),jersey,0,3.02,0,g);
-  mesh(new THREE.SphereGeometry(.44,9,6),M.skin,0,3.65,0,g);
-  const helmet=mesh(new THREE.SphereGeometry(.5,9,6,0,Math.PI*2,0,Math.PI*.63),accent,0,3.76,-.02,g); helmet.scale.z=1.08;
+function player({team='LV',number='00',x=0,z=0,scale=SKILL_SCALE,role=''}) {
+  const g=new THREE.Group();
+  g.position.set(x,0,z);
+  g.userData={number,role,team,stun:0,prev:new THREE.Vector3(x,0,z),phase:Math.random()*Math.PI*2};
+  scene.add(g); allPlayers.push(g);
+
+  const kit=teamKit(team), spec=bodySpec(role);
+  const torsoY=2.42;
+
+  mesh(new THREE.BoxGeometry(spec.hipW,.58,.7),kit.pants,0,1.55,0,g);
+  const torso=mesh(new THREE.BoxGeometry(spec.torsoW,spec.torsoH,spec.torsoD),kit.jersey,0,torsoY,0,g);
+  torso.geometry.translate(0,.04,0);
+
+  for(const sx of [-1,1]){
+    const pad=mesh(new THREE.BoxGeometry(.5,.42,.88),kit.jersey,sx*spec.shoulderW*.39,3.0,0,g);
+    pad.rotation.z=sx*.08;
+    mesh(new THREE.BoxGeometry(.18,.44,.9),kit.trim,sx*spec.shoulderW*.52,2.95,0,g);
+  }
+  mesh(new THREE.BoxGeometry(spec.shoulderW,.18,.92),kit.jersey,0,3.05,0,g);
+
+  mesh(new THREE.CylinderGeometry(.22,.25,.3,7),M.skin,0,3.35,0,g);
+  mesh(new THREE.SphereGeometry(spec.head,10,7),M.skin,0,3.67,.03,g);
+
+  const helmet=mesh(new THREE.SphereGeometry(spec.head+.12,10,7),kit.helmet,0,3.78,0,g);
+  helmet.scale.set(1.04,.93,1.08);
+  mesh(new THREE.BoxGeometry((spec.head+.13)*1.7,.12,.78),kit.helmet,0,3.49,.08,g);
+  mesh(new THREE.BoxGeometry(.13,.07,1.02),kit.helmetStripe,0,4.25,0,g);
+  barBetween(g,[-.42,3.72,.42],[.42,3.72,.42],.038,kit.facemask);
+  barBetween(g,[-.4,3.57,.49],[.4,3.57,.49],.038,kit.facemask);
+  barBetween(g,[-.41,3.73,.4],[-.46,3.47,.5],.04,kit.facemask);
+  barBetween(g,[.41,3.73,.4],[.46,3.47,.5],.04,kit.facemask);
+  barBetween(g,[-.45,3.49,.49],[.45,3.49,.49],.035,kit.facemask);
+
   const arms=[];
-  for(const sx of [-.48,.48]){const a=mesh(new THREE.BoxGeometry(.32,1.25,.32),M.skin,sx,2.25,0,g);a.rotation.z=sx>0?-.1:.1;arms.push(a);}
+  for(const sx of [-1,1]){
+    const arm=new THREE.Group(); arm.position.set(sx*spec.armX,2.82,0); g.add(arm); arms.push(arm);
+    mesh(new THREE.BoxGeometry(.38,.6,.42),kit.jersey,0,-.18,0,arm);
+    mesh(new THREE.CylinderGeometry(.16,.19,.67,7),M.skin,0,-.74,0,arm);
+    mesh(new THREE.BoxGeometry(.3,.25,.3),M.glove,0,-1.13,.01,arm);
+    arm.rotation.z=sx*.08;
+  }
+
   const legs=[];
-  for(const sx of [-.34,.34]){const leg=mesh(new THREE.BoxGeometry(.42,1.45,.46),jersey,sx,1,0,g);legs.push(leg);mesh(new THREE.BoxGeometry(.46,.28,.68),accent,sx,.19,.05,g);}
-  g.userData.limbs={arms,legs,torso}; g.scale.setScalar(scale); return g;
+  for(const sx of [-1,1]){
+    const leg=new THREE.Group(); leg.position.set(sx*spec.legX,1.4,0);g.add(leg);legs.push(leg);
+    mesh(new THREE.BoxGeometry(spec.thighW,.85,.52),kit.pants,0,-.28,0,leg);
+    mesh(new THREE.BoxGeometry(spec.thighW*.78,.7,.42),kit.sock,0,-1.03,0,leg);
+    const shoe=mesh(new THREE.BoxGeometry(spec.thighW*.95,.27,.72),M.shoe,0,-1.48,.1,leg);shoe.position.z=.12;
+  }
+
+  mesh(new THREE.BoxGeometry(spec.torsoW*.78,.08,.04),kit.trim,0,2.94,-spec.torsoD*.52,g);
+  const backNum=mesh(new THREE.PlaneGeometry(.96,.82),numberMaterial(number,team,true),0,2.47,-spec.torsoD*.515-.012,g);
+  backNum.rotation.y=Math.PI;
+  mesh(new THREE.PlaneGeometry(.78,.68),numberMaterial(number,team,false),0,2.45,spec.torsoD*.515+.012,g);
+
+  mesh(new THREE.BoxGeometry(spec.hipW*.92,.09,.73),M.black,0,1.78,0,g);
+  if(role==='QB'||role==='RB'){
+    const towel=mesh(new THREE.BoxGeometry(.28,.5,.08),M.white,.18,1.28,-.39,g);
+    towel.rotation.z=.08;
+  }
+
+  g.userData.limbs={arms,legs,torso};
+  g.scale.setScalar(scale);
+  if(team==='DEN') g.rotation.y=Math.PI;
+  return g;
 }
 
 const offense={
@@ -77,7 +175,6 @@ const offense={
 const lineX=[-4.6,-2.3,0,2.3,4.6];
 const linemen=lineX.map((x,i)=>player({number:String(70+i),x,z:OL_Z,scale:LINE_SCALE,role:'OL'}));
 
-// 4-3 shell. The four down linemen straddle the defensive side of the neutral zone.
 const defStart=[
   [-5.35,DL_Z],[-1.8,DL_Z],[1.8,DL_Z],[5.35,DL_Z],
   [-10,4.8],[0,4.2],[10,4.8],
@@ -109,7 +206,7 @@ function reset(msg='Press SNAP to start the play'){
   setState('PRE_SNAP');controlled=offense.qb;offense.qb.position.set(0,0,-15);offense.rb.position.set(4.8,0,-17.2);
   for(const k of ['Y','X','A','B']){const [x,z]=routes[k][0];offense[k].position.set(x,0,z);offense[k].rotation.set(0,0,0);}
   linemen.forEach((o,i)=>{o.position.set(lineX[i],0,OL_Z);o.rotation.set(0,0,0);});
-  defense.forEach((d,i)=>{d.position.set(defStart[i][0],0,defStart[i][1]);d.rotation.set(0,0,0);d.userData.stun=0;});
+  defense.forEach((d,i)=>{d.position.set(defStart[i][0],0,defStart[i][1]);d.rotation.set(0,Math.PI,0);d.userData.stun=0;});
   football.visible=false;aimLine.visible=false;ring.visible=false;aim=flight=null;slideTime=0;powerHeld=false;playClock=14;jukeTime=jukeCooldown=powerCooldown=throwAnim=0;runGesture=null;status('READY',msg);
 }
 function snap(){if(state!=='PRE_SNAP')return;routeTime=0;setState('POCKET');status('BALL LIVE','Read the coverage, move in the pocket, pull back and release to throw');}
