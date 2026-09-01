@@ -31,28 +31,12 @@ async function closeWithVideo(page, name) {
   await page.close();
   if (video) await video.saveAs(`${outDir}/${name}.webm`);
 }
+async function shot(page, name) { await page.screenshot({ path: `${outDir}/${name}.png`, fullPage: false }); }
+async function snap(page) { await page.locator('#snapBtn').click(); await page.waitForTimeout(100); }
+async function holdKey(page, key, ms) { await page.keyboard.down(key); await page.waitForTimeout(ms); await page.keyboard.up(key); }
+async function backUpPocket(page, ms = 420) { await holdKey(page, 'ArrowDown', ms); await page.waitForTimeout(40); }
 
-async function shot(page, name) {
-  await page.screenshot({ path: `${outDir}/${name}.png`, fullPage: false });
-}
-
-async function snap(page) {
-  await page.locator('#snapBtn').click();
-  await page.waitForTimeout(100);
-}
-
-async function holdKey(page, key, ms) {
-  await page.keyboard.down(key);
-  await page.waitForTimeout(ms);
-  await page.keyboard.up(key);
-}
-
-async function backUpPocket(page, ms = 420) {
-  await holdKey(page, 'ArrowDown', ms);
-  await page.waitForTimeout(40);
-}
-
-async function dragThrowTouch(page, dx = 36, dy = -185) {
+async function dragThrowTouch(page, dx = 36, dy = -185, holdMs = 360, holdShot = null) {
   const canvas = page.locator('#viewport canvas');
   const box = await canvas.boundingBox();
   if (!box) throw new Error('canvas missing');
@@ -74,7 +58,12 @@ async function dragThrowTouch(page, dx = 36, dy = -185) {
       send('pointermove', sx + (ex - sx) * t, sy + (ey - sy) * t, 1);
     }
   }, { sx, sy, ex, ey });
-  await page.waitForTimeout(90);
+
+  // Hold the touch long enough to verify that the QB reaches and maintains the
+  // cocked aiming pose before release, matching the useful Retro Bowl behavior.
+  await page.waitForTimeout(holdMs);
+  if (holdShot) await shot(page, holdShot);
+
   await page.evaluate(({ ex, ey }) => {
     document.querySelector('#viewport canvas').dispatchEvent(new PointerEvent('pointerup', {
       bubbles: true, cancelable: true, composed: true,
@@ -84,14 +73,12 @@ async function dragThrowTouch(page, dx = 36, dy = -185) {
   }, { ex, ey });
 }
 
-// Static acceptance frame.
 {
   const page = await openFresh('presnap');
   await shot(page, '01-presnap');
   await closeWithVideo(page, 'presnap');
 }
 
-// Pocket angles and dropback. One screenshot per settled pose only.
 {
   const page = await openFresh('pocket');
   await snap(page);
@@ -104,17 +91,16 @@ async function dragThrowTouch(page, dx = 36, dy = -185) {
   await closeWithVideo(page, 'pocket');
 }
 
-// Throw: continuous video only, so screenshot latency cannot stretch the play.
+// Hold the aim for a visible windup, then release. This is the primary passing QA.
 {
-  const page = await openFresh('throw');
+  const page = await openFresh('throw-aim-hold');
   await snap(page);
-  await backUpPocket(page, 260);
-  await dragThrowTouch(page, -52, -210);
-  await page.waitForTimeout(950);
-  await closeWithVideo(page, 'throw');
+  await backUpPocket(page, 220);
+  await dragThrowTouch(page, -52, -210, 380, '05-aim-cocked');
+  await page.waitForTimeout(650);
+  await closeWithVideo(page, 'throw-aim-hold');
 }
 
-// Scramble and diagonal angle transition.
 {
   const page = await openFresh('scramble');
   await snap(page);
@@ -130,18 +116,17 @@ async function dragThrowTouch(page, dx = 36, dy = -185) {
   await closeWithVideo(page, 'scramble');
 }
 
-// Explicit right-running visual regression for detached sleeve-number artifacts.
+// Explicit regression for the contaminated right-facing source cells / floating 12s.
 {
   const page = await openFresh('run-right');
   await snap(page);
   await backUpPocket(page);
   await page.locator('#tuckBtn').click();
-  await holdKey(page, 'ArrowRight', 420);
-  await page.waitForTimeout(100);
+  await holdKey(page, 'ArrowRight', 520);
+  await page.waitForTimeout(120);
   await closeWithVideo(page, 'run-right');
 }
 
-// Juke left and right in one continuous clip.
 {
   const page = await openFresh('juke');
   await snap(page);
@@ -154,7 +139,6 @@ async function dragThrowTouch(page, dx = 36, dy = -185) {
   await closeWithVideo(page, 'juke');
 }
 
-// Held power move.
 {
   const page = await openFresh('power');
   await snap(page);
@@ -171,7 +155,6 @@ async function dragThrowTouch(page, dx = 36, dy = -185) {
   await closeWithVideo(page, 'power');
 }
 
-// Full slide sequence.
 {
   const page = await openFresh('slide');
   await snap(page);
