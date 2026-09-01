@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - 'tools/build_qb_glb.py'
+      - 'tools/integrate_qb_runtime.py'
+      - 'src/qbModel.js'
       - '.github/workflows/build-player-assets.yml'
   workflow_dispatch:
 
@@ -30,9 +32,14 @@ jobs:
       - name: Build QB GLB
         run: python tools/build_qb_glb.py
 
-      - name: Verify asset
+      - name: Integrate authored QB runtime
+        run: python tools/integrate_qb_runtime.py
+
+      - name: Verify generated asset and JavaScript
         run: |
           test -s public/assets/models/players/qb_v1.glb
+          node --check src/main.js
+          node --check src/qbModel.js
           python - <<'PY'
           import json, struct
           path='public/assets/models/players/qb_v1.glb'
@@ -50,14 +57,14 @@ jobs:
           print('validated',path,total,'bytes',clips)
           PY
 
-      - name: Commit generated GLB
+      - name: Commit generated runtime assets
         run: |
-          if git diff --quiet -- public/assets/models/players/qb_v1.glb; then
-            echo 'QB asset is already current.'
+          if git diff --quiet -- public/assets/models/players/qb_v1.glb src/main.js; then
+            echo 'QB asset and runtime integration are already current.'
             exit 0
           fi
           git config user.name 'gridiron-assets-bot'
           git config user.email 'actions@users.noreply.github.com'
-          git add public/assets/models/players/qb_v1.glb
-          git commit -m 'Build QB model v1 asset'
+          git add public/assets/models/players/qb_v1.glb src/main.js
+          git commit -m 'Build and integrate QB model v1'
           git push
