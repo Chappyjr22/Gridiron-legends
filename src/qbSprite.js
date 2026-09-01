@@ -17,7 +17,7 @@ function loadImage(src) {
       try {
         if (image.decode) await image.decode();
       } catch {
-        // onload already guarantees a usable fallback in browsers without decode.
+        // onload already guarantees a usable image in browsers without decode.
       }
       resolve(image);
     };
@@ -52,8 +52,32 @@ function makeFrameTexture(image, frame, count) {
   return texture;
 }
 
-function makeFrameSet(image, count) {
-  return Array.from({ length: count }, (_, frame) => makeFrameTexture(image, frame, count));
+function makeFrameSprite(texture, name) {
+  const material = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    alphaTest: 0.18,
+    depthWrite: false,
+    depthTest: true,
+    toneMapped: false,
+  });
+  const sprite = new THREE.Sprite(material);
+  sprite.name = name;
+  sprite.center.set(0.5, 0);
+  sprite.position.set(0, 0, 0);
+  sprite.scale.set(1, 1, 1);
+  sprite.renderOrder = 3;
+  sprite.visible = false;
+  return sprite;
+}
+
+function makeSpriteSet(image, count, prefix, root) {
+  return Array.from({ length: count }, (_, frame) => {
+    const texture = makeFrameTexture(image, frame, count);
+    const sprite = makeFrameSprite(texture, `${prefix}_${frame}`);
+    root.add(sprite);
+    return sprite;
+  });
 }
 
 function dirIndex(direction) {
@@ -63,12 +87,13 @@ function dirIndex(direction) {
 
 function setFrame(controller, sheet, frame) {
   const frames = controller.frames[sheet];
-  if (!frames?.length || !controller.material) return;
+  if (!frames?.length) return;
   const safeFrame = Math.max(0, Math.min(frames.length - 1, frame));
-  const texture = frames[safeFrame];
-  if (controller.material.map !== texture) {
-    controller.material.map = texture;
-    controller.material.needsUpdate = true;
+  const target = frames[safeFrame];
+  if (controller.activeFrame !== target) {
+    if (controller.activeFrame) controller.activeFrame.visible = false;
+    target.visible = true;
+    controller.activeFrame = target;
   }
   controller.sheet = sheet;
   controller.frame = safeFrame;
@@ -114,13 +139,20 @@ function stabilizeDirection(controller, candidate, dt) {
 }
 
 export function attachPixelQB(qbGroup, fallbackRig) {
+  const root = new THREE.Group();
+  root.name = 'pixel_qb_fullframe_root';
+  root.position.set(0, 0.02, 0);
+  root.scale.set(3.72, 4.96, 1);
+  qbGroup.add(root);
+
   const controller = {
     ready: false,
     failed: false,
-    sprite: null,
-    material: null,
+    sprite: root,
+    spriteRoot: root,
     frames: {},
     images: [],
+    activeFrame: null,
     group: qbGroup,
     fallbackRig,
     action: 'idle',
@@ -139,34 +171,17 @@ export function attachPixelQB(qbGroup, fallbackRig) {
     loadImage(QB_AUTHORED_RUN_RIGHT_ATLAS),
   ]).then(([baseImage, passImage, runRightImage]) => {
     controller.images = [baseImage, passImage, runRightImage];
-    controller.frames.base = makeFrameSet(baseImage, DIRS.length);
-    controller.frames.pass = makeFrameSet(passImage, PASS_FRAMES);
-    controller.frames.runRight = makeFrameSet(runRightImage, RUN_RIGHT_FRAMES);
-
-    const material = new THREE.SpriteMaterial({
-      map: controller.frames.base[0],
-      transparent: true,
-      alphaTest: 0.18,
-      depthWrite: true,
-      depthTest: true,
-      toneMapped: false,
-    });
-    const sprite = new THREE.Sprite(material);
-    sprite.name = 'pixel_qb_authored_fullframe_v2';
-    sprite.center.set(0.5, 0);
-    sprite.position.set(0, 0.02, 0);
-    sprite.scale.set(3.72, 4.96, 1);
-    sprite.renderOrder = 3;
-    qbGroup.add(sprite);
+    controller.frames.base = makeSpriteSet(baseImage, DIRS.length, 'qb_base', root);
+    controller.frames.pass = makeSpriteSet(passImage, PASS_FRAMES, 'qb_pass', root);
+    controller.frames.runRight = makeSpriteSet(runRightImage, RUN_RIGHT_FRAMES, 'qb_run_right', root);
 
     if (fallbackRig) fallbackRig.visible = false;
-    controller.material = material;
-    controller.sprite = sprite;
     controller.ready = true;
     showBaseDirection(controller, 'N');
-    console.info('[Gridiron Legends] Independent full-frame QB sprite runtime active');
+    console.info('[Gridiron Legends] Permanent full-frame QB sprite runtime active');
   }).catch((error) => {
     controller.failed = true;
+    root.visible = false;
     if (fallbackRig) fallbackRig.visible = true;
     console.warn('[Gridiron Legends] Authored QB sheets failed, using fallback.', error);
   });
@@ -194,6 +209,7 @@ export function updatePixelQB(controller, dt, { state, moving = false, aiming = 
   if (changed) {
     controller.action = action;
     controller.elapsed = 0;
+    console.info(`[Gridiron Legends] QB action ${action}`);
   } else {
     controller.elapsed += dt;
   }
