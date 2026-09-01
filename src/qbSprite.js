@@ -27,10 +27,17 @@ function loadImage(src){
 function dirIndex(direction){ return Math.max(0,DIRS.indexOf(direction)); }
 function rotateDirection(direction,steps){ const i=dirIndex(direction); return DIRS[(i+steps+DIRS.length*4)%DIRS.length]; }
 
-// Every animation cell is a hard 96x128 sandbox. Earlier transforms could paint
-// across cell boundaries, which embedded fragments of neighboring #12 poses into
-// other directions. All art for a frame now gets clipped before it can touch a
-// neighboring atlas cell.
+// The authored E/NE/SE source cells contain detached fragments from neighboring
+// turnaround poses. Build those directions from their clean opposite cells and
+// mirror them, then still clip every animation cell so transformed art can never
+// spill into a neighboring frame.
+function sourceSpec(direction){
+  if(direction==='E') return {index:dirIndex('W'),mirror:true};
+  if(direction==='NE') return {index:dirIndex('NW'),mirror:true};
+  if(direction==='SE') return {index:dirIndex('SW'),mirror:true};
+  return {index:dirIndex(direction),mirror:false};
+}
+
 function renderCell(ctx,frameX,frameY,draw){
   ctx.save();
   ctx.beginPath();
@@ -41,22 +48,23 @@ function renderCell(ctx,frameX,frameY,draw){
 }
 
 function drawBase(ctx,source,direction,frameX,frameY,{dx=0,dy=0,sx=1,sy=1,rotation=0}={}){
-  const sourceDirIndex=dirIndex(direction);
+  const spec=sourceSpec(direction);
   ctx.save();
   ctx.imageSmoothingEnabled=false;
   ctx.translate(frameX+FRAME_W/2+dx,frameY+FRAME_H-3+dy);
   ctx.rotate(rotation*Math.PI/180);
-  ctx.scale(sx,sy);
-  ctx.drawImage(source,sourceDirIndex*FRAME_W,0,FRAME_W,FRAME_H,-FRAME_W/2,-FRAME_H+3,FRAME_W,FRAME_H);
+  ctx.scale((spec.mirror?-1:1)*sx,sy);
+  ctx.drawImage(source,spec.index*FRAME_W,0,FRAME_W,FRAME_H,-FRAME_W/2,-FRAME_H+3,FRAME_W,FRAME_H);
   ctx.restore();
 }
 function drawUpperBase(ctx,source,direction,frameX,frameY,{dx=0,dy=0,rotation=0,upperH=80}={}){
-  const sourceDirIndex=dirIndex(direction);
+  const spec=sourceSpec(direction);
   ctx.save();
   ctx.imageSmoothingEnabled=false;
   ctx.translate(frameX+FRAME_W/2+dx,frameY+upperH+dy);
   ctx.rotate(rotation*Math.PI/180);
-  ctx.drawImage(source,sourceDirIndex*FRAME_W,0,FRAME_W,upperH,-FRAME_W/2,-upperH,FRAME_W,upperH);
+  ctx.scale(spec.mirror?-1:1,1);
+  ctx.drawImage(source,spec.index*FRAME_W,0,FRAME_W,upperH,-FRAME_W/2,-upperH,FRAME_W,upperH);
   ctx.restore();
 }
 function pixelBall(ctx,x,y){
@@ -219,8 +227,6 @@ function buildAnimationAtlas(source){
 
     for(const action of ['jukeL','jukeR']){
       const left=action==='jukeL',offsets=left?[0,-1,-1,0]:[0,1,1,0];
-      // The actual gameplay object already bursts laterally. The sprite only needs
-      // a plant/lean/recovery pose, so keep in-cell translation small and clean.
       const shift=left?[0,-2,-4,-1]:[0,2,4,1],dy=[0,-1,-2,-1];
       for(let f=0;f<4;f++){
         const y=(ROW_START[action]+f)*FRAME_H,sourceName=rotateDirection(direction,offsets[f]);
@@ -276,8 +282,8 @@ export function attachPixelQB(qbGroup,fallbackRig){
     const atlas=buildAnimationAtlas(image),texture=new THREE.CanvasTexture(atlas);
     texture.colorSpace=THREE.SRGBColorSpace;texture.magFilter=THREE.NearestFilter;texture.minFilter=THREE.NearestFilter;texture.generateMipmaps=false;texture.wrapS=THREE.RepeatWrapping;texture.wrapT=THREE.RepeatWrapping;
     const material=new THREE.SpriteMaterial({map:texture,transparent:true,alphaTest:.22,depthWrite:true,depthTest:true,toneMapped:false});
-    const sprite=new THREE.Sprite(material);sprite.name='pixel_qb_production_v8';sprite.center.set(.5,0);sprite.position.set(0,.02,0);sprite.scale.set(3.72,4.96,1);sprite.renderOrder=3;qbGroup.add(sprite);
-    if(fallbackRig)fallbackRig.visible=false;Object.assign(controller,{ready:true,sprite,texture});setFrame(controller,'idle',0,'N');console.info('[Gridiron Legends] Isolated-cell Retro QB sprite v8 active');
+    const sprite=new THREE.Sprite(material);sprite.name='pixel_qb_production_v9';sprite.center.set(.5,0);sprite.position.set(0,.02,0);sprite.scale.set(3.72,4.96,1);sprite.renderOrder=3;qbGroup.add(sprite);
+    if(fallbackRig)fallbackRig.visible=false;Object.assign(controller,{ready:true,sprite,texture});setFrame(controller,'idle',0,'N');console.info('[Gridiron Legends] Clean-mirrored Retro QB sprite v9 active');
   }).catch(error=>{controller.failed=true;if(fallbackRig)fallbackRig.visible=true;console.warn('[Gridiron Legends] Pixel QB failed, using 3D fallback.',error);});
   return controller;
 }
