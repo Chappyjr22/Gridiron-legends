@@ -5,7 +5,9 @@ const baseURL = process.env.GRIDIRON_QA_URL || 'http://127.0.0.1:4173';
 const outDir = process.env.GRIDIRON_QA_OUT || 'artifacts/visual-qa';
 fs.mkdirSync(outDir, { recursive: true });
 
-const browser = await chromium.launch({ headless: true });
+const launchOptions = { headless: true };
+if (process.env.CHROME_PATH) launchOptions.executablePath = process.env.CHROME_PATH;
+const browser = await chromium.launch(launchOptions);
 const context = await browser.newContext({
   viewport: { width: 414, height: 896 },
   deviceScaleFactor: 2,
@@ -59,8 +61,8 @@ async function dragThrowTouch(page, dx = 36, dy = -185, holdMs = 360, holdShot =
     }
   }, { sx, sy, ex, ey });
 
-  // Hold the touch long enough to verify that the QB reaches and maintains the
-  // cocked aiming pose before release, matching the useful Retro Bowl behavior.
+  // Retro Bowl reference: the QB should finish loading/cocking the ball while
+  // the player is still holding the aim, then stay cocked until release.
   await page.waitForTimeout(holdMs);
   if (holdShot) await shot(page, holdShot);
 
