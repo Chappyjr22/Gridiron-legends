@@ -5,7 +5,7 @@ const FRAME_W = 96;
 const FRAME_H = 128;
 const DIRS = ['N','NE','E','SE','S','SW','W','NW'];
 const ACTIONS = { idle:2, dropback:4, run:6, throw:6, jukeL:4, jukeR:4, slide:4, power:4 };
-const FPS = { idle:2, dropback:9, run:11, throw:10, jukeL:12, jukeR:12, slide:8, power:9 };
+const FPS = { idle:2, dropback:9, run:11, throw:9, jukeL:12, jukeR:12, slide:8, power:9 };
 const JUKE_VISUAL_TIME = .42;
 const SLIDE_VISUAL_TIME = .56;
 const ROW_START = {};
@@ -32,11 +32,12 @@ function drawBase(ctx,source,sourceDirIndex,frameX,frameY,{dx=0,dy=0,sx=1,sy=1,r
   ctx.drawImage(source,sourceDirIndex*FRAME_W,0,FRAME_W,FRAME_H,-FRAME_W/2,-FRAME_H+3,FRAME_W,FRAME_H);
   ctx.restore();
 }
-function drawUpperBase(ctx,source,sourceDirIndex,frameX,frameY,{dx=0,dy=0}={}){
-  const upperH=88;
+function drawUpperBase(ctx,source,sourceDirIndex,frameX,frameY,{dx=0,dy=0,rotation=0,upperH=80}={}){
   ctx.save();
   ctx.imageSmoothingEnabled=false;
-  ctx.drawImage(source,sourceDirIndex*FRAME_W,0,FRAME_W,upperH,frameX+dx,frameY+dy,FRAME_W,upperH);
+  ctx.translate(frameX+FRAME_W/2+dx,frameY+upperH+dy);
+  ctx.rotate(rotation*Math.PI/180);
+  ctx.drawImage(source,sourceDirIndex*FRAME_W,0,FRAME_W,upperH,-FRAME_W/2,-upperH,FRAME_W,upperH);
   ctx.restore();
 }
 function pixelBall(ctx,x,y){
@@ -62,9 +63,9 @@ function drawJoint(ctx,x,y,r,fill){ ctx.fillStyle=P.outline; ctx.fillRect(Math.r
 // them from side/three-quarter gameplay angles and restore the jersey color beneath.
 function cleanSleeveNumberArtifacts(ctx,direction,frameX,frameY){
   const patches = {
-    E:[[59,50,12,11],[34,52,8,9]], W:[[25,50,12,11],[54,52,8,9]],
-    NE:[[64,51,11,10],[24,53,8,8]], NW:[[21,51,11,10],[65,53,8,8]],
-    SE:[[64,52,11,10],[24,53,8,8]], SW:[[21,52,11,10],[65,53,8,8]],
+    E:[[59,50,12,11],[34,52,8,9],[42,40,14,9]], W:[[25,50,12,11],[54,52,8,9],[40,40,14,9]],
+    NE:[[64,51,11,10],[24,53,8,8],[43,40,13,9]], NW:[[21,51,11,10],[65,53,8,8],[40,40,13,9]],
+    SE:[[64,52,11,10],[24,53,8,8],[43,40,13,9]], SW:[[21,52,11,10],[65,53,8,8],[40,40,13,9]],
   }[direction];
   if (!patches) return;
   ctx.save();
@@ -127,17 +128,18 @@ function drawSlideFrame(ctx,source,direction,bx,y,frame){
     pixelBall(ctx,bx+(useRight?58:38),y+70);
     return;
   }
-  const torsoDx=sign*[0,1,3,5][frame], torsoDy=[0,3,7,10][frame];
-  drawUpperBase(ctx,source,dirIndex(sourceName),bx,y,{dx:torsoDx,dy:torsoDy});
+  const torsoDx=sign*[0,1,3,5][frame], torsoDy=[0,4,8,11][frame];
+  const torsoLean=sign*[0,-5,-9,-12][frame];
+  drawUpperBase(ctx,source,dirIndex(sourceName),bx,y,{dx:torsoDx,dy:torsoDy,rotation:torsoLean,upperH:80});
   cleanSleeveNumberArtifacts(ctx,sourceName,bx+torsoDx,y+torsoDy);
-  const hipX=bx+48+torsoDx, hipY=y+84+torsoDy;
-  ctx.fillStyle=P.outline; ctx.fillRect(hipX-10,hipY-3,20,15);
-  ctx.fillStyle=P.ivory; ctx.fillRect(hipX-8,hipY-1,16,11);
-  ctx.fillStyle=P.rust; ctx.fillRect(useRight?hipX-8:hipX+5,hipY-1,3,11);
-  const lengths=[0,20,27,33], thickness=[0,11,10,9];
-  drawSlideLeg(ctx,hipX,hipY+5,lengths[frame],thickness[frame],sign,-1);
-  drawSlideLeg(ctx,hipX-sign*2,hipY+9,Math.max(16,lengths[frame]-5),Math.max(7,thickness[frame]-2),sign,4);
-  pixelBall(ctx,bx+(useRight?58:38)+torsoDx,y+69+torsoDy);
+  const hipX=bx+48+torsoDx-sign*[0,1,3,5][frame], hipY=y+78+torsoDy;
+  ctx.fillStyle=P.outline; ctx.fillRect(hipX-11,hipY-3,22,16);
+  ctx.fillStyle=P.ivory; ctx.fillRect(hipX-9,hipY-1,18,12);
+  ctx.fillStyle=P.rust; ctx.fillRect(useRight?hipX-9:hipX+6,hipY-1,3,12);
+  const lengths=[0,22,30,37], thickness=[0,11,10,9];
+  drawSlideLeg(ctx,hipX,hipY+5,lengths[frame],thickness[frame],sign,-3);
+  drawSlideLeg(ctx,hipX-sign*3,hipY+10,Math.max(17,lengths[frame]-6),Math.max(7,thickness[frame]-2),sign,4);
+  pixelBall(ctx,bx+(useRight?57:39)+torsoDx-sign*[0,0,2,3][frame],y+67+torsoDy);
 }
 
 function buildAnimationAtlas(source){
@@ -163,6 +165,7 @@ function buildAnimationAtlas(source){
     for(let f=0;f<6;f++){
       const y=(ROW_START.throw+f)*FRAME_H,sourceName=throwSourceDirection(direction,f);
       drawBase(ctx,source,dirIndex(sourceName),bx,y,{dx:[0,1,3,4,3,1][f],dy:[0,-2,-3,-4,-2,0][f],sx:[1,1.02,1.05,1.06,1.03,1][f],sy:[1,1,.98,.97,1,1][f],rotation:[0,1,3,4,-2,-4][f]});
+      cleanSleeveNumberArtifacts(ctx,sourceName,bx,y);
       ctx.save(); ctx.translate(bx,y); clearThrowSide(ctx,sourceName); drawThrowPose(ctx,direction,f); ctx.restore();
     }
     for(const action of ['jukeL','jukeR']){
@@ -180,10 +183,16 @@ function buildAnimationAtlas(source){
       const pose=[{dx:0,dy:0,sx:1,sy:1,rot:0},{dx:1,dy:4,sx:1.11,sy:.92,rot:-2},{dx:3,dy:9,sx:1.23,sy:.82,rot:-5},{dx:1,dy:5,sx:1.12,sy:.90,rot:-2}][f];
       drawBase(ctx,source,dirIndex(sourceName),bx,y,{dx:pose.dx,dy:pose.dy,sx:pose.sx,sy:pose.sy,rotation:pose.rot});
       cleanSleeveNumberArtifacts(ctx,sourceName,bx+pose.dx,y+pose.dy);
-      ctx.fillStyle=P.outline; ctx.fillRect(bx+52+pose.dx,y+56+pose.dy,22,14);
-      ctx.fillStyle=P.black; ctx.fillRect(bx+54+pose.dx,y+58+pose.dy,18,10);
-      ctx.fillStyle=P.rust; ctx.fillRect(bx+54+pose.dx,y+66+pose.dy,18,3);
-      pixelBall(ctx,bx+55+pose.dx,y+70+pose.dy);
+      ctx.save();
+      ctx.translate(bx+pose.dx,y+pose.dy);
+      if(f>0){
+        // Arm wraps over the ball during the shoulder drop instead of drawing a
+        // rectangular contact block over the jersey.
+        drawFootballArm(ctx,[66,57],[62,67],[55,70],1,{handBall:true});
+      } else {
+        pixelBall(ctx,55,70);
+      }
+      ctx.restore();
     }
   }
   return canvas;
@@ -212,8 +221,8 @@ export function attachPixelQB(qbGroup,fallbackRig){
     const atlas=buildAnimationAtlas(image),texture=new THREE.CanvasTexture(atlas);
     texture.colorSpace=THREE.SRGBColorSpace; texture.magFilter=THREE.NearestFilter; texture.minFilter=THREE.NearestFilter; texture.generateMipmaps=false; texture.wrapS=THREE.RepeatWrapping; texture.wrapT=THREE.RepeatWrapping;
     const material=new THREE.SpriteMaterial({map:texture,transparent:true,alphaTest:.22,depthWrite:true,depthTest:true,toneMapped:false});
-    const sprite=new THREE.Sprite(material); sprite.name='pixel_qb_production_v4'; sprite.center.set(.5,0); sprite.position.set(0,.02,0); sprite.scale.set(3.72,4.96,1); sprite.renderOrder=3; qbGroup.add(sprite);
-    if(fallbackRig)fallbackRig.visible=false; Object.assign(controller,{ready:true,sprite,texture}); setFrame(controller,'idle',0,'N'); console.info('[Gridiron Legends] QA-polished QB sprite v4 active');
+    const sprite=new THREE.Sprite(material); sprite.name='pixel_qb_production_v5'; sprite.center.set(.5,0); sprite.position.set(0,.02,0); sprite.scale.set(3.72,4.96,1); sprite.renderOrder=3; qbGroup.add(sprite);
+    if(fallbackRig)fallbackRig.visible=false; Object.assign(controller,{ready:true,sprite,texture}); setFrame(controller,'idle',0,'N'); console.info('[Gridiron Legends] QA-polished QB sprite v5 active');
   }).catch(error=>{controller.failed=true;if(fallbackRig)fallbackRig.visible=true;console.warn('[Gridiron Legends] Pixel QB failed, using 3D fallback.',error);});
   return controller;
 }
