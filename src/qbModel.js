@@ -1,7 +1,7 @@
 import { attachPixelQB, updatePixelQB } from './qbSprite.js';
 
-// Retro-Bowl-inspired timing: the QB winds up while AIMING. Finger release only
-// needs a short beat for stride/release before the real football leaves his hand.
+// The QB winds up while AIMING. Finger release only needs a short beat for the
+// authored stride/release frame before the real football leaves his hand.
 const THROW_RELEASE_MS = 110;
 const THROW_VISUAL_MS = 360;
 const LEGACY_THROW_SUPPRESS_MS = 760;
@@ -79,23 +79,12 @@ function installPowerSync(controller) {
 }
 
 function applyPresentationPose(controller) {
+  // Full authored frames own their silhouettes and motion. The runtime does not
+  // rotate, squash, carve, or offset individual animation states anymore.
   const sprite = controller?.sprite;
   if (!sprite) return;
-  sprite.position.x = 0;
-  sprite.position.y = .02;
+  sprite.position.set(0, 0.02, 0);
   sprite.scale.set(BASE_SPRITE_W, BASE_SPRITE_H, 1);
-  const frame = controller.frame || 0;
-  switch (controller.action) {
-    case 'dropback': sprite.position.y += [0,.012,.004,.018][frame % 4]; break;
-    case 'run': sprite.position.y += [0,.015,.03,.01,0,.02][frame % 6]; break;
-    case 'aim': sprite.position.y += [0,.004,.009,.012][Math.min(frame,3)]; break;
-    case 'throw': sprite.position.y += [.012,.005,0][Math.min(frame,2)]; break;
-    case 'jukeL': sprite.position.x -= [0,.025,.065,.025][Math.min(frame,3)]; break;
-    case 'jukeR': sprite.position.x += [0,.025,.065,.025][Math.min(frame,3)]; break;
-    case 'slide': sprite.position.y += [0,.002,.004,.006][Math.min(frame,3)]; break;
-    case 'power': sprite.position.y -= [0,.003,.006,.003][Math.min(frame,3)]; break;
-    default: break;
-  }
 }
 
 export function attachAuthoredQB(qbGroup, fallbackRig) {
