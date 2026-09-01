@@ -258,7 +258,7 @@ function pickClip(patterns) {
 
 function mapQuickClips() {
   const rules = {
-    idle: [/^idle$/, /^idle[0-9]*$/, /standingidle/, /idle/],
+    idle: [/^idleloop$/, /^idle$/, /^idle[0-9]*$/, /standingidle/, /idle/],
     jog: [/jogforward/, /jogfwd/, /jogfront/, /^jog$/, /jog/, /walkforward/],
     sprint: [/sprintforward/, /sprintfwd/, /^sprint$/, /sprint/, /runforward/, /^run$/],
     left: [/jogleft/, /strafeleft/, /walkleft/, /stepleft/],
