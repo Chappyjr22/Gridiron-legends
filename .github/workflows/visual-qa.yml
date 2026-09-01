@@ -6,8 +6,11 @@ on:
     paths:
       - 'src/**'
       - 'index.html'
+      - 'sprite-studio.html'
+      - 'vite.config.js'
       - 'tools/visual-qa.mjs'
       - 'tools/qb-pose-qa.mjs'
+      - 'tools/sprite-studio-qa.mjs'
       - '.github/workflows/visual-qa.yml'
   workflow_dispatch:
 
@@ -56,6 +59,9 @@ jobs:
 
       - name: Run Playwright gameplay visual QA
         run: node tools/visual-qa.mjs
+
+      - name: Run Sprite Studio visual QA
+        run: node tools/sprite-studio-qa.mjs
 
       - name: Upload visual QA captures
         if: always()
