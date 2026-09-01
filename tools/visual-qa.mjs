@@ -12,7 +12,7 @@ const context = await browser.newContext({
   isMobile: true,
   hasTouch: true,
   userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148',
-  recordVideo: { dir: `${outDir}/video`, size: { width: 414, height: 896 } },
+  recordVideo: { dir: `${outDir}/raw-video`, size: { width: 414, height: 896 } },
 });
 
 async function openFresh(label) {
@@ -22,8 +22,14 @@ async function openFresh(label) {
   page.on('pageerror', err => console.error(`[${label}] pageerror:`, err));
   await page.goto(baseURL, { waitUntil: 'networkidle' });
   await page.waitForFunction(() => document.querySelector('#viewport canvas'));
-  await page.waitForTimeout(700);
+  await page.waitForTimeout(450);
   return page;
+}
+
+async function closeWithVideo(page, name) {
+  const video = page.video();
+  await page.close();
+  if (video) await video.saveAs(`${outDir}/${name}.webm`);
 }
 
 async function shot(page, name) {
@@ -32,12 +38,18 @@ async function shot(page, name) {
 
 async function snap(page) {
   await page.locator('#snapBtn').click();
-  await page.waitForTimeout(120);
+  await page.waitForTimeout(100);
 }
 
-async function backUpPocket(page, ms = 720) {
+async function holdKey(page, key, ms) {
+  await page.keyboard.down(key);
+  await page.waitForTimeout(ms);
+  await page.keyboard.up(key);
+}
+
+async function backUpPocket(page, ms = 420) {
   await holdKey(page, 'ArrowDown', ms);
-  await page.waitForTimeout(60);
+  await page.waitForTimeout(40);
 }
 
 async function dragThrowTouch(page, dx = 36, dy = -185) {
@@ -52,16 +64,9 @@ async function dragThrowTouch(page, dx = 36, dy = -185) {
   await page.evaluate(({ sx, sy, ex, ey }) => {
     const canvas = document.querySelector('#viewport canvas');
     const send = (type, x, y, buttons) => canvas.dispatchEvent(new PointerEvent(type, {
-      bubbles: true,
-      cancelable: true,
-      composed: true,
-      clientX: x,
-      clientY: y,
-      pointerId: 91,
-      pointerType: 'touch',
-      isPrimary: true,
-      button: 0,
-      buttons,
+      bubbles: true, cancelable: true, composed: true,
+      clientX: x, clientY: y, pointerId: 91, pointerType: 'touch',
+      isPrimary: true, button: 0, buttons,
     }));
     send('pointerdown', sx, sy, 1);
     for (let i = 1; i <= 8; i++) {
@@ -71,99 +76,74 @@ async function dragThrowTouch(page, dx = 36, dy = -185) {
   }, { sx, sy, ex, ey });
   await page.waitForTimeout(90);
   await page.evaluate(({ ex, ey }) => {
-    const canvas = document.querySelector('#viewport canvas');
-    canvas.dispatchEvent(new PointerEvent('pointerup', {
-      bubbles: true,
-      cancelable: true,
-      composed: true,
-      clientX: ex,
-      clientY: ey,
-      pointerId: 91,
-      pointerType: 'touch',
-      isPrimary: true,
-      button: 0,
-      buttons: 0,
+    document.querySelector('#viewport canvas').dispatchEvent(new PointerEvent('pointerup', {
+      bubbles: true, cancelable: true, composed: true,
+      clientX: ex, clientY: ey, pointerId: 91, pointerType: 'touch',
+      isPrimary: true, button: 0, buttons: 0,
     }));
   }, { ex, ey });
 }
 
-async function holdKey(page, key, ms) {
-  await page.keyboard.down(key);
-  await page.waitForTimeout(ms);
-  await page.keyboard.up(key);
-}
-
-async function captureSequence(page, prefix, delays) {
-  let elapsed = 0;
-  for (const delay of delays) {
-    await page.waitForTimeout(Math.max(0, delay - elapsed));
-    elapsed = delay;
-    await shot(page, `${prefix}-${String(delay).padStart(4, '0')}ms`);
-  }
-}
-
-// 1. Base art / pre-snap
+// Static acceptance frame.
 {
   const page = await openFresh('presnap');
   await shot(page, '01-presnap');
-  await page.close();
+  await closeWithVideo(page, 'presnap');
 }
 
-// 2. Pocket shuffle / direction buckets
+// Pocket angles and dropback. One screenshot per settled pose only.
 {
   const page = await openFresh('pocket');
   await snap(page);
-  await holdKey(page, 'ArrowLeft', 260);
+  await holdKey(page, 'ArrowLeft', 220);
   await shot(page, '02-pocket-left');
-  await holdKey(page, 'ArrowRight', 520);
+  await holdKey(page, 'ArrowRight', 440);
   await shot(page, '03-pocket-right');
-  await holdKey(page, 'ArrowDown', 320);
+  await holdKey(page, 'ArrowDown', 260);
   await shot(page, '04-dropback');
-  await page.close();
+  await closeWithVideo(page, 'pocket');
 }
 
-// 3. Throw, frame by frame around a real touch release
+// Throw: continuous video only, so screenshot latency cannot stretch the play.
 {
   const page = await openFresh('throw');
   await snap(page);
-  await backUpPocket(page, 320);
+  await backUpPocket(page, 260);
   await dragThrowTouch(page, -52, -210);
-  await captureSequence(page, '05-throw', [55, 125, 205, 285, 355, 420, 500, 590, 700]);
-  await page.close();
+  await page.waitForTimeout(850);
+  await closeWithVideo(page, 'throw');
 }
 
-// 4. Scramble + diagonal direction changes, starting deep enough to avoid contact
+// Scramble and diagonal angle transition.
 {
   const page = await openFresh('scramble');
   await snap(page);
   await backUpPocket(page);
   await page.locator('#tuckBtn').click();
-  await holdKey(page, 'ArrowUp', 150);
-  await shot(page, '06-scramble-forward');
+  await holdKey(page, 'ArrowUp', 180);
   await page.keyboard.down('ArrowUp');
   await page.keyboard.down('ArrowLeft');
-  await page.waitForTimeout(150);
-  await shot(page, '07-scramble-diagonal');
+  await page.waitForTimeout(180);
   await page.keyboard.up('ArrowLeft');
   await page.keyboard.up('ArrowUp');
-  await page.close();
+  await page.waitForTimeout(120);
+  await closeWithVideo(page, 'scramble');
 }
 
-// 5. Jukes from deep pocket space so the full 4 frames can finish
+// Juke left and right in one continuous clip.
 {
   const page = await openFresh('juke');
   await snap(page);
   await backUpPocket(page);
   await page.locator('#tuckBtn').click();
   await page.keyboard.press('KeyQ');
-  await captureSequence(page, '08-juke-left', [35, 85, 135, 200, 280]);
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(420);
   await page.keyboard.press('KeyE');
-  await captureSequence(page, '09-juke-right', [35, 85, 135, 200, 280]);
-  await page.close();
+  await page.waitForTimeout(420);
+  await closeWithVideo(page, 'juke');
 }
 
-// 6. Power move, no defender contact required for animation inspection
+// Held power move.
 {
   const page = await openFresh('power');
   await snap(page);
@@ -174,20 +154,21 @@ async function captureSequence(page, prefix, delays) {
   if (!box) throw new Error('power button missing');
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
-  await captureSequence(page, '10-power', [45, 110, 180, 260, 360]);
+  await page.waitForTimeout(430);
   await page.mouse.up();
-  await page.close();
+  await page.waitForTimeout(100);
+  await closeWithVideo(page, 'power');
 }
 
-// 7. Slide from deep pocket space so the full non-looping sequence is visible
+// Full slide sequence.
 {
   const page = await openFresh('slide');
   await snap(page);
   await backUpPocket(page);
   await page.locator('#tuckBtn').click();
   await page.locator('#slideBtn').click();
-  await captureSequence(page, '11-slide', [45, 120, 220, 350, 500, 650]);
-  await page.close();
+  await page.waitForTimeout(720);
+  await closeWithVideo(page, 'slide');
 }
 
 await context.close();
