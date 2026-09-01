@@ -25,23 +25,16 @@ function makeFrameTexture(image, frame, count) {
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
-  const ctx = canvas.getContext('2d', { alpha: true, willReadFrequently: true });
+
+  const ctx = canvas.getContext('2d', { alpha: true });
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, width, height);
   ctx.drawImage(image, frame * width, 0, width, height, 0, 0, width, height);
 
-  const source = ctx.getImageData(0, 0, width, height).data;
-  const rowBytes = width * 4;
-  const rgba = new Uint8Array(source.length);
-  // DataTexture rows use a bottom-up orientation for our sprite UVs, so copy the
-  // finished authored bitmap row-by-row in reverse order. No pixel is modified.
-  for (let y = 0; y < height; y += 1) {
-    const srcStart = y * rowBytes;
-    const dstStart = (height - 1 - y) * rowBytes;
-    rgba.set(source.subarray(srcStart, srcStart + rowBytes), dstStart);
-  }
-
-  const texture = new THREE.DataTexture(rgba, width, height, THREE.RGBAFormat, THREE.UnsignedByteType);
+  // Every gameplay frame is a complete authored bitmap. Keep it as a permanent
+  // CanvasTexture so Three.js never has to swap atlas maps, reinterpret raw RGBA,
+  // or rebuild a player's body at runtime.
+  const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.magFilter = THREE.NearestFilter;
   texture.minFilter = THREE.NearestFilter;
@@ -56,17 +49,19 @@ function makeFrameSprite(texture, name) {
   const material = new THREE.SpriteMaterial({
     map: texture,
     transparent: true,
-    alphaTest: 0.12,
+    alphaTest: 0.08,
     depthWrite: false,
     depthTest: true,
     toneMapped: false,
   });
+
   const sprite = new THREE.Sprite(material);
   sprite.name = name;
   sprite.center.set(0.5, 0);
   sprite.position.set(0, 0, 0);
   sprite.scale.set(1, 1, 1);
   sprite.renderOrder = 3;
+  sprite.frustumCulled = false;
   sprite.visible = false;
   return sprite;
 }
@@ -87,13 +82,18 @@ function dirIndex(direction) {
 function setFrame(controller, sheet, frame) {
   const frames = controller.frames[sheet];
   if (!frames?.length) return;
+
   const safeFrame = Math.max(0, Math.min(frames.length - 1, frame));
   const target = frames[safeFrame];
+
   if (controller.activeFrame !== target) {
     if (controller.activeFrame) controller.activeFrame.visible = false;
+    controller.spriteRoot.visible = true;
     target.visible = true;
+    target.material.opacity = 1;
     controller.activeFrame = target;
   }
+
   controller.sheet = sheet;
   controller.frame = safeFrame;
 }
@@ -122,17 +122,20 @@ function stabilizeDirection(controller, candidate, dt) {
     controller.pendingDirectionTime = 0;
     return controller.direction || candidate || 'N';
   }
+
   if (candidate !== controller.pendingDirection) {
     controller.pendingDirection = candidate;
     controller.pendingDirectionTime = 0;
   } else {
     controller.pendingDirectionTime += dt;
   }
+
   if (controller.pendingDirectionTime >= 0.075) {
     controller.pendingDirection = null;
     controller.pendingDirectionTime = 0;
     return candidate;
   }
+
   return controller.direction || 'N';
 }
 
@@ -141,6 +144,7 @@ export function attachPixelQB(qbGroup, fallbackRig) {
   root.name = 'pixel_qb_fullframe_root';
   root.position.set(0, 0.02, 0);
   root.scale.set(3.72, 4.96, 1);
+  root.visible = true;
   qbGroup.add(root);
 
   const controller = {
@@ -176,7 +180,7 @@ export function attachPixelQB(qbGroup, fallbackRig) {
     if (fallbackRig) fallbackRig.visible = false;
     controller.ready = true;
     showBaseDirection(controller, 'N');
-    console.info('[Gridiron Legends] Raw RGBA full-frame QB runtime active');
+    console.info('[Gridiron Legends] Permanent full-frame CanvasTexture QB runtime active');
   }).catch((error) => {
     controller.failed = true;
     root.visible = false;
@@ -233,10 +237,12 @@ export function updatePixelQB(controller, dt, { state, moving = false, aiming = 
   if (action === 'run') {
     const candidate = speed > 0.3 ? directionFromVelocity(vx, vz, controller.direction) : controller.direction;
     controller.direction = stabilizeDirection(controller, candidate, dt);
+
     if (controller.direction === 'E') {
       setFrame(controller, 'runRight', Math.floor(controller.elapsed * RUN_FPS) % RUN_RIGHT_FRAMES);
       return;
     }
+
     showBaseDirection(controller, controller.direction);
     return;
   }
@@ -253,5 +259,6 @@ export function updatePixelQB(controller, dt, { state, moving = false, aiming = 
 
   if (state === 'PRE_SNAP') controller.direction = 'N';
   else if (speed > 0.3) controller.direction = stabilizeDirection(controller, directionFromVelocity(vx, vz, controller.direction), dt);
+
   showBaseDirection(controller, controller.direction);
 }
