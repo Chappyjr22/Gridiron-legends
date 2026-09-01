@@ -14,7 +14,8 @@ const ACTIONS = {
   slide: 4,
   power: 4,
 };
-const FPS = { idle: 2, dropback: 9, run: 11, throw: 12, jukeL: 16, jukeR: 16, slide: 8, power: 10 };
+const FPS = { idle: 2, dropback: 9, run: 11, throw: 12, jukeL: 14, jukeR: 14, slide: 8, power: 10 };
+const JUKE_VISUAL_TIME = .34;
 const ROW_START = {};
 let rowCursor = 0;
 for (const [action, count] of Object.entries(ACTIONS)) {
@@ -116,16 +117,16 @@ function drawJoint(ctx, x, y, r, fill) {
 
 function throwSourceDirection(direction, stage) {
   const seq = {
-    N:  ['N','NE','NE','NE','N','N'],
-    NE: ['NE','NE','E','NE','N','NE'],
-    NW: ['NW','N','NE','NE','N','NW'],
+    N:  ['N','NE','E','E','NE','N'],
+    NE: ['NE','E','E','E','NE','NE'],
+    NW: ['NW','N','NE','E','NE','NW'],
   };
   return (seq[direction] || seq.N)[stage];
 }
 
 function clearThrowSide(ctx, direction) {
   const regions = {
-    N:[62,49,34,51], NE:[58,47,38,53], E:[50,47,46,53],
+    N:[62,49,34,51], NE:[58,47,38,53], E:[48,45,48,56],
     NW:[0,47,38,53], W:[0,47,46,53],
   };
   const r=regions[direction] || regions.N;
@@ -169,13 +170,14 @@ function drawThrowPose(ctx, direction, stage) {
   else if (backDir==='NE') { shoulder=[66,56]; side=1; }
   else shoulder=[67,56];
 
+  // Set, load, high cock, stride, release, follow-through.
   const poses=[
-    {e:[64,67], h:[56,72], ball:true},
-    {e:[71,57], h:[78,49], ball:true},
-    {e:[72,48], h:[67,37], ball:true},
-    {e:[75,48], h:[83,42], ball:true},
-    {e:[75,57], h:[88,61], ball:false},
-    {e:[67,68], h:[82,76], ball:false},
+    {e:[63,66], h:[55,71], ball:true},
+    {e:[71,58], h:[79,50], ball:true},
+    {e:[73,47], h:[68,34], ball:true},
+    {e:[76,46], h:[85,39], ball:true},
+    {e:[74,55], h:[91,55], ball:false},
+    {e:[66,67], h:[82,80], ball:false},
   ];
   const pose=poses[stage];
 
@@ -184,11 +186,11 @@ function drawThrowPose(ctx, direction, stage) {
   const offShoulder=[29,58];
   const offPoses=[
     {e:[35,68],h:[46,70]},
-    {e:[37,65],h:[49,66]},
-    {e:[38,64],h:[49,65]},
-    {e:[36,66],h:[47,69]},
-    {e:[32,70],h:[42,76]},
-    {e:[29,73],h:[36,82]},
+    {e:[38,65],h:[49,65]},
+    {e:[39,63],h:[50,64]},
+    {e:[37,65],h:[48,68]},
+    {e:[32,70],h:[43,77]},
+    {e:[29,73],h:[36,83]},
   ];
   const off=offPoses[stage];
   thickSegment(ctx,offShoulder,[offShoulder[0]+4,offShoulder[1]+5],10,P.black,3);
@@ -252,10 +254,11 @@ function buildAnimationAtlas(source) {
       const y=(ROW_START.throw+f)*FRAME_H;
       const sourceName=throwSourceDirection(direction,f);
       drawBase(ctx,source,dirIndex(sourceName),bx,y,{
-        dx:[0,0,1,2,2,1][f],
-        dy:[0,-1,-1,-2,-1,0][f],
-        sx:[1,1.01,1.01,1.02,1.01,1][f],
-        rotation:[0,0,1,1,-1,-2][f],
+        dx:[0,1,2,3,2,1][f],
+        dy:[0,-1,-2,-3,-1,0][f],
+        sx:[1,1.01,1.03,1.04,1.02,1][f],
+        sy:[1,1,.99,.98,1,1][f],
+        rotation:[0,0,2,3,-2,-3][f],
       });
       ctx.save();
       ctx.translate(bx,y);
@@ -275,8 +278,9 @@ function buildAnimationAtlas(source) {
         drawBase(ctx,source,dirIndex(sourceName),bx,y,{
           dx:shift[f],
           dy:dy[f],
-          sx:[1,1.02,1.06,1.01][f],
-          sy:[1,.99,.96,1][f],
+          sx:[1,1.03,1.08,1.02][f],
+          sy:[1,.98,.94,.99][f],
+          rotation:left?[0,-2,-6,-2][f]:[0,2,6,2][f],
         });
         const [ballX,ballY]=ballPosition(sourceName);
         pixelBall(ctx,bx+ballX+shift[f],y+ballY+dy[f]);
@@ -288,29 +292,32 @@ function buildAnimationAtlas(source) {
       const useRight=!['W','NW','SW'].includes(direction);
       const sourceName=useRight?'E':'W';
       const sign=useRight?1:-1;
+      // Keep the full body inside the native frame. The earlier 63 degree pose
+      // clipped the player and looked like he disappeared into the turf.
       drawBase(ctx,source,dirIndex(sourceName),bx,y,{
-        dx:sign*[0,6,12,17][f],
-        dy:[1,6,14,22][f],
-        sx:[1,.98,.92,.88][f],
-        sy:[1,.90,.76,.62][f],
-        rotation:sign*[8,22,43,63][f],
+        dx:sign*[0,4,8,11][f],
+        dy:[0,3,7,11][f],
+        sx:[1,1.04,1.12,1.20][f],
+        sy:[1,.92,.82,.72][f],
+        rotation:sign*[5,14,25,34][f],
       });
-      pixelBall(ctx,bx+(useRight?58:38)+sign*[0,4,8,11][f],y+70+[0,3,7,11][f]);
+      pixelBall(ctx,bx+(useRight?58:38)+sign*[0,3,6,8][f],y+70+[0,2,5,8][f]);
     }
 
-    const powerSource=[direction,rotateDirection(direction,1),rotateDirection(direction,1),direction];
     for (let f=0; f<ACTIONS.power; f++) {
       const y=(ROW_START.power+f)*FRAME_H;
-      const sourceName=powerSource[f];
+      // Power is a shoulder drop, not a direction change. Keep the same authored
+      // facing angle so the player does not flick sideways while trucking.
+      const sourceName=direction;
       drawBase(ctx,source,dirIndex(sourceName),bx,y,{
         dx:[0,1,3,1][f],
-        dy:[0,1,3,1][f],
-        sx:[1,1.05,1.10,1.03][f],
-        sy:[1,.98,.94,.99][f],
-        rotation:[0,-2,-5,-2][f],
+        dy:[0,2,5,2][f],
+        sx:[1,1.07,1.14,1.06][f],
+        sy:[1,.96,.90,.96][f],
+        rotation:[0,-2,-6,-2][f],
       });
       const [ballX,ballY]=ballPosition(sourceName);
-      pixelBall(ctx,bx+ballX+[0,1,3,1][f],y+ballY+[0,1,3,1][f]);
+      pixelBall(ctx,bx+ballX+[0,1,3,1][f],y+ballY+[0,2,5,2][f]);
     }
   }
   return canvas;
@@ -364,7 +371,7 @@ export function attachPixelQB(qbGroup,fallbackRig) {
   const controller={
     ready:false,failed:false,sprite:null,texture:null,group:qbGroup,fallbackRig,
     action:'idle',direction:'N',elapsed:0,frame:0,prev:qbGroup.position.clone(),
-    pendingDirection:null,pendingDirectionTime:0,
+    pendingDirection:null,pendingDirectionTime:0,jukeLock:0,jukeAction:null,
   };
   loadImage(QB_BASE_ATLAS).then((image)=>{
     const atlas=buildAnimationAtlas(image);
@@ -378,7 +385,7 @@ export function attachPixelQB(qbGroup,fallbackRig) {
 
     const material=new THREE.SpriteMaterial({map:texture,transparent:true,alphaTest:.22,depthWrite:true,depthTest:true,toneMapped:false});
     const sprite=new THREE.Sprite(material);
-    sprite.name='pixel_qb_production_v2';
+    sprite.name='pixel_qb_production_v3';
     sprite.center.set(.5,0);
     sprite.position.set(0,.02,0);
     sprite.scale.set(3.72,4.96,1);
@@ -388,7 +395,7 @@ export function attachPixelQB(qbGroup,fallbackRig) {
 
     Object.assign(controller,{ready:true,sprite,texture});
     setFrame(controller,'idle',0,'N');
-    console.info('[Gridiron Legends] QB sprite animation rebuild active');
+    console.info('[Gridiron Legends] Playwright-polished QB sprite active');
   }).catch((error)=>{
     controller.failed=true;
     if (fallbackRig) fallbackRig.visible=true;
@@ -405,10 +412,20 @@ export function updatePixelQB(controller,dt,{state,moving=false,throwing=false,s
   const speed=Math.hypot(vx,vz);
   const lateralBurst=Math.abs(vx)>10.4 && Math.abs(vx)>Math.abs(vz)*1.15;
 
+  controller.jukeLock=Math.max(0,(controller.jukeLock||0)-dt);
+  if (state==='SCRAMBLE' && lateralBurst && controller.jukeLock<=0) {
+    controller.jukeAction=vx>0?'jukeL':'jukeR';
+    controller.jukeLock=JUKE_VISUAL_TIME;
+  }
+  if (state!=='SCRAMBLE' && state!=='RUN') {
+    controller.jukeLock=0;
+    controller.jukeAction=null;
+  }
+
   let action='idle';
   if (sliding) action='slide';
   else if (throwing) action='throw';
-  else if (state==='SCRAMBLE' && lateralBurst) action=vx>0?'jukeL':'jukeR';
+  else if ((state==='SCRAMBLE'||state==='RUN') && controller.jukeLock>0 && controller.jukeAction) action=controller.jukeAction;
   else if ((state==='SCRAMBLE'||state==='RUN') && power) action='power';
   else if ((state==='POCKET'||state==='AIMING') && (moving||speed>.3)) action='dropback';
   else if ((state==='SCRAMBLE'||state==='RUN') && (moving||speed>.3)) action='run';
