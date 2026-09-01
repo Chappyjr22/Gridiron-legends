@@ -1,13 +1,6 @@
-name: Build Player Assets
+name: Legacy 3D Player Asset Build
 
 on:
-  push:
-    paths:
-      - 'tools/build_qb_glb.py'
-      - 'tools/normalize_qb_gltf.py'
-      - 'tools/integrate_qb_runtime.py'
-      - 'src/qbModel.js'
-      - '.github/workflows/build-player-assets.yml'
   workflow_dispatch:
 
 permissions:
@@ -30,20 +23,15 @@ jobs:
       - name: Install asset dependencies
         run: pip install trimesh==4.11.1 numpy==2.3.5 pillow==12.3.0
 
-      - name: Build QB GLB
+      - name: Build legacy QB GLB
         run: python tools/build_qb_glb.py
 
       - name: Normalize animated glTF nodes
         run: python tools/normalize_qb_gltf.py
 
-      - name: Integrate authored QB runtime
-        run: python tools/integrate_qb_runtime.py
-
-      - name: Verify generated asset and JavaScript
+      - name: Verify generated GLB
         run: |
           test -s public/assets/models/players/qb_v1.glb
-          node --check src/main.js
-          node --check src/qbModel.js
           python - <<'PY'
           import json, struct
           path='public/assets/models/players/qb_v1.glb'
@@ -52,25 +40,17 @@ jobs:
               assert magic == 0x46546C67 and version == 2
               json_len,json_type=struct.unpack('<II',f.read(8))
               doc=json.loads(f.read(json_len).decode().rstrip())
-          clips=[a['name'] for a in doc.get('animations',[])]
-          required={'idle','dropback','throw','run','slide'}
-          assert required.issubset(clips), clips
-          names={n.get('name') for n in doc.get('nodes',[])}
-          for node in ['root','pelvis','chest','upperarm_r','football_socket_r']:
-              assert node in names, node
-          targets={c['target']['node'] for a in doc.get('animations',[]) for c in a.get('channels',[])}
-          assert all('matrix' not in doc['nodes'][i] for i in targets)
-          print('validated',path,total,'bytes',clips,'animated nodes',len(targets))
+          print('validated legacy GLB', path, total, 'bytes')
           PY
 
-      - name: Commit generated runtime assets
+      - name: Commit legacy asset if requested
         run: |
-          if git diff --quiet -- public/assets/models/players/qb_v1.glb src/main.js; then
-            echo 'QB asset and runtime integration are already current.'
+          if git diff --quiet -- public/assets/models/players/qb_v1.glb; then
+            echo 'Legacy QB asset already current.'
             exit 0
           fi
           git config user.name 'gridiron-assets-bot'
           git config user.email 'actions@users.noreply.github.com'
-          git add public/assets/models/players/qb_v1.glb src/main.js
-          git commit -m 'Build and integrate QB model v1'
+          git add public/assets/models/players/qb_v1.glb
+          git commit -m 'Rebuild legacy QB model asset'
           git push
