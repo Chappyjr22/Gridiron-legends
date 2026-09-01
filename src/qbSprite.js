@@ -13,45 +13,47 @@ const RUN_FPS = 10;
 function loadImage(src) {
   return new Promise((resolve, reject) => {
     const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = reject;
-
-    if (src.startsWith('data:image/png;base64,')) {
+    image.onload = async () => {
       try {
-        const encoded = src.slice(src.indexOf(',') + 1);
-        const binary = atob(encoded);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-        image.__gridironObjectUrl = URL.createObjectURL(new Blob([bytes], { type: 'image/png' }));
-        image.src = image.__gridironObjectUrl;
-      } catch (error) {
-        reject(error);
+        if (image.decode) await image.decode();
+      } catch {
+        // onload already guarantees a usable fallback in browsers without decode.
       }
-      return;
-    }
+      resolve(image);
+    };
+    image.onerror = reject;
     image.src = src;
   });
 }
 
-function makeTexture(image) {
-  // Freeze the decoded PNG into a canvas once. The animation only changes UV
-  // offset/repeat after this point, so WebGL never has to re-upload Image data.
+function makeFrameTexture(image, frame, count) {
+  const frameWidth = Math.round((image.naturalWidth || image.width) / count);
+  const frameHeight = image.naturalHeight || image.height;
   const canvas = document.createElement('canvas');
-  canvas.width = image.naturalWidth || image.width;
-  canvas.height = image.naturalHeight || image.height;
+  canvas.width = frameWidth;
+  canvas.height = frameHeight;
   const ctx = canvas.getContext('2d', { alpha: true });
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(image, 0, 0);
+  ctx.clearRect(0, 0, frameWidth, frameHeight);
+  ctx.drawImage(
+    image,
+    frame * frameWidth, 0, frameWidth, frameHeight,
+    0, 0, frameWidth, frameHeight,
+  );
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.magFilter = THREE.NearestFilter;
   texture.minFilter = THREE.NearestFilter;
   texture.generateMipmaps = false;
-  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapS = THREE.ClampToEdgeWrapping;
   texture.wrapT = THREE.ClampToEdgeWrapping;
   texture.needsUpdate = true;
   return texture;
+}
+
+function makeFrameSet(image, count) {
+  return Array.from({ length: count }, (_, frame) => makeFrameTexture(image, frame, count));
 }
 
 function dirIndex(direction) {
@@ -59,21 +61,21 @@ function dirIndex(direction) {
   return index < 0 ? 0 : index;
 }
 
-function setFrame(controller, sheet, frame, count) {
-  const texture = controller.textures[sheet];
-  if (!texture || !controller.material) return;
+function setFrame(controller, sheet, frame) {
+  const frames = controller.frames[sheet];
+  if (!frames?.length || !controller.material) return;
+  const safeFrame = Math.max(0, Math.min(frames.length - 1, frame));
+  const texture = frames[safeFrame];
   if (controller.material.map !== texture) {
     controller.material.map = texture;
     controller.material.needsUpdate = true;
   }
-  texture.repeat.set(1 / count, 1);
-  texture.offset.set(Math.max(0, Math.min(count - 1, frame)) / count, 0);
   controller.sheet = sheet;
-  controller.frame = frame;
+  controller.frame = safeFrame;
 }
 
 function showBaseDirection(controller, direction) {
-  setFrame(controller, 'base', dirIndex(direction), DIRS.length);
+  setFrame(controller, 'base', dirIndex(direction));
 }
 
 function directionFromVelocity(x, z, fallback = 'N') {
@@ -117,7 +119,7 @@ export function attachPixelQB(qbGroup, fallbackRig) {
     failed: false,
     sprite: null,
     material: null,
-    textures: {},
+    frames: {},
     images: [],
     group: qbGroup,
     fallbackRig,
@@ -137,12 +139,12 @@ export function attachPixelQB(qbGroup, fallbackRig) {
     loadImage(QB_AUTHORED_RUN_RIGHT_ATLAS),
   ]).then(([baseImage, passImage, runRightImage]) => {
     controller.images = [baseImage, passImage, runRightImage];
-    controller.textures.base = makeTexture(baseImage);
-    controller.textures.pass = makeTexture(passImage);
-    controller.textures.runRight = makeTexture(runRightImage);
+    controller.frames.base = makeFrameSet(baseImage, DIRS.length);
+    controller.frames.pass = makeFrameSet(passImage, PASS_FRAMES);
+    controller.frames.runRight = makeFrameSet(runRightImage, RUN_RIGHT_FRAMES);
 
     const material = new THREE.SpriteMaterial({
-      map: controller.textures.base,
+      map: controller.frames.base[0],
       transparent: true,
       alphaTest: 0.18,
       depthWrite: true,
@@ -150,7 +152,7 @@ export function attachPixelQB(qbGroup, fallbackRig) {
       toneMapped: false,
     });
     const sprite = new THREE.Sprite(material);
-    sprite.name = 'pixel_qb_authored_fullframe_v1';
+    sprite.name = 'pixel_qb_authored_fullframe_v2';
     sprite.center.set(0.5, 0);
     sprite.position.set(0, 0.02, 0);
     sprite.scale.set(3.72, 4.96, 1);
@@ -162,7 +164,7 @@ export function attachPixelQB(qbGroup, fallbackRig) {
     controller.sprite = sprite;
     controller.ready = true;
     showBaseDirection(controller, 'N');
-    console.info('[Gridiron Legends] Full-frame authored QB sprite runtime active');
+    console.info('[Gridiron Legends] Independent full-frame QB sprite runtime active');
   }).catch((error) => {
     controller.failed = true;
     if (fallbackRig) fallbackRig.visible = true;
@@ -199,14 +201,14 @@ export function updatePixelQB(controller, dt, { state, moving = false, aiming = 
   if (action === 'aim') {
     const frame = Math.min(3, Math.floor(controller.elapsed * AIM_FPS));
     controller.direction = 'N';
-    setFrame(controller, 'pass', frame, PASS_FRAMES);
+    setFrame(controller, 'pass', frame);
     return;
   }
 
   if (action === 'throw') {
     const releaseFrame = Math.min(2, Math.floor(controller.elapsed * RELEASE_FPS));
     controller.direction = 'N';
-    setFrame(controller, 'pass', 4 + releaseFrame, PASS_FRAMES);
+    setFrame(controller, 'pass', 4 + releaseFrame);
     return;
   }
 
@@ -221,7 +223,7 @@ export function updatePixelQB(controller, dt, { state, moving = false, aiming = 
     controller.direction = stabilizeDirection(controller, candidate, dt);
     if (controller.direction === 'E') {
       const frame = Math.floor(controller.elapsed * RUN_FPS) % RUN_RIGHT_FRAMES;
-      setFrame(controller, 'runRight', frame, RUN_RIGHT_FRAMES);
+      setFrame(controller, 'runRight', frame);
       return;
     }
     showBaseDirection(controller, controller.direction);
