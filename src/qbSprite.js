@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { QB_BASE_ATLAS } from './qbSpriteBase.js';
-import { QB_AUTHORED_PASS_ATLAS, QB_AUTHORED_RUN_RIGHT_ATLAS } from './qbAuthoredSheets.js';
+import { QB_AUTHORED_PASS_ATLAS } from './qbAuthoredSheets.js';
+import { QB_AUTHORED_RUN_RIGHT_ATLAS } from './qbRunRightSheet.js';
 
 const DIRS = ['N','NE','E','SE','S','SW','W','NW'];
 const PASS_FRAMES = 8;
