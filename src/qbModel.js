@@ -1,8 +1,8 @@
 import { attachPixelQB, updatePixelQB } from './qbSprite.js';
 
-const THROW_RELEASE_MS = 405;
-const THROW_VISUAL_MS = 650;
-const LEGACY_THROW_SUPPRESS_MS = 1100;
+const THROW_RELEASE_MS = 500;
+const THROW_VISUAL_MS = 720;
+const LEGACY_THROW_SUPPRESS_MS = 1150;
 const BASE_SPRITE_W = 3.72;
 const BASE_SPRITE_H = 4.96;
 
@@ -112,13 +112,10 @@ function applyPresentationPose(controller) {
       break;
     }
     case 'slide': {
-      // The atlas now contains the actual feet-first slide pose. Keep the
-      // billboard itself upright and only add a tiny grounding offset.
       sprite.position.y += [0,.002,.004,.006][Math.min(frame,3)];
       break;
     }
     case 'power': {
-      // The atlas carries the shoulder drop and widened contact silhouette.
       sprite.position.y -= [0,.003,.006,.003][Math.min(frame,3)];
       break;
     }
@@ -127,8 +124,6 @@ function applyPresentationPose(controller) {
   }
 }
 
-// Compatibility wrapper: main.js already calls these names. Keeping this API
-// lets gameplay stay unchanged while the player visual pipeline evolves.
 export function attachAuthoredQB(qbGroup, fallbackRig) {
   if (fallbackRig) fallbackRig.visible = false;
 
