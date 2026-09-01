@@ -27,6 +27,7 @@ jobs:
       - name: Install Playwright package
         run: |
           npm install --no-save playwright@1.57.0
+          npx playwright install ffmpeg
           CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
           if [ -z "$CHROME_PATH" ]; then
             echo "No system Chrome/Chromium found on runner"
