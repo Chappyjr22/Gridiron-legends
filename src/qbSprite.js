@@ -10,27 +10,43 @@ const AIM_FPS = 8;
 const RELEASE_FPS = 12;
 const RUN_FPS = 10;
 
-async function loadAtlas(src) {
-  const atlas = await new THREE.TextureLoader().loadAsync(src);
-  atlas.colorSpace = THREE.SRGBColorSpace;
-  atlas.magFilter = THREE.NearestFilter;
-  atlas.minFilter = THREE.NearestFilter;
-  atlas.generateMipmaps = false;
-  atlas.wrapS = THREE.RepeatWrapping;
-  atlas.wrapT = THREE.ClampToEdgeWrapping;
-  atlas.needsUpdate = true;
-  return atlas;
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = src;
+  });
 }
 
-function makeFrameTexture(atlas, frame, count) {
-  const texture = atlas.clone();
-  texture.image = atlas.image;
-  texture.repeat.set(1 / count, 1);
-  texture.offset.set(frame / count, 0);
+function makeFrameTexture(image, frame, count) {
+  const width = Math.round((image.naturalWidth || image.width) / count);
+  const height = image.naturalHeight || image.height;
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d', { alpha: true, willReadFrequently: true });
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, width, height);
+  ctx.drawImage(image, frame * width, 0, width, height, 0, 0, width, height);
+
+  const source = ctx.getImageData(0, 0, width, height).data;
+  const rowBytes = width * 4;
+  const rgba = new Uint8Array(source.length);
+  // DataTexture rows use a bottom-up orientation for our sprite UVs, so copy the
+  // finished authored bitmap row-by-row in reverse order. No pixel is modified.
+  for (let y = 0; y < height; y += 1) {
+    const srcStart = y * rowBytes;
+    const dstStart = (height - 1 - y) * rowBytes;
+    rgba.set(source.subarray(srcStart, srcStart + rowBytes), dstStart);
+  }
+
+  const texture = new THREE.DataTexture(rgba, width, height, THREE.RGBAFormat, THREE.UnsignedByteType);
+  texture.colorSpace = THREE.SRGBColorSpace;
   texture.magFilter = THREE.NearestFilter;
   texture.minFilter = THREE.NearestFilter;
   texture.generateMipmaps = false;
-  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapS = THREE.ClampToEdgeWrapping;
   texture.wrapT = THREE.ClampToEdgeWrapping;
   texture.needsUpdate = true;
   return texture;
@@ -55,9 +71,9 @@ function makeFrameSprite(texture, name) {
   return sprite;
 }
 
-function makeSpriteSet(atlas, count, prefix, root) {
+function makeSpriteSet(image, count, prefix, root) {
   return Array.from({ length: count }, (_, frame) => {
-    const sprite = makeFrameSprite(makeFrameTexture(atlas, frame, count), `${prefix}_${frame}`);
+    const sprite = makeFrameSprite(makeFrameTexture(image, frame, count), `${prefix}_${frame}`);
     root.add(sprite);
     return sprite;
   });
@@ -133,7 +149,7 @@ export function attachPixelQB(qbGroup, fallbackRig) {
     sprite: root,
     spriteRoot: root,
     frames: {},
-    atlases: {},
+    images: [],
     activeFrame: null,
     group: qbGroup,
     fallbackRig,
@@ -148,24 +164,24 @@ export function attachPixelQB(qbGroup, fallbackRig) {
   };
 
   Promise.all([
-    loadAtlas(QB_BASE_ATLAS),
-    loadAtlas(QB_AUTHORED_PASS_ATLAS),
-    loadAtlas(QB_AUTHORED_RUN_RIGHT_ATLAS),
-  ]).then(([baseAtlas, passAtlas, runRightAtlas]) => {
-    controller.atlases = { base: baseAtlas, pass: passAtlas, runRight: runRightAtlas };
-    controller.frames.base = makeSpriteSet(baseAtlas, DIRS.length, 'qb_base', root);
-    controller.frames.pass = makeSpriteSet(passAtlas, PASS_FRAMES, 'qb_pass', root);
-    controller.frames.runRight = makeSpriteSet(runRightAtlas, RUN_RIGHT_FRAMES, 'qb_run_right', root);
+    loadImage(QB_BASE_ATLAS),
+    loadImage(QB_AUTHORED_PASS_ATLAS),
+    loadImage(QB_AUTHORED_RUN_RIGHT_ATLAS),
+  ]).then(([baseImage, passImage, runRightImage]) => {
+    controller.images = [baseImage, passImage, runRightImage];
+    controller.frames.base = makeSpriteSet(baseImage, DIRS.length, 'qb_base', root);
+    controller.frames.pass = makeSpriteSet(passImage, PASS_FRAMES, 'qb_pass', root);
+    controller.frames.runRight = makeSpriteSet(runRightImage, RUN_RIGHT_FRAMES, 'qb_run_right', root);
 
     if (fallbackRig) fallbackRig.visible = false;
     controller.ready = true;
     showBaseDirection(controller, 'N');
-    console.info('[Gridiron Legends] Permanent authored-atlas QB runtime active');
+    console.info('[Gridiron Legends] Raw RGBA full-frame QB runtime active');
   }).catch((error) => {
     controller.failed = true;
     root.visible = false;
     if (fallbackRig) fallbackRig.visible = true;
-    console.warn('[Gridiron Legends] Authored QB atlases failed, using fallback.', error);
+    console.warn('[Gridiron Legends] Authored QB frame decode failed, using fallback.', error);
   });
 
   return controller;
@@ -197,16 +213,14 @@ export function updatePixelQB(controller, dt, { state, moving = false, aiming = 
   }
 
   if (action === 'aim') {
-    const frame = Math.min(3, Math.floor(controller.elapsed * AIM_FPS));
     controller.direction = 'N';
-    setFrame(controller, 'pass', frame);
+    setFrame(controller, 'pass', Math.min(3, Math.floor(controller.elapsed * AIM_FPS)));
     return;
   }
 
   if (action === 'throw') {
-    const releaseFrame = Math.min(2, Math.floor(controller.elapsed * RELEASE_FPS));
     controller.direction = 'N';
-    setFrame(controller, 'pass', 4 + releaseFrame);
+    setFrame(controller, 'pass', 4 + Math.min(2, Math.floor(controller.elapsed * RELEASE_FPS)));
     return;
   }
 
