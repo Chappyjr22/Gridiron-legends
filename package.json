@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "packageManager": "npm@10.9.8",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "vite build",
+    "build": "npm install --no-audit --no-fund && vite build",
     "preview": "vite preview --host 0.0.0.0"
   },
   "dependencies": {
