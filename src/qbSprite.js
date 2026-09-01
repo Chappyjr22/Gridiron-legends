@@ -22,8 +22,6 @@ function loadImage(src) {
         const binary = atob(encoded);
         const bytes = new Uint8Array(binary.length);
         for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-        // Keep the Blob URL alive for the lifetime of the HTMLImageElement.
-        // Three.js may defer GPU upload until an animation sheet is first shown.
         image.__gridironObjectUrl = URL.createObjectURL(new Blob([bytes], { type: 'image/png' }));
         image.src = image.__gridironObjectUrl;
       } catch (error) {
@@ -36,7 +34,16 @@ function loadImage(src) {
 }
 
 function makeTexture(image) {
-  const texture = new THREE.Texture(image);
+  // Freeze the decoded PNG into a canvas once. The animation only changes UV
+  // offset/repeat after this point, so WebGL never has to re-upload Image data.
+  const canvas = document.createElement('canvas');
+  canvas.width = image.naturalWidth || image.width;
+  canvas.height = image.naturalHeight || image.height;
+  const ctx = canvas.getContext('2d', { alpha: true });
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(image, 0, 0);
+
+  const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.magFilter = THREE.NearestFilter;
   texture.minFilter = THREE.NearestFilter;
@@ -61,7 +68,6 @@ function setFrame(controller, sheet, frame, count) {
   }
   texture.repeat.set(1 / count, 1);
   texture.offset.set(Math.max(0, Math.min(count - 1, frame)) / count, 0);
-  texture.needsUpdate = true;
   controller.sheet = sheet;
   controller.frame = frame;
 }
