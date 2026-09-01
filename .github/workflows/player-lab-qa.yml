@@ -26,6 +26,9 @@ jobs:
       - name: Install app dependencies
         run: npm install
 
+      - name: Build
+        run: npm run build
+
       - name: Install Playwright
         run: |
           npm install --no-save playwright@1.57.0
@@ -36,9 +39,6 @@ jobs:
           fi
           echo "CHROME_PATH=$CHROME_PATH" >> "$GITHUB_ENV"
           "$CHROME_PATH" --version
-
-      - name: Build
-        run: npm run build
 
       - name: Start preview server
         run: |
