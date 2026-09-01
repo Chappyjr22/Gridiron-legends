@@ -14,8 +14,8 @@ const FIELD_W=53.3, LOS=-8, END=72;
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x071018);
 scene.fog=new THREE.Fog(0x071018,80,180);
-const camera=new THREE.PerspectiveCamera(46,innerWidth/innerHeight,.1,300);
-camera.position.set(0,16,-35);
+const camera=new THREE.PerspectiveCamera(44,innerWidth/innerHeight,.1,300);
+camera.position.set(0,14.2,-33.5);
 const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.35));
 renderer.setSize(innerWidth,innerHeight);
@@ -93,7 +93,7 @@ function reset(msg='Press SNAP to start the play'){
 function snap(){if(state!=='PRE_SNAP')return;routeTime=0;setState('POCKET');status('BALL LIVE','Move in the pocket, pull back to aim, release to throw');}
 function arc(a,b,lift){const pts=[];for(let i=0;i<=28;i++){const t=i/28,p=a.clone().lerp(b,t);p.y+=Math.sin(Math.PI*t)*lift;pts.push(p);}return pts;}
 function beginAim(x,y){if(state!=='POCKET')return;aim={sx:x,sy:y,target:null,power:0,lift:0};setState('AIMING');updateAim(x,y);}
-function updateAim(x,y){if(!aim)return;const dx=x-aim.sx,dy=y-aim.sy,p=clamp(Math.hypot(dx,dy)/220,.12,1),side=clamp(dx/140,-1,1),q=offense.qb.position;
+function updateAim(x,y){if(!aim)return;const dx=x-aim.sx,dy=y-aim.sy,p=clamp(Math.hypot(dx,dy)/220,.12,1),side=clamp(dx/185,-1,1),q=offense.qb.position;
   aim.target=new THREE.Vector3(clamp(q.x+side*18,-24,24),.7,clamp(q.z+lerp(12,46,p),q.z+8,67));aim.power=p;aim.lift=lerp(3.5,11,p);
   const start=q.clone().add(new THREE.Vector3(0,3,.5));aimLine.geometry.setFromPoints(arc(start,aim.target.clone(),aim.lift));aimLine.computeLineDistances();aimLine.visible=true;ring.position.copy(aim.target);ring.visible=true;}
 function throwBall(){if(state!=='AIMING'||!aim?.target){aimLine.visible=ring.visible=false;aim=null;if(state==='AIMING')setState('POCKET');return;}
@@ -122,7 +122,7 @@ function defenseAI(dt){if(!['SCRAMBLE','RUN'].includes(state))return;let nearest
   if(nearest<1.45&&slideTime<=0){finishRun(false);return;}if(controlled.position.z>=END){ui.score.textContent='24';setState('DEAD');status('TOUCHDOWN','LAS VEGAS OUTLAWS');setTimeout(()=>reset('Touchdown! Prototype drive reset.'),1200);}}
 function finishRun(slid){const gained=Math.max(0,Math.round(controlled.position.z-LOS)),first=controlled.position.z>=firstDownZ;if(first){down=1;toGo=10;firstDownZ=controlled.position.z+10;}else{down=Math.min(4,down+1);toGo=Math.max(1,Math.round(firstDownZ-controlled.position.z));}
   ballSpot=clamp(ballSpot+gained,1,99);ui.down.textContent=`${ord(down)} & ${toGo}`;ui.spot.textContent=ballSpot<50?`LV ${ballSpot}`:`DEN ${100-ballSpot}`;setState('DEAD');status(slid?'SLIDE':first?'FIRST DOWN':'TACKLED',`Gain of ${gained} yards`);setTimeout(()=>reset('Next play ready.'),800);}
-function cam(dt){const focus=['RUN','SCRAMBLE'].includes(state)?controlled.position:offense.qb.position,desired=['RUN','SCRAMBLE'].includes(state)?new THREE.Vector3(focus.x*.18,12.8,focus.z-20):new THREE.Vector3(offense.qb.position.x*.14,16.2,offense.qb.position.z-20);camera.position.lerp(desired,1-Math.pow(.001,dt));const look=focus.clone().add(new THREE.Vector3(0,2.4,14)),q=new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().lookAt(camera.position,look,new THREE.Vector3(0,1,0)));camera.quaternion.slerp(q,1-Math.pow(.0008,dt));}
+function cam(dt){const running=['RUN','SCRAMBLE'].includes(state),focus=running?controlled.position:offense.qb.position,desired=running?new THREE.Vector3(focus.x*.16,11.8,focus.z-17.5):new THREE.Vector3(offense.qb.position.x*.12,14.2,offense.qb.position.z-18.5);camera.position.lerp(desired,1-Math.pow(.001,dt));const look=focus.clone().add(new THREE.Vector3(0,2.2,15.5)),q=new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().lookAt(camera.position,look,new THREE.Vector3(0,1,0)));camera.quaternion.slerp(q,1-Math.pow(.0008,dt));}
 function badges(){const show=['PRE_SNAP','POCKET','AIMING','BALL'].includes(state);for(const k of ['Y','X','A','B']){const el=ui.badges[k];el.style.display=show?'grid':'none';if(!show)continue;const p=offense[k].position.clone().add(new THREE.Vector3(0,4.6,0)).project(camera);el.style.left=`${(p.x*.5+.5)*innerWidth}px`;el.style.top=`${(-p.y*.5+.5)*innerHeight}px`;el.style.opacity=p.z>1?'0':'1';}}
 function clock(dt){if(state!=='PRE_SNAP')return;clockAcc+=dt;if(clockAcc>=1){clockAcc-=1;playClock=Math.max(0,playClock-1);ui.playClock.textContent=`:${String(playClock).padStart(2,'0')}`;ui.playClock.style.color=playClock<=5?'#ef604a':playClock<=10?'#e8ae4a':'';if(playClock===0){playClock=14;status('DELAY','Play clock expired');}}}
 function frame(now){const dt=Math.min(.035,(now-last)/1000||.016);last=now;if(slideTime>0){slideTime-=dt;controlled.rotation.x=lerp(controlled.rotation.x,-1.05,.2);if(slideTime<=0){controlled.rotation.x=0;finishRun(true);}}
