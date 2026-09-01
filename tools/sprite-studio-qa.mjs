@@ -14,6 +14,14 @@ page.on('pageerror', err => console.error('[sprite-studio] pageerror:', err));
 
 await page.goto(`${baseURL}/sprite-studio.html`, { waitUntil: 'networkidle' });
 await page.waitForFunction(() => window.__gridironSpriteStudio?.state?.poses?.size === 6);
+await page.waitForFunction(() => {
+  const c = document.querySelector('#editCanvas');
+  if (!c) return false;
+  const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+  let count = 0;
+  for (let i = 3; i < d.length; i += 4) if (d[i] > 0) count++;
+  return count > 100;
+});
 
 const poseCount = await page.locator('.pose-btn').count();
 if (poseCount !== 6) throw new Error(`Expected 6 pose buttons, found ${poseCount}`);
@@ -36,14 +44,20 @@ await page.getByRole('button', { name: 'Aim / Cock' }).click();
 await page.getByRole('button', { name: 'Duplicate current' }).click();
 await page.screenshot({ path: `${outDir}/sprite-studio-03-pose-library.png`, fullPage: true });
 
-const masterOpaque = await page.evaluate(() => {
-  const c = window.__gridironSpriteStudio.state.master;
-  const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
-  let count = 0;
-  for (let i = 3; i < d.length; i += 4) if (d[i] > 0) count++;
-  return count;
+const counts = await page.evaluate(() => {
+  const opaque = (c) => {
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let count = 0;
+    for (let i = 3; i < d.length; i += 4) if (d[i] > 0) count++;
+    return count;
+  };
+  return {
+    master: opaque(window.__gridironSpriteStudio.state.master),
+    editor: opaque(document.querySelector('#editCanvas')),
+  };
 });
-if (masterOpaque < 100) throw new Error('Approved QB master did not load into Sprite Studio');
+if (counts.master < 100) throw new Error('Approved QB master did not load into Sprite Studio');
+if (counts.editor < 100) throw new Error('Editable QB pose is blank');
 
 await browser.close();
 console.log('Sprite Studio QA passed');
