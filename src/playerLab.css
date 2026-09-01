@@ -98,7 +98,19 @@ h1 span { color: #7f8c92; font-size: .45em; font-weight: 700; vertical-align: mi
 .muted { color: #88979d; font-size: 13px; }
 
 .quick-grid, .view-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
-.quick-grid { grid-template-columns: repeat(3, 1fr); margin: 13px 0; }
+.quick-grid { grid-template-columns: repeat(2, 1fr); margin: 13px 0; }
+.candidate-label {
+  display: inline-flex;
+  margin-bottom: 10px;
+  padding: 5px 8px;
+  border: 1px solid rgba(94,191,130,.45);
+  border-radius: 999px;
+  color: #89d5a4;
+  background: rgba(94,191,130,.08);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
 button {
   min-height: 38px;
   border: 1px solid #36444c;

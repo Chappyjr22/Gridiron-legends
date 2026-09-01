@@ -11,8 +11,8 @@
     <header class="topbar">
       <div>
         <div class="eyebrow">GRIDIRON LEGENDS • 3D PIPELINE EXPERIMENT</div>
-        <h1>3D Player Lab <span>Phase 1</span></h1>
-        <p>Rig and locomotion baseline only. This page does not modify the live game character pipeline.</p>
+        <h1>3D Player Lab <span>Football motion review</span></h1>
+        <p>Football-specific source motion inspection only. This page does not modify the live game character pipeline.</p>
       </div>
       <a class="text-link" href="/">Back to game</a>
     </header>
@@ -32,20 +32,25 @@
 
       <aside class="controls-panel">
         <section class="control-card">
-          <h2>Animation test</h2>
-          <p class="muted">These buttons are matched automatically against the loaded Quaternius animation library. Generic clips are only being used to validate the rig, locomotion, and blending pipeline. Football-specific QB motion will come from football mocap or offline-retargeted motion.</p>
+          <div class="candidate-label">SOURCE MOTION CANDIDATE</div>
+          <h2>Quarterback mocap</h2>
+          <p class="muted">This is Rokoko's football-quarterback capture on its original Mixamo skeleton. It has not been retargeted or cleaned. Review the movement first, then approve or reject it before any offline bake.</p>
           <div id="quickAnimations" class="quick-grid">
-            <button data-animation="idle" disabled>Idle</button>
-            <button data-animation="jog" disabled>Jog</button>
-            <button data-animation="sprint" disabled>Sprint</button>
-            <button data-animation="left" disabled>Left</button>
-            <button data-animation="right" disabled>Right</button>
+            <button data-animation="take1" disabled>QB take 1</button>
+            <button data-animation="take2" disabled>QB take 2</button>
+            <button data-animation="take3" disabled>QB take 3</button>
+            <button data-animation="full" disabled>Full source</button>
+            <button id="playPause" type="button">Pause</button>
           </div>
           <label class="field">
             <span>All discovered clips</span>
             <select id="clipSelect" disabled>
               <option>Waiting for animation library…</option>
             </select>
+          </label>
+          <label class="field range-field">
+            <span>Timeline <b id="timelineReadout">0.00s / 0.00s</b></span>
+            <input id="timelineRange" type="range" min="0" max="1" step="0.01" value="0" disabled />
           </label>
           <label class="field range-field">
             <span>Animation speed <b id="speedReadout">1.00×</b></span>
@@ -77,14 +82,16 @@
             <div><dt>Animations</dt><dd id="animationMetric">waiting</dd></div>
             <div><dt>Right hand</dt><dd id="handMetric">waiting</dd></div>
             <div><dt>Renderer</dt><dd id="rendererMetric">waiting</dd></div>
+            <div><dt>Motion source</dt><dd id="sourceMetric">waiting</dd></div>
           </dl>
         </section>
 
         <section class="control-card source-card">
-          <h2>Phase 1 asset sources</h2>
-          <p><strong>Character:</strong> Quaternius Universal Base Characters, CC0.</p>
-          <p><strong>Animations:</strong> Quaternius Universal Animation Library, CC0.</p>
-          <p class="muted">The lab loads the audited GLBs vendored inside this repository under <code>public/assets/vendor/quaternius/</code>. These assets are a canonical-rig and generic-locomotion baseline only, not the final football player or football-specific motion set.</p>
+          <h2>Source and pipeline status</h2>
+          <p><strong>Motion:</strong> Rokoko Football Quarterback, 30 FPS Mixamo FBX. The 36.29-second recording is split into three review takes, with the full source preserved.</p>
+          <p><strong>Current state:</strong> Raw source inspection. No runtime retargeting.</p>
+          <p><strong>Next gate:</strong> If the mechanics pass visual review, retarget and bake the clip offline onto the canonical player skeleton and export it inside a clean GLB.</p>
+          <p class="muted">Rokoko publishes this free sports pack for use in animation, VFX, game, and 3D projects, including commercial projects. Source details are recorded beside the vendored asset.</p>
         </section>
       </aside>
     </main>

@@ -31,24 +31,23 @@ const diagnostics = await page.evaluate(() => ({
   currentClip: window.__gridironPlayerLab.currentClip?.name || null,
   height: window.__gridironPlayerLab.normalizedHeight,
   errors: [...window.__gridironPlayerLab.errors],
+  sourceLabel: window.__gridironPlayerLab.sourceLabel,
 }));
 
-if (diagnostics.clips < 10) throw new Error(`Expected a real animation library, found ${diagnostics.clips} clips`);
+if (diagnostics.clips !== 4) throw new Error(`Expected three QB review takes plus the full source, found ${diagnostics.clips}`);
 if (diagnostics.bones < 20) throw new Error(`Expected a rigged humanoid, found ${diagnostics.bones} bones`);
 if (!diagnostics.currentClip) throw new Error('No default animation is playing');
 if (diagnostics.height < 1.7 || diagnostics.height > 2.1) throw new Error(`Unexpected normalized character height: ${diagnostics.height}`);
 if (diagnostics.errors.length) throw new Error(`Player Lab reported errors: ${diagnostics.errors.join('; ')}`);
+if (!diagnostics.sourceLabel.includes('Football Quarterback')) throw new Error(`Unexpected source: ${diagnostics.sourceLabel}`);
 if (pageErrors.length) throw new Error(`Page errors: ${pageErrors.join('; ')}`);
 
-await page.screenshot({ path: `${outDir}/player-lab-01-idle.png`, fullPage: true });
-
-for (const key of ['jog', 'sprint']) {
-  const button = page.locator(`[data-animation="${key}"]`);
-  if (await button.isEnabled()) {
-    await button.click();
-    await page.waitForTimeout(850);
-    await page.screenshot({ path: `${outDir}/player-lab-${key}.png`, fullPage: true });
-  }
+await page.locator('#playPause').click();
+const duration = await page.evaluate(() => window.__gridironPlayerLab.currentClip.duration);
+for (const [label, ratio] of [['start', 0.08], ['middle', 0.5], ['finish', 0.86]]) {
+  await page.locator('#timelineRange').fill(String(duration * ratio));
+  await page.waitForTimeout(250);
+  await page.screenshot({ path: `${outDir}/player-lab-qb-${label}.png`, fullPage: true });
 }
 
 await browser.close();

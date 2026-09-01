@@ -1,15 +1,18 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 import './playerLab.css';
 
-const CHARACTER_URLS = [
-  '/assets/vendor/quaternius/humanoid-base.glb',
-];
-
-const ANIMATION_URLS = [
-  '/assets/vendor/quaternius/universal-animation-library.glb',
-];
+const FOOTBALL_QB_SOURCE = {
+  label: 'Rokoko Football Quarterback source motion',
+  url: '/assets/vendor/rokoko/Football_Quarterback_mixamo.fbx',
+  fps: 30,
+  takes: [
+    { key: 'take1', name: 'qb_source_take_1', start: 3.4, end: 11.6 },
+    { key: 'take2', name: 'qb_source_take_2', start: 18.4, end: 27.1 },
+    { key: 'take3', name: 'qb_source_take_3', start: 27.1, end: 36.28 },
+  ],
+};
 
 const TARGET_HEIGHT = 1.88;
 const stage = document.querySelector('#stage');
@@ -19,6 +22,9 @@ const activeClipLabel = document.querySelector('#activeClipLabel');
 const clipSelect = document.querySelector('#clipSelect');
 const speedRange = document.querySelector('#speedRange');
 const speedReadout = document.querySelector('#speedReadout');
+const playPauseButton = document.querySelector('#playPause');
+const timelineRange = document.querySelector('#timelineRange');
+const timelineReadout = document.querySelector('#timelineReadout');
 const skeletonToggle = document.querySelector('#skeletonToggle');
 const footballToggle = document.querySelector('#footballToggle');
 const gridToggle = document.querySelector('#gridToggle');
@@ -30,6 +36,7 @@ const diagnostics = {
   animations: document.querySelector('#animationMetric'),
   hand: document.querySelector('#handMetric'),
   renderer: document.querySelector('#rendererMetric'),
+  source: document.querySelector('#sourceMetric'),
 };
 
 const state = {
@@ -44,6 +51,9 @@ const state = {
   rightHand: null,
   football: null,
   normalizedHeight: 0,
+  sourceLabel: '',
+  playing: true,
+  playbackSpeed: 1,
   errors: [],
 };
 
@@ -120,24 +130,10 @@ platform.receiveShadow = true;
 scene.add(platform);
 
 const clock = new THREE.Clock();
-const loader = new GLTFLoader();
+const fbxLoader = new FBXLoader();
 
 function normalizeName(value = '') {
   return value.toLowerCase().replace(/[^a-z0-9]/g, '');
-}
-
-async function loadWithFallback(urls, label) {
-  let lastError = null;
-  for (const url of urls) {
-    try {
-      statusText.textContent = `Loading ${label}…`;
-      return await loader.loadAsync(url);
-    } catch (error) {
-      lastError = error;
-      console.warn(`[Player Lab] Failed ${label} source`, url, error);
-    }
-  }
-  throw lastError || new Error(`Unable to load ${label}`);
 }
 
 function configureCharacter(root) {
@@ -163,7 +159,10 @@ function configureCharacter(root) {
   root.scale.multiplyScalar(scale);
   root.updateMatrixWorld(true);
   box = new THREE.Box3().setFromObject(root);
+  const center = box.getCenter(new THREE.Vector3());
+  root.position.x -= center.x;
   root.position.y -= box.min.y;
+  root.position.z -= center.z;
   root.updateMatrixWorld(true);
 
   const normalizedBox = new THREE.Box3().setFromObject(root);
@@ -218,18 +217,30 @@ function attachFootball() {
   if (!state.character) return;
   state.rightHand = findRightHand(state.character);
   state.football = makeFootball();
+  scene.add(state.football);
 
   if (state.rightHand) {
-    state.rightHand.add(state.football);
-    state.football.position.set(0.03, 0.035, 0.075);
-    state.football.rotation.set(0.25, 0.5, 1.15);
     diagnostics.hand.textContent = state.rightHand.name || 'resolved';
   } else {
-    state.character.add(state.football);
     state.football.position.set(0.42, 1.02, 0.1);
     diagnostics.hand.textContent = 'not resolved';
   }
   state.football.visible = footballToggle.checked;
+}
+
+const footballOffset = new THREE.Vector3(0.02, 0.02, 0.065);
+const footballWorldOffset = new THREE.Vector3();
+const footballRotationOffset = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.25, 0.5, 1.15));
+const handWorldPosition = new THREE.Vector3();
+const handWorldQuaternion = new THREE.Quaternion();
+
+function updateFootballSocket() {
+  if (!state.football || !state.rightHand) return;
+  state.rightHand.getWorldPosition(handWorldPosition);
+  state.rightHand.getWorldQuaternion(handWorldQuaternion);
+  footballWorldOffset.copy(footballOffset).applyQuaternion(handWorldQuaternion);
+  state.football.position.copy(handWorldPosition).add(footballWorldOffset);
+  state.football.quaternion.copy(handWorldQuaternion).multiply(footballRotationOffset);
 }
 
 function clipScore(name, patterns) {
@@ -256,11 +267,10 @@ function pickClip(patterns) {
 
 function mapQuickClips() {
   const rules = {
-    idle: [/^idleloop$/, /^idle$/, /^idle[0-9]*$/, /standingidle/, /idle/],
-    jog: [/jogforward/, /jogfwd/, /jogfront/, /^jog$/, /jog/, /walkforward/],
-    sprint: [/sprintforward/, /sprintfwd/, /^sprint$/, /sprint/, /runforward/, /^run$/],
-    left: [/jogleft/, /strafeleft/, /walkleft/, /stepleft/],
-    right: [/jogright/, /straferight/, /walkright/, /stepright/],
+    take1: [/qbsourcetake1/],
+    take2: [/qbsourcetake2/],
+    take3: [/qbsourcetake3/],
+    full: [/qbsourcefull/],
   };
 
   state.quickClips.clear();
@@ -290,9 +300,16 @@ function populateClipSelect() {
   clipSelect.disabled = !sorted.length;
 }
 
-function setAnimation(clip, fade = 0.22) {
+function setAnimation(clip, fade = 0.22, restart = false) {
   if (!state.mixer || !clip) return false;
-  if (state.currentClip === clip && state.currentAction) return true;
+  if (state.currentClip === clip && state.currentAction) {
+    if (restart) {
+      state.currentAction.reset().play();
+      seekAnimation(0);
+      setPlaying(true);
+    }
+    return true;
+  }
 
   const nextAction = state.mixer.clipAction(clip, state.character);
   nextAction.enabled = true;
@@ -309,6 +326,10 @@ function setAnimation(clip, fade = 0.22) {
 
   state.currentAction = nextAction;
   state.currentClip = clip;
+  timelineRange.max = String(Math.max(0.01, clip.duration));
+  timelineRange.value = '0';
+  timelineRange.disabled = false;
+  updateTimelineReadout(0);
   activeClipLabel.textContent = clip.name;
   clipSelect.value = clip.name;
   document.querySelectorAll('[data-animation]').forEach((button) => {
@@ -320,11 +341,33 @@ function setAnimation(clip, fade = 0.22) {
 
 function updateDiagnostics() {
   const bones = state.character ? getBones(state.character) : [];
-  diagnostics.character.textContent = state.character ? 'Quaternius humanoid rig baseline' : 'not loaded';
+  diagnostics.character.textContent = state.character ? 'Rokoko source performer mesh' : 'not loaded';
   diagnostics.height.textContent = state.normalizedHeight ? `${state.normalizedHeight.toFixed(2)} m normalized` : 'waiting';
   diagnostics.bones.textContent = bones.length ? String(bones.length) : 'waiting';
   diagnostics.animations.textContent = state.clips.length ? String(state.clips.length) : 'waiting';
   diagnostics.renderer.textContent = `${renderer.capabilities.isWebGL2 ? 'WebGL2' : 'WebGL1'} • ${renderer.info.render.calls} calls`;
+  diagnostics.source.textContent = state.sourceLabel || 'waiting';
+}
+
+function updateTimelineReadout(time) {
+  const duration = state.currentClip?.duration || 0;
+  timelineReadout.textContent = `${time.toFixed(2)}s / ${duration.toFixed(2)}s`;
+}
+
+function setPlaying(playing) {
+  state.playing = playing;
+  if (state.mixer) state.mixer.timeScale = playing ? state.playbackSpeed : 0;
+  playPauseButton.textContent = playing ? 'Pause' : 'Play';
+  playPauseButton.setAttribute('aria-pressed', String(!playing));
+}
+
+function seekAnimation(time) {
+  if (!state.currentAction || !state.currentClip) return;
+  const clampedTime = THREE.MathUtils.clamp(time, 0, state.currentClip.duration);
+  state.currentAction.time = clampedTime;
+  state.mixer.update(0);
+  timelineRange.value = String(clampedTime);
+  updateTimelineReadout(clampedTime);
 }
 
 function setView(name) {
@@ -342,9 +385,10 @@ function setView(name) {
 
 async function initializeAssets() {
   try {
-    const characterGltf = await loadWithFallback(CHARACTER_URLS, 'Quaternius character');
-    state.character = characterGltf.scene;
+    statusText.textContent = `Loading ${FOOTBALL_QB_SOURCE.label}…`;
+    state.character = await fbxLoader.loadAsync(FOOTBALL_QB_SOURCE.url);
     state.character.name = 'GridironPlayerLabCharacter';
+    state.sourceLabel = FOOTBALL_QB_SOURCE.label;
     configureCharacter(state.character);
     scene.add(state.character);
 
@@ -357,20 +401,32 @@ async function initializeAssets() {
     attachFootball();
     updateDiagnostics();
 
-    const animationGltf = await loadWithFallback(ANIMATION_URLS, 'Quaternius animation library');
-    state.clips = animationGltf.animations || [];
+    const rawClip = state.character.animations?.[0] || null;
+    state.clips = rawClip
+      ? [
+          Object.assign(rawClip.clone(), { name: 'qb_source_full' }),
+          ...FOOTBALL_QB_SOURCE.takes.map((take) => THREE.AnimationUtils.subclip(
+            rawClip,
+            take.name,
+            Math.round(take.start * FOOTBALL_QB_SOURCE.fps),
+            Math.round(take.end * FOOTBALL_QB_SOURCE.fps),
+            FOOTBALL_QB_SOURCE.fps,
+          )),
+        ]
+      : [];
     state.mixer = new THREE.AnimationMixer(state.character);
     populateClipSelect();
     mapQuickClips();
     updateDiagnostics();
 
-    const initialClip = state.quickClips.get('idle') || state.clips[0] || null;
+    const initialClip = state.quickClips.get('take1') || state.clips[0] || null;
     if (initialClip) setAnimation(initialClip, 0);
+    setPlaying(true);
 
     state.ready = Boolean(state.character && state.clips.length);
     loadState.className = `status-dot ${state.ready ? 'ready' : 'error'}`;
     statusText.textContent = state.ready
-      ? `Ready • ${state.clips.length} clips discovered`
+      ? `Ready • football QB source motion loaded`
       : 'Character loaded, but no animation clips were found';
 
     console.info('[Player Lab] Loaded animation clips:', state.clips.map((clip) => clip.name));
@@ -383,7 +439,7 @@ async function initializeAssets() {
 }
 
 document.querySelectorAll('[data-animation]').forEach((button) => {
-  button.addEventListener('click', () => setAnimation(state.quickClips.get(button.dataset.animation)));
+  button.addEventListener('click', () => setAnimation(state.quickClips.get(button.dataset.animation), 0.22, true));
 });
 
 clipSelect.addEventListener('change', () => {
@@ -393,8 +449,16 @@ clipSelect.addEventListener('change', () => {
 
 speedRange.addEventListener('input', () => {
   const speed = Number(speedRange.value);
+  state.playbackSpeed = speed;
   speedReadout.textContent = `${speed.toFixed(2)}×`;
-  if (state.mixer) state.mixer.timeScale = speed;
+  if (state.mixer && state.playing) state.mixer.timeScale = speed;
+});
+
+playPauseButton.addEventListener('click', () => setPlaying(!state.playing));
+
+timelineRange.addEventListener('input', () => {
+  setPlaying(false);
+  seekAnimation(Number(timelineRange.value));
 });
 
 skeletonToggle.addEventListener('change', () => {
@@ -426,6 +490,12 @@ function animate() {
   requestAnimationFrame(animate);
   const delta = Math.min(clock.getDelta(), 0.05);
   if (state.mixer) state.mixer.update(delta);
+  if (state.currentAction && state.currentClip && state.playing) {
+    const time = state.currentAction.time % state.currentClip.duration;
+    timelineRange.value = String(time);
+    updateTimelineReadout(time);
+  }
+  updateFootballSocket();
   controls.update();
   updateDiagnostics();
   renderer.render(scene, camera);
