@@ -115,7 +115,7 @@ export function updateAuthoredQB(controller, dt, { state, moving, throwing, slid
     play(controller, 'run');
   } else if ((state === 'POCKET' || state === 'AIMING') && moving) {
     play(controller, 'dropback');
-  } else if (state === 'PRE_SNAP' || state === 'POCKET' || state === 'AIMING' || state === 'BALL' || state === 'DEAD') {
+  } else {
     play(controller, 'idle');
   }
 
