@@ -40,8 +40,8 @@ function field(){
     for(const x of [-8.5,8.5]) mesh(new THREE.BoxGeometry(.18,.04,1.2),M.white,x,.05,z+5);
   }
   mesh(new THREE.BoxGeometry(FIELD_W,.05,10),M.black,0,.02,77);
-  mesh(new THREE.BoxGeometry(FIELD_W,.04,.35),new THREE.MeshBasicMaterial({color:0x274cb4,transparent:true,opacity:.88}),0,.07,LOS);
-  mesh(new THREE.BoxGeometry(FIELD_W,.04,.35),new THREE.MeshBasicMaterial({color:0xe4b12f,transparent:true,opacity:.9}),0,.075,2);
+  const los=mesh(new THREE.BoxGeometry(FIELD_W,.04,.35),new THREE.MeshBasicMaterial({color:0x274cb4,transparent:true,opacity:.88}),0,.07,LOS);
+  const first=mesh(new THREE.BoxGeometry(FIELD_W,.04,.35),new THREE.MeshBasicMaterial({color:0xe4b12f,transparent:true,opacity:.9}),0,.075,2);
   const goal=material(0xe2c027); mesh(new THREE.CylinderGeometry(.13,.13,9,8),goal,0,4.5,85); mesh(new THREE.BoxGeometry(12,.22,.22),goal,0,8.5,85);
   mesh(new THREE.CylinderGeometry(.11,.11,7,8),goal,-6,12,85); mesh(new THREE.CylinderGeometry(.11,.11,7,8),goal,6,12,85);
   mesh(new THREE.BoxGeometry(11,13,125),M.concrete,-34,6,27); mesh(new THREE.BoxGeometry(11,13,125),M.concrete,34,6,27);
@@ -94,7 +94,7 @@ function snap(){if(state!=='PRE_SNAP')return;routeTime=0;setState('POCKET');stat
 function arc(a,b,lift){const pts=[];for(let i=0;i<=28;i++){const t=i/28,p=a.clone().lerp(b,t);p.y+=Math.sin(Math.PI*t)*lift;pts.push(p);}return pts;}
 function beginAim(x,y){if(state!=='POCKET')return;aim={sx:x,sy:y,target:null,power:0,lift:0};setState('AIMING');updateAim(x,y);}
 function updateAim(x,y){if(!aim)return;const dx=x-aim.sx,dy=y-aim.sy,p=clamp(Math.hypot(dx,dy)/220,.12,1),side=clamp(dx/140,-1,1),q=offense.qb.position;
-  aim.target=new THREE.Vector3(clamp(q.x-side*18,-24,24),.7,clamp(q.z+lerp(12,46,p),q.z+8,67));aim.power=p;aim.lift=lerp(3.5,11,p);
+  aim.target=new THREE.Vector3(clamp(q.x+side*18,-24,24),.7,clamp(q.z+lerp(12,46,p),q.z+8,67));aim.power=p;aim.lift=lerp(3.5,11,p);
   const start=q.clone().add(new THREE.Vector3(0,3,.5));aimLine.geometry.setFromPoints(arc(start,aim.target.clone(),aim.lift));aimLine.computeLineDistances();aimLine.visible=true;ring.position.copy(aim.target);ring.visible=true;}
 function throwBall(){if(state!=='AIMING'||!aim?.target){aimLine.visible=ring.visible=false;aim=null;if(state==='AIMING')setState('POCKET');return;}
   const start=offense.qb.position.clone().add(new THREE.Vector3(0,3,.5)),end=aim.target.clone().setY(1.35);flight={t:0,duration:clamp(start.distanceTo(end)/34,.58,1.45),start,end,lift:aim.lift};
@@ -108,10 +108,10 @@ for(const e of ['pointerup','pointercancel','pointerleave'])ui.power.addEventLis
 addEventListener('keydown',e=>{keys.add(e.code);if(e.code==='Space'){e.preventDefault();snap();}if(e.code==='KeyR')tuck();if(e.code.startsWith('Shift'))slide();});addEventListener('keyup',e=>keys.delete(e.code));
 renderer.domElement.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;beginAim(e.clientX,e.clientY);});
 renderer.domElement.addEventListener('pointermove',e=>{if(state==='AIMING')updateAim(e.clientX,e.clientY);});renderer.domElement.addEventListener('pointerup',throwBall);renderer.domElement.addEventListener('pointercancel',throwBall);
-function stickUpdate(e){const r=ui.stick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,max=r.width*.31;let dx=e.clientX-cx,dy=e.clientY-cy,m=Math.hypot(dx,dy);if(m>max){dx=dx/m*max;dy=dy/m*max;}ui.knob.style.transform=`translate(${dx}px,${dy}px)`;stickMove.x=dx/max;stickMove.z=-dy/max;}
+function stickUpdate(e){const r=ui.stick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,max=r.width*.31;let dx=e.clientX-cx,dy=e.clientY-cy,m=Math.hypot(dx,dy);if(m>max){dx=dx/m*max;dy=dy/m*max;}ui.knob.style.transform=`translate(${dx}px,${dy}px)`;stickMove.x=-dx/max;stickMove.z=-dy/max;}
 ui.stick.addEventListener('pointerdown',e=>{stickId=e.pointerId;ui.stick.setPointerCapture(e.pointerId);stickUpdate(e);});ui.stick.addEventListener('pointermove',e=>{if(stickId===e.pointerId)stickUpdate(e);});
 function stickEnd(e){if(stickId!==e.pointerId)return;stickId=null;stickMove.x=stickMove.z=0;ui.knob.style.transform='translate(0,0)';}ui.stick.addEventListener('pointerup',stickEnd);ui.stick.addEventListener('pointercancel',stickEnd);
-function input(){let x=stickMove.x,z=stickMove.z;if(keys.has('KeyA')||keys.has('ArrowLeft'))x--;if(keys.has('KeyD')||keys.has('ArrowRight'))x++;if(keys.has('KeyW')||keys.has('ArrowUp'))z++;if(keys.has('KeyS')||keys.has('ArrowDown'))z--;const l=Math.hypot(x,z);return l>1?{x:x/l,z:z/l}:{x,z};}
+function input(){let x=stickMove.x,z=stickMove.z;if(keys.has('KeyA')||keys.has('ArrowLeft'))x++;if(keys.has('KeyD')||keys.has('ArrowRight'))x--;if(keys.has('KeyW')||keys.has('ArrowUp'))z++;if(keys.has('KeyS')||keys.has('ArrowDown'))z--;const l=Math.hypot(x,z);return l>1?{x:x/l,z:z/l}:{x,z};}
 function move(dt){if(!['POCKET','AIMING','SCRAMBLE','RUN'].includes(state))return;const v=input(),p=controlled.position,s=['POCKET','AIMING'].includes(state)?5.7:9.5*(powerHeld?.86:1)*(slideTime>0?.2:1);p.x+=v.x*s*dt;p.z+=v.z*s*dt;
   if(controlled===offense.qb&&['POCKET','AIMING'].includes(state)){p.x=clamp(p.x,-9,9);p.z=clamp(p.z,-20,-7.8);}else{p.x=clamp(p.x,-25,25);p.z=clamp(p.z,-24,82);}if(Math.hypot(v.x,v.z)>.1)controlled.rotation.y=Math.atan2(v.x,v.z);}
 function receivers(dt){if(!['POCKET','AIMING','BALL'].includes(state))return;routeTime+=dt;for(const k of ['Y','X','A','B']){const old=offense[k].position.clone(),next=routePoint(k,routeTime*8.1);offense[k].position.copy(next);const d=next.clone().sub(old);if(d.lengthSq()>.0001)offense[k].rotation.y=Math.atan2(d.x,d.z);}}
