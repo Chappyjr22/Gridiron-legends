@@ -1,8 +1,8 @@
 import { attachPixelQB, updatePixelQB } from './qbSprite.js';
 
-const THROW_RELEASE_MS = 365;
-const THROW_VISUAL_MS = 575;
-const LEGACY_THROW_SUPPRESS_MS = 1000;
+const THROW_RELEASE_MS = 405;
+const THROW_VISUAL_MS = 650;
+const LEGACY_THROW_SUPPRESS_MS = 1100;
 const BASE_SPRITE_W = 3.72;
 const BASE_SPRITE_H = 4.96;
 
@@ -100,28 +100,26 @@ function applyPresentationPose(controller) {
       break;
     }
     case 'throw': {
-      sprite.position.y += [0,.004,.01,.012,.004,0][Math.min(frame,5)];
+      sprite.position.y += [0,.006,.012,.016,.006,0][Math.min(frame,5)];
       break;
     }
     case 'jukeL': {
-      sprite.position.x -= [0,.02,.05,.02][Math.min(frame,3)];
+      sprite.position.x -= [0,.025,.065,.025][Math.min(frame,3)];
       break;
     }
     case 'jukeR': {
-      sprite.position.x += [0,.02,.05,.02][Math.min(frame,3)];
+      sprite.position.x += [0,.025,.065,.025][Math.min(frame,3)];
       break;
     }
     case 'slide': {
-      // Keep the foot anchor above the field. The atlas supplies the actual
-      // fall/extension pose; presentation only gives it a little extra width.
-      const w=[1,1.02,1.05,1.08][Math.min(frame,3)];
-      const h=[1,.98,.94,.90][Math.min(frame,3)];
-      sprite.scale.set(BASE_SPRITE_W*w,BASE_SPRITE_H*h,1);
-      sprite.position.y += [0,.004,.008,.012][Math.min(frame,3)];
+      // The atlas now contains the actual feet-first slide pose. Keep the
+      // billboard itself upright and only add a tiny grounding offset.
+      sprite.position.y += [0,.002,.004,.006][Math.min(frame,3)];
       break;
     }
     case 'power': {
-      sprite.scale.set(BASE_SPRITE_W*1.025,BASE_SPRITE_H*.985,1);
+      // The atlas carries the shoulder drop and widened contact silhouette.
+      sprite.position.y -= [0,.003,.006,.003][Math.min(frame,3)];
       break;
     }
     default:
