@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'tools/build_qb_glb.py'
+      - 'tools/normalize_qb_gltf.py'
       - 'tools/integrate_qb_runtime.py'
       - 'src/qbModel.js'
       - '.github/workflows/build-player-assets.yml'
@@ -32,6 +33,9 @@ jobs:
       - name: Build QB GLB
         run: python tools/build_qb_glb.py
 
+      - name: Normalize animated glTF nodes
+        run: python tools/normalize_qb_gltf.py
+
       - name: Integrate authored QB runtime
         run: python tools/integrate_qb_runtime.py
 
@@ -54,7 +58,9 @@ jobs:
           names={n.get('name') for n in doc.get('nodes',[])}
           for node in ['root','pelvis','chest','upperarm_r','football_socket_r']:
               assert node in names, node
-          print('validated',path,total,'bytes',clips)
+          targets={c['target']['node'] for a in doc.get('animations',[]) for c in a.get('channels',[])}
+          assert all('matrix' not in doc['nodes'][i] for i in targets)
+          print('validated',path,total,'bytes',clips,'animated nodes',len(targets))
           PY
 
       - name: Commit generated runtime assets
