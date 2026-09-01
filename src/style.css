@@ -297,3 +297,32 @@ button { font: inherit; }
   .action { min-height: 52px; font-size: 10px; }
   #desktopHelp { display: none; }
 }
+
+/* Phone landscape tuning: keep the field dominant while preserving tap targets. */
+@media (max-height: 520px) and (orientation: landscape) {
+  #scorebug {
+    top: 6px;
+    width: min(730px, calc(100% - 18px));
+    min-height: 58px;
+    grid-template-columns: 1fr 168px 1fr;
+  }
+  .team { grid-template-columns: 46px 1fr 50px; gap: 5px; padding: 5px 8px; }
+  .team-right { grid-template-columns: 50px 1fr 46px; }
+  .team strong { font-size: 29px; }
+  .team-abbr { font-size: 17px; }
+  .crest { font-size: 10px; }
+  .timeouts { margin-top: 3px; }
+  .timeouts i { width: 10px; height: 4px; }
+  .clock-row { font-size: 14px; padding: 5px 6px; }
+  .down-row { font-size: 10px; padding: 5px 6px; }
+  #status { top: 72px; padding: 5px 9px; gap: 7px; }
+  #status strong { font-size: 11px; }
+  #status span { display: none; }
+  .receiver-badge { width: 26px; height: 26px; font-size: 13px; border-width: 2px; }
+  .stick { left: 16px; bottom: 16px; width: 108px; height: 108px; }
+  .stick-knob { width: 48px; height: 48px; left: 30px; top: 30px; }
+  .action-stack { right: 14px; bottom: 15px; grid-template-columns: repeat(2, 84px); gap: 8px; }
+  .action { min-height: 50px; font-size: 10px; }
+  #targetHint { bottom: 14%; font-size: 10px; padding: 5px 8px; }
+  #desktopHelp { display: none; }
+}
