@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#080b0d" />
+  <title>Gridiron Legends Prototype</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <main id="game">
+    <div id="viewport"></div>
+
+    <section id="scorebug" aria-label="Game score">
+      <div class="team team-left">
+        <div class="crest crest-lv">LV</div>
+        <div>
+          <div class="team-abbr">LV</div>
+          <div class="timeouts"><i></i><i></i><i></i></div>
+        </div>
+        <strong id="homeScore">17</strong>
+      </div>
+
+      <div class="game-center">
+        <div class="clock-row">
+          <b id="quarter">4TH</b>
+          <span id="gameClock">0:43</span>
+          <em id="playClock">:14</em>
+        </div>
+        <div class="down-row">
+          <b id="downDistance">1ST &amp; 10</b>
+          <span id="ballSpot">LV 28</span>
+        </div>
+      </div>
+
+      <div class="team team-right">
+        <strong id="awayScore">14</strong>
+        <div>
+          <div class="team-abbr">DEN</div>
+          <div class="timeouts"><i></i><i></i><i></i></div>
+        </div>
+        <div class="crest crest-den">DEN</div>
+      </div>
+    </section>
+
+    <div id="status" role="status" aria-live="polite">
+      <strong id="statusTitle">READY</strong>
+      <span id="statusText">Press SNAP to start the play</span>
+    </div>
+
+    <div id="targetHint">PULL BACK • AIM • RELEASE</div>
+
+    <div id="receiverBadges" aria-hidden="true">
+      <span class="receiver-badge badge-y">Y</span>
+      <span class="receiver-badge badge-x">X</span>
+      <span class="receiver-badge badge-a">A</span>
+      <span class="receiver-badge badge-b">B</span>
+    </div>
+
+    <div id="controls">
+      <div id="stick" class="stick" aria-label="Movement joystick">
+        <div class="stick-ring"></div>
+        <div id="stickKnob" class="stick-knob"></div>
+      </div>
+
+      <div class="action-stack">
+        <button id="snapBtn" class="action primary" type="button">SNAP</button>
+        <button id="tuckBtn" class="action" type="button" disabled>TUCK &amp; RUN</button>
+        <button id="slideBtn" class="action" type="button" disabled>SLIDE</button>
+        <button id="powerBtn" class="action power" type="button" disabled>POWER</button>
+      </div>
+    </div>
+
+    <div id="desktopHelp">
+      <span><b>WASD</b> move</span>
+      <span><b>SPACE</b> snap</span>
+      <span><b>DRAG</b> throw</span>
+      <span><b>R</b> tuck</span>
+      <span><b>SHIFT</b> slide</span>
+    </div>
+
+    <div id="pixelOverlay"></div>
+  </main>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
