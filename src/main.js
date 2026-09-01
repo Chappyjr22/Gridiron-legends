@@ -13,6 +13,7 @@ const lerp=(a,b,t)=>a+(b-a)*t;
 const FIELD_W=53.333, FIELD_L=120, LOS=-8, END=72;
 const SKILL_SCALE=.62, LINE_SCALE=.68, DEF_LINE_SCALE=.68;
 const PLAYER_HEAD_Y=2.55, CATCH_Y=1.45, THROW_Y=1.78;
+const OL_Z=LOS-.32, WIDE_Z=LOS-.24, SLOT_Z=LOS-.82, DL_Z=LOS+.72;
 
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x071018);
@@ -40,7 +41,6 @@ function field(){
   mesh(new THREE.BoxGeometry(.25,.04,FIELD_L),M.white, FIELD_W/2,.03,27);
   for(let z=-28;z<=82;z+=10){
     mesh(new THREE.BoxGeometry(FIELD_W,.035,.18),M.white,0,.04,z);
-    // NFL-style hash spacing: roughly 18.5 feet between hashes.
     for(const x of [-3.08,3.08]) mesh(new THREE.BoxGeometry(.16,.04,1.05),M.white,x,.05,z+5);
   }
   mesh(new THREE.BoxGeometry(FIELD_W,.05,10),M.black,0,.02,77);
@@ -71,19 +71,26 @@ function player({team='LV',number='00',x=0,z=0,scale=SKILL_SCALE,role=''}){
 
 const offense={
   qb:player({number:'12',x:0,z:-15,role:'QB'}), rb:player({number:'28',x:4.8,z:-17.2,role:'RB'}),
-  Y:player({number:'87',x:-19,z:-7,role:'WR'}), X:player({number:'1',x:-10.5,z:-7,role:'WR'}),
-  A:player({number:'9',x:10.5,z:-7,role:'WR'}), B:player({number:'88',x:19,z:-7,role:'WR'})
+  Y:player({number:'87',x:-19,z:WIDE_Z,role:'WR'}), X:player({number:'1',x:-10.5,z:SLOT_Z,role:'WR'}),
+  A:player({number:'9',x:10.5,z:SLOT_Z,role:'WR'}), B:player({number:'88',x:19,z:WIDE_Z,role:'WR'})
 };
 const lineX=[-4.6,-2.3,0,2.3,4.6];
-const linemen=lineX.map((x,i)=>player({number:String(70+i),x,z:-9.15,scale:LINE_SCALE,role:'OL'}));
+const linemen=lineX.map((x,i)=>player({number:String(70+i),x,z:OL_Z,scale:LINE_SCALE,role:'OL'}));
 
-// 4-3 shell: four down linemen, three linebackers, two corners and two safeties.
-const defStart=[[-6.6,-1.2],[-2.2,-.8],[2.2,-.8],[6.6,-1.2],[-10,5],[0,4.5],[10,5],[-20,2],[20,2],[-8,14],[8,14]];
+// 4-3 shell. The four down linemen straddle the defensive side of the neutral zone.
+const defStart=[
+  [-5.35,DL_Z],[-1.8,DL_Z],[1.8,DL_Z],[5.35,DL_Z],
+  [-10,4.8],[0,4.2],[10,4.8],
+  [-20,1.3],[20,1.3],
+  [-8,13.5],[8,13.5]
+];
 const defense=defStart.map(([x,z],i)=>player({team:'DEN',number:String(20+i),x,z,scale:i<4?DEF_LINE_SCALE:SKILL_SCALE,role:i<4?'DL':i<7?'LB':i<9?'CB':'S'}));
 
 const routes={
-  Y:[[-19,-7],[-17,4],[-10,14],[-4,24]], X:[[-10.5,-7],[-10,6],[-10,22],[-9,38]],
-  A:[[10.5,-7],[10.5,7],[16,11],[22,12]], B:[[19,-7],[19,8],[18,24],[16,42]]
+  Y:[[-19,WIDE_Z],[-18,4],[-10,14],[-4,24]],
+  X:[[-10.5,SLOT_Z],[-10,6],[-10,22],[-9,38]],
+  A:[[10.5,SLOT_Z],[10.5,7],[16,11],[22,12]],
+  B:[[19,WIDE_Z],[19,8],[18,24],[16,42]]
 };
 const routeVec=(key)=>routes[key].map(([x,z])=>new THREE.Vector3(x,0,z));
 function routePoint(key,d){const pts=routeVec(key);for(let i=0;i<pts.length-1;i++){const len=pts[i].distanceTo(pts[i+1]);if(d<=len)return pts[i].clone().lerp(pts[i+1],d/len);d-=len;}const a=pts.at(-2),b=pts.at(-1),dir=b.clone().sub(a).normalize();return b.clone().addScaledVector(dir,d);}
@@ -101,7 +108,7 @@ function setState(s){state=s;ui.snap.disabled=s!=='PRE_SNAP';ui.tuck.disabled=![
 function reset(msg='Press SNAP to start the play'){
   setState('PRE_SNAP');controlled=offense.qb;offense.qb.position.set(0,0,-15);offense.rb.position.set(4.8,0,-17.2);
   for(const k of ['Y','X','A','B']){const [x,z]=routes[k][0];offense[k].position.set(x,0,z);offense[k].rotation.set(0,0,0);}
-  linemen.forEach((o,i)=>{o.position.set(lineX[i],0,-9.15);o.rotation.set(0,0,0);});
+  linemen.forEach((o,i)=>{o.position.set(lineX[i],0,OL_Z);o.rotation.set(0,0,0);});
   defense.forEach((d,i)=>{d.position.set(defStart[i][0],0,defStart[i][1]);d.rotation.set(0,0,0);d.userData.stun=0;});
   football.visible=false;aimLine.visible=false;ring.visible=false;aim=flight=null;slideTime=0;powerHeld=false;playClock=14;jukeTime=jukeCooldown=powerCooldown=throwAnim=0;runGesture=null;status('READY',msg);
 }
@@ -149,6 +156,13 @@ function move(dt){if(!['POCKET','AIMING','SCRAMBLE','RUN'].includes(state))retur
   if(controlled===offense.qb&&['POCKET','AIMING'].includes(state)){p.x=clamp(p.x,-8.5,8.5);p.z=clamp(p.z,-20,-7.8);}else{p.x=clamp(p.x,-25.5,25.5);p.z=clamp(p.z,-24,82);}if(Math.hypot(v.x,v.z)>.1&&!jukeTime)controlled.rotation.y=Math.atan2(v.x,v.z);}
 function receivers(dt){if(!['POCKET','AIMING','BALL'].includes(state))return;routeTime+=dt;for(const k of ['Y','X','A','B']){const old=offense[k].position.clone(),next=routePoint(k,routeTime*7.7);offense[k].position.copy(next);const d=next.clone().sub(old);if(d.lengthSq()>.0001)offense[k].rotation.y=Math.atan2(d.x,d.z);}}
 
+function moveDefenderToward(d,target,speed,dt){
+  if(d.userData.stun>0){d.userData.stun=Math.max(0,d.userData.stun-dt);return;}
+  const v=target.clone().sub(d.position);v.y=0;
+  if(v.lengthSq()<.02)return;
+  v.normalize();d.position.addScaledVector(v,speed*dt);d.rotation.y=Math.atan2(v.x,v.z);
+}
+
 function passRush(dt){if(!['POCKET','AIMING','BALL'].includes(state))return;
   for(let i=0;i<4;i++){
     const d=defense[i],o=linemen[Math.min(4,Math.round(i*4/3))];
@@ -156,11 +170,47 @@ function passRush(dt){if(!['POCKET','AIMING','BALL'].includes(state))return;
     const gap=o.position.clone().sub(d.position);gap.y=0;const dist=gap.length();
     if(dist>1.05){gap.normalize();d.position.addScaledVector(gap,3.5*dt);d.rotation.y=Math.atan2(gap.x,gap.z);}
     else{
-      // Blocker mirrors the rusher while the rusher slowly compresses the pocket.
       const toRush=d.position.clone().sub(o.position);toRush.y=0;if(toRush.lengthSq()>.01){toRush.normalize();o.position.addScaledVector(toRush,1.0*dt);o.rotation.y=Math.atan2(toRush.x,toRush.z);}
       const toQB=offense.qb.position.clone().sub(d.position);toQB.y=0;if(toQB.lengthSq()>.01){toQB.normalize();d.position.addScaledVector(toQB,.58*dt);}
     }
   }
+}
+
+function coverageAI(dt){
+  if(!['POCKET','AIMING','BALL'].includes(state))return;
+
+  const y=offense.Y.position,x=offense.X.position,a=offense.A.position,b=offense.B.position;
+  const ballBreak=state==='BALL'&&football.visible;
+
+  const cbLeftTarget=ballBreak
+    ? football.position.clone().setY(0)
+    : new THREE.Vector3(y.x-.6,0,Math.max(LOS+1.2,y.z+1.35));
+  const cbRightTarget=ballBreak
+    ? football.position.clone().setY(0)
+    : new THREE.Vector3(b.x+.6,0,Math.max(LOS+1.2,b.z+1.35));
+  moveDefenderToward(defense[7],cbLeftTarget,ballBreak?8.0:6.15,dt);
+  moveDefenderToward(defense[8],cbRightTarget,ballBreak?8.0:6.15,dt);
+
+  const lbLeftTarget=new THREE.Vector3(x.x+.45,0,clamp(x.z+1.8,1.8,13));
+  const lbRightTarget=new THREE.Vector3(a.x-.45,0,clamp(a.z+1.8,1.8,13));
+  moveDefenderToward(defense[4],ballBreak?football.position.clone().setY(0):lbLeftTarget,ballBreak?7.4:5.65,dt);
+  moveDefenderToward(defense[6],ballBreak?football.position.clone().setY(0):lbRightTarget,ballBreak?7.4:5.65,dt);
+
+  const midX=clamp((x.x+a.x)*.22,-4.5,4.5);
+  const mlbTarget=ballBreak
+    ? football.position.clone().setY(0)
+    : new THREE.Vector3(midX,0,clamp(Math.max(x.z,a.z)*.55+3,3.5,11.5));
+  moveDefenderToward(defense[5],mlbTarget,ballBreak?7.1:5.25,dt);
+
+  const deepestLeft=Math.max(y.z,x.z),deepestRight=Math.max(a.z,b.z);
+  const sLeftTarget=ballBreak
+    ? football.position.clone().setY(0)
+    : new THREE.Vector3(clamp((y.x+x.x)*.48,-14,-3),0,clamp(deepestLeft+5.5,12,31));
+  const sRightTarget=ballBreak
+    ? football.position.clone().setY(0)
+    : new THREE.Vector3(clamp((a.x+b.x)*.48,3,14),0,clamp(deepestRight+5.5,12,31));
+  moveDefenderToward(defense[9],sLeftTarget,ballBreak?8.2:5.9,dt);
+  moveDefenderToward(defense[10],sRightTarget,ballBreak?8.2:5.9,dt);
 }
 
 function catchCandidate(pos){let best=null,dist=99;for(const k of ['Y','X','A','B']){const d=offense[k].position.clone().add(new THREE.Vector3(0,CATCH_Y,0)).distanceTo(pos);if(d<dist){dist=d;best=offense[k];}}return dist<1.85?best:null;}
@@ -190,7 +240,7 @@ function cam(dt){const running=['RUN','SCRAMBLE'].includes(state),focus=running?
 function badges(){const show=['PRE_SNAP','POCKET','AIMING','BALL'].includes(state);for(const k of ['Y','X','A','B']){const el=ui.badges[k];el.style.display=show?'grid':'none';if(!show)continue;const p=offense[k].position.clone().add(new THREE.Vector3(0,PLAYER_HEAD_Y,0)).project(camera);el.style.left=`${(p.x*.5+.5)*innerWidth}px`;el.style.top=`${(-p.y*.5+.5)*innerHeight}px`;el.style.opacity=p.z>1?'0':'1';}}
 function clock(dt){if(state!=='PRE_SNAP')return;clockAcc+=dt;if(clockAcc>=1){clockAcc-=1;playClock=Math.max(0,playClock-1);ui.playClock.textContent=`:${String(playClock).padStart(2,'0')}`;ui.playClock.style.color=playClock<=5?'#ef604a':playClock<=10?'#e8ae4a':'';if(playClock===0){playClock=14;status('DELAY','Play clock expired');}}}
 function frame(now){const dt=Math.min(.035,(now-last)/1000||.016);last=now;jukeCooldown=Math.max(0,jukeCooldown-dt);powerCooldown=Math.max(0,powerCooldown-dt);if(slideTime>0){slideTime-=dt;controlled.rotation.x=lerp(controlled.rotation.x,-1.05,.2);if(slideTime<=0){controlled.rotation.x=0;finishRun(true);}}
-  move(dt);receivers(dt);passRush(dt);ballFlight(dt);defenseAI(dt);animatePlayers(dt,now);cam(dt);badges();clock(dt);renderer.render(scene,camera);requestAnimationFrame(frame);}
+  move(dt);receivers(dt);passRush(dt);coverageAI(dt);ballFlight(dt);defenseAI(dt);animatePlayers(dt,now);cam(dt);badges();clock(dt);renderer.render(scene,camera);requestAnimationFrame(frame);}
 requestAnimationFrame(frame);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 reset();
