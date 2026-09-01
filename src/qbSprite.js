@@ -21,45 +21,42 @@ const P = {
 
 function loadImage(src){
   return new Promise((resolve,reject)=>{
-    const image=new Image();
-    image.onload=()=>resolve(image);
-    image.onerror=reject;
-    image.src=src;
+    const image=new Image(); image.onload=()=>resolve(image); image.onerror=reject; image.src=src;
   });
 }
 function dirIndex(direction){ return Math.max(0,DIRS.indexOf(direction)); }
-function rotateDirection(direction,steps){
-  const i=dirIndex(direction);
-  return DIRS[(i+steps+DIRS.length*4)%DIRS.length];
-}
+function rotateDirection(direction,steps){ const i=dirIndex(direction); return DIRS[(i+steps+DIRS.length*4)%DIRS.length]; }
 
-// The authored right-facing source cells contain parts of adjacent #12 poses.
-// Build E/NE/SE from the clean opposite cells and mirror them inside the frame.
-function sourceSpec(direction){
-  if(direction==='E') return {index:dirIndex('W'),mirror:true};
-  if(direction==='NE') return {index:dirIndex('NW'),mirror:true};
-  if(direction==='SE') return {index:dirIndex('SW'),mirror:true};
-  return {index:dirIndex(direction),mirror:false};
+// Every animation cell is a hard 96x128 sandbox. Earlier transforms could paint
+// across cell boundaries, which embedded fragments of neighboring #12 poses into
+// other directions. All art for a frame now gets clipped before it can touch a
+// neighboring atlas cell.
+function renderCell(ctx,frameX,frameY,draw){
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(frameX,frameY,FRAME_W,FRAME_H);
+  ctx.clip();
+  draw();
+  ctx.restore();
 }
 
 function drawBase(ctx,source,direction,frameX,frameY,{dx=0,dy=0,sx=1,sy=1,rotation=0}={}){
-  const spec=sourceSpec(direction);
+  const sourceDirIndex=dirIndex(direction);
   ctx.save();
   ctx.imageSmoothingEnabled=false;
   ctx.translate(frameX+FRAME_W/2+dx,frameY+FRAME_H-3+dy);
   ctx.rotate(rotation*Math.PI/180);
-  ctx.scale((spec.mirror?-1:1)*sx,sy);
-  ctx.drawImage(source,spec.index*FRAME_W,0,FRAME_W,FRAME_H,-FRAME_W/2,-FRAME_H+3,FRAME_W,FRAME_H);
+  ctx.scale(sx,sy);
+  ctx.drawImage(source,sourceDirIndex*FRAME_W,0,FRAME_W,FRAME_H,-FRAME_W/2,-FRAME_H+3,FRAME_W,FRAME_H);
   ctx.restore();
 }
 function drawUpperBase(ctx,source,direction,frameX,frameY,{dx=0,dy=0,rotation=0,upperH=80}={}){
-  const spec=sourceSpec(direction);
+  const sourceDirIndex=dirIndex(direction);
   ctx.save();
   ctx.imageSmoothingEnabled=false;
   ctx.translate(frameX+FRAME_W/2+dx,frameY+upperH+dy);
   ctx.rotate(rotation*Math.PI/180);
-  ctx.scale(spec.mirror?-1:1,1);
-  ctx.drawImage(source,spec.index*FRAME_W,0,FRAME_W,upperH,-FRAME_W/2,-upperH,FRAME_W,upperH);
+  ctx.drawImage(source,sourceDirIndex*FRAME_W,0,FRAME_W,upperH,-FRAME_W/2,-upperH,FRAME_W,upperH);
   ctx.restore();
 }
 function pixelBall(ctx,x,y){
@@ -143,32 +140,32 @@ function drawThrowComposite(ctx,source,direction,bx,y,sourceName,poseStage,trans
 }
 
 function drawSlideLimb(ctx,hip,knee,ankle,foot,near=true){
-  thickSegment(ctx,hip,knee,near?11:9,P.ivory,3);
-  thickSegment(ctx,knee,ankle,near?8:7,P.black,3);
-  thickSegment(ctx,ankle,foot,near?9:8,P.black,3);
+  thickSegment(ctx,hip,knee,near?8:7,P.ivory,2);
+  thickSegment(ctx,knee,ankle,near?6:5,P.black,2);
+  thickSegment(ctx,ankle,foot,near?7:6,P.black,2);
 }
 function drawSlideFrame(ctx,source,direction,bx,y,frame){
   const useRight=!['W','NW','SW'].includes(direction),sourceName=useRight?'E':'W',sign=useRight?1:-1;
   if(frame===0){
-    drawBase(ctx,source,sourceName,bx,y,{dy:1,sx:1.02,sy:.98});
+    drawBase(ctx,source,sourceName,bx,y,{dy:1,sx:1.01,sy:.99});
     pixelBall(ctx,bx+(useRight?58:38),y+70); return;
   }
-  const torsoDx=sign*[0,1,3,5][frame],torsoDy=[0,4,9,13][frame],torsoLean=sign*[0,-5,-10,-14][frame];
+  const torsoDx=sign*[0,1,2,3][frame],torsoDy=[0,4,8,11][frame],torsoLean=sign*[0,-3,-6,-8][frame];
   drawUpperBase(ctx,source,sourceName,bx,y,{dx:torsoDx,dy:torsoDy,rotation:torsoLean,upperH:78});
-  const hip=[bx+48+torsoDx-sign*[0,1,3,5][frame],y+79+torsoDy];
-  ctx.fillStyle=P.outline; ctx.fillRect(hip[0]-11,hip[1]-5,22,16);
-  ctx.fillStyle=P.ivory; ctx.fillRect(hip[0]-9,hip[1]-3,18,12);
-  ctx.fillStyle=P.rust; ctx.fillRect(useRight?hip[0]-9:hip[0]+6,hip[1]-3,3,12);
-  const reach=[0,17,25,32][frame];
+  const hip=[bx+48+torsoDx-sign*[0,1,2,3][frame],y+79+torsoDy];
+  ctx.fillStyle=P.outline; ctx.fillRect(hip[0]-10,hip[1]-4,20,14);
+  ctx.fillStyle=P.ivory; ctx.fillRect(hip[0]-8,hip[1]-2,16,10);
+  ctx.fillStyle=P.rust; ctx.fillRect(useRight?hip[0]-8:hip[0]+5,hip[1]-2,3,10);
+  const reach=[0,13,20,27][frame];
   const knee1=[hip[0]+sign*reach,hip[1]+[0,4,5,5][frame]];
-  const ankle1=[hip[0]+sign*(reach+[0,8,12,16][frame]),hip[1]+[0,12,14,14][frame]];
-  const foot1=[ankle1[0]+sign*[0,8,10,11][frame],ankle1[1]+1];
-  const knee2=[hip[0]+sign*Math.max(10,reach-5),hip[1]+[0,8,9,9][frame]];
-  const ankle2=[hip[0]+sign*(reach+[0,3,7,10][frame]),hip[1]+[0,17,19,19][frame]];
-  const foot2=[ankle2[0]+sign*[0,7,9,10][frame],ankle2[1]+2];
+  const ankle1=[hip[0]+sign*(reach+[0,7,10,13][frame]),hip[1]+[0,10,12,12][frame]];
+  const foot1=[ankle1[0]+sign*[0,6,8,9][frame],ankle1[1]+1];
+  const knee2=[hip[0]+sign*Math.max(8,reach-5),hip[1]+[0,7,8,8][frame]];
+  const ankle2=[hip[0]+sign*(reach+[0,2,5,7][frame]),hip[1]+[0,14,16,16][frame]];
+  const foot2=[ankle2[0]+sign*[0,5,7,8][frame],ankle2[1]+2];
   drawSlideLimb(ctx,hip,knee2,ankle2,foot2,false);
   drawSlideLimb(ctx,[hip[0]+sign*2,hip[1]-2],knee1,ankle1,foot1,true);
-  pixelBall(ctx,bx+(useRight?57:39)+torsoDx-sign*[0,0,2,3][frame],y+67+torsoDy);
+  pixelBall(ctx,bx+(useRight?57:39)+torsoDx-sign*[0,0,1,2][frame],y+67+torsoDy);
 }
 
 function buildAnimationAtlas(source){
@@ -176,47 +173,83 @@ function buildAnimationAtlas(source){
   const ctx=canvas.getContext('2d',{alpha:true}); ctx.imageSmoothingEnabled=false;
   for(let dirIdx=0;dirIdx<DIRS.length;dirIdx++){
     const direction=DIRS[dirIdx],bx=dirIdx*FRAME_W;
+
     for(let f=0;f<2;f++){
-      const y=(ROW_START.idle+f)*FRAME_H; drawBase(ctx,source,direction,bx,y,{dy:f?-1:0});
-      const [ballX,ballY]=ballPosition(direction); pixelBall(ctx,bx+ballX,y+ballY+(f?-1:0));
+      const y=(ROW_START.idle+f)*FRAME_H;
+      renderCell(ctx,bx,y,()=>{
+        drawBase(ctx,source,direction,bx,y,{dy:f?-1:0});
+        const [ballX,ballY]=ballPosition(direction); pixelBall(ctx,bx+ballX,y+ballY+(f?-1:0));
+      });
     }
+
     const drop=[{dx:0,dy:0,sx:1,sy:1},{dx:-1,dy:-2,sx:1.01,sy:.99},{dx:1,dy:0,sx:.99,sy:1.01},{dx:0,dy:-1,sx:1,sy:1}];
     for(let f=0;f<4;f++){
-      const y=(ROW_START.dropback+f)*FRAME_H,p=drop[f]; drawBase(ctx,source,direction,bx,y,p);
-      const [ballX,ballY]=ballPosition(direction); pixelBall(ctx,bx+ballX+p.dx,y+ballY+p.dy);
+      const y=(ROW_START.dropback+f)*FRAME_H,p=drop[f];
+      renderCell(ctx,bx,y,()=>{
+        drawBase(ctx,source,direction,bx,y,p);
+        const [ballX,ballY]=ballPosition(direction); pixelBall(ctx,bx+ballX+p.dx,y+ballY+p.dy);
+      });
     }
-    const run=[{dx:-1,dy:0,sx:1,sy:1},{dx:-2,dy:-4,sx:1.04,sy:.96},{dx:-1,dy:-1,sx:.99,sy:1.01},{dx:1,dy:0,sx:1,sy:1},{dx:2,dy:-4,sx:1.04,sy:.96},{dx:1,dy:-1,sx:.99,sy:1.01}];
+
+    // Keep the run cycle intentionally simple and readable, like classic sprite
+    // football games: six strong steps, no whole-body rotation between frames.
+    const run=[{dx:-1,dy:0,sx:1,sy:1},{dx:-2,dy:-3,sx:1.03,sy:.97},{dx:-1,dy:-1,sx:1,sy:1},{dx:1,dy:0,sx:1,sy:1},{dx:2,dy:-3,sx:1.03,sy:.97},{dx:1,dy:-1,sx:1,sy:1}];
     for(let f=0;f<6;f++){
-      const y=(ROW_START.run+f)*FRAME_H,p=run[f]; drawBase(ctx,source,direction,bx,y,p);
-      const [ballX,ballY]=ballPosition(direction); pixelBall(ctx,bx+ballX+p.dx,y+ballY+p.dy);
+      const y=(ROW_START.run+f)*FRAME_H,p=run[f];
+      renderCell(ctx,bx,y,()=>{
+        drawBase(ctx,source,direction,bx,y,p);
+        const [ballX,ballY]=ballPosition(direction); pixelBall(ctx,bx+ballX+p.dx,y+ballY+p.dy);
+      });
     }
+
     for(let f=0;f<4;f++){
       const y=(ROW_START.aim+f)*FRAME_H,sourceName=aimSourceDirection(direction,f);
-      drawThrowComposite(ctx,source,direction,bx,y,sourceName,f,{dx:[0,1,2,3][f],dy:[0,-1,-2,-3][f],sx:[1,1.01,1.03,1.04][f],sy:[1,1,.99,.98][f],rotation:[0,1,2,3][f]});
+      renderCell(ctx,bx,y,()=>{
+        drawThrowComposite(ctx,source,direction,bx,y,sourceName,f,{dx:[0,1,2,2][f],dy:[0,-1,-2,-2][f],sx:[1,1.01,1.02,1.02][f],sy:[1,1,.99,.99][f],rotation:[0,1,2,2][f]});
+      });
     }
+
     const releaseStages=[3,4,5];
     for(let f=0;f<3;f++){
       const y=(ROW_START.throw+f)*FRAME_H,sourceName=releaseSourceDirection(direction,f);
-      drawThrowComposite(ctx,source,direction,bx,y,sourceName,releaseStages[f],{dx:[3,3,1][f],dy:[-3,-1,0][f],sx:[1.04,1.03,1][f],sy:[.98,1,1][f],rotation:[3,-2,-4][f]});
+      renderCell(ctx,bx,y,()=>{
+        drawThrowComposite(ctx,source,direction,bx,y,sourceName,releaseStages[f],{dx:[2,2,1][f],dy:[-2,-1,0][f],sx:[1.02,1.02,1][f],sy:[.99,1,1][f],rotation:[2,-2,-3][f]});
+      });
     }
+
     for(const action of ['jukeL','jukeR']){
-      const left=action==='jukeL',offsets=left?[0,-1,-1,0]:[0,1,1,0],shift=left?[0,-7,-13,-5]:[0,7,13,5],dy=[0,-2,-4,-1];
+      const left=action==='jukeL',offsets=left?[0,-1,-1,0]:[0,1,1,0];
+      // The actual gameplay object already bursts laterally. The sprite only needs
+      // a plant/lean/recovery pose, so keep in-cell translation small and clean.
+      const shift=left?[0,-2,-4,-1]:[0,2,4,1],dy=[0,-1,-2,-1];
       for(let f=0;f<4;f++){
         const y=(ROW_START[action]+f)*FRAME_H,sourceName=rotateDirection(direction,offsets[f]);
-        drawBase(ctx,source,sourceName,bx,y,{dx:shift[f],dy:dy[f],sx:[1,1.04,1.09,1.02][f],sy:[1,.97,.93,.99][f],rotation:left?[0,-3,-7,-2][f]:[0,3,7,2][f]});
-        const [ballX,ballY]=ballPosition(sourceName); pixelBall(ctx,bx+ballX+shift[f],y+ballY+dy[f]);
+        renderCell(ctx,bx,y,()=>{
+          drawBase(ctx,source,sourceName,bx,y,{dx:shift[f],dy:dy[f],sx:[1,1.02,1.04,1.01][f],sy:[1,.99,.97,1][f],rotation:left?[0,-2,-4,-1][f]:[0,2,4,1][f]});
+          const [ballX,ballY]=ballPosition(sourceName); pixelBall(ctx,bx+ballX+shift[f],y+ballY+dy[f]);
+        });
       }
     }
-    for(let f=0;f<4;f++) drawSlideFrame(ctx,source,direction,bx,(ROW_START.slide+f)*FRAME_H,f);
+
+    for(let f=0;f<4;f++){
+      const y=(ROW_START.slide+f)*FRAME_H;
+      renderCell(ctx,bx,y,()=>drawSlideFrame(ctx,source,direction,bx,y,f));
+    }
+
     for(let f=0;f<4;f++){
       const y=(ROW_START.power+f)*FRAME_H,sourceName=['N','NE','NW'].includes(direction)?direction:'N';
-      const pose=[{dx:0,dy:0,sx:1,sy:1,rot:0},{dx:1,dy:4,sx:1.11,sy:.92,rot:-2},{dx:3,dy:9,sx:1.23,sy:.82,rot:-5},{dx:1,dy:5,sx:1.12,sy:.90,rot:-2}][f];
-      drawBase(ctx,source,sourceName,bx,y,{dx:pose.dx,dy:pose.dy,sx:pose.sx,sy:pose.sy,rotation:pose.rot});
-      ctx.save();ctx.translate(bx+pose.dx,y+pose.dy);if(f>0)drawFootballArm(ctx,[66,57],[62,67],[55,70],1,{handBall:true});else pixelBall(ctx,55,70);ctx.restore();
+      const pose=[{dx:0,dy:0,sx:1,sy:1,rot:0},{dx:0,dy:2,sx:1.05,sy:.96,rot:-1},{dx:1,dy:4,sx:1.10,sy:.91,rot:-3},{dx:0,dy:2,sx:1.05,sy:.96,rot:-1}][f];
+      renderCell(ctx,bx,y,()=>{
+        drawBase(ctx,source,sourceName,bx,y,{dx:pose.dx,dy:pose.dy,sx:pose.sx,sy:pose.sy,rotation:pose.rot});
+        ctx.save();ctx.translate(bx+pose.dx,y+pose.dy);
+        if(f>0)drawFootballArm(ctx,[66,57],[61,65],[54,69],1,{handBall:true});else pixelBall(ctx,55,70);
+        ctx.restore();
+      });
     }
   }
   return canvas;
 }
+
 function directionFromVelocity(x,z,fallback='N'){
   const mag=Math.hypot(x,z);if(mag<.12)return fallback;
   const angle=Math.atan2(x,z),oct=Math.round(angle/(Math.PI/4)),index=(oct+8)%8;
@@ -231,19 +264,24 @@ function stabilizeDirection(controller,candidate,dt){
 }
 function setFrame(controller,action,frame,direction){
   const row=ROW_START[action]+Math.max(0,Math.min(ACTIONS[action]-1,frame));
-  controller.texture.repeat.set(1/DIRS.length,1/ROWS);controller.texture.offset.x=dirIndex(direction)/DIRS.length;controller.texture.offset.y=1-((row+1)/ROWS);controller.texture.needsUpdate=true;
+  controller.texture.repeat.set(1/DIRS.length,1/ROWS);
+  controller.texture.offset.x=dirIndex(direction)/DIRS.length;
+  controller.texture.offset.y=1-((row+1)/ROWS);
+  controller.texture.needsUpdate=true;
 }
+
 export function attachPixelQB(qbGroup,fallbackRig){
   const controller={ready:false,failed:false,sprite:null,texture:null,group:qbGroup,fallbackRig,action:'idle',direction:'N',elapsed:0,frame:0,prev:qbGroup.position.clone(),pendingDirection:null,pendingDirectionTime:0,jukeLock:0,jukeAction:null,slideLock:0};
   loadImage(QB_BASE_ATLAS).then(image=>{
     const atlas=buildAnimationAtlas(image),texture=new THREE.CanvasTexture(atlas);
     texture.colorSpace=THREE.SRGBColorSpace;texture.magFilter=THREE.NearestFilter;texture.minFilter=THREE.NearestFilter;texture.generateMipmaps=false;texture.wrapS=THREE.RepeatWrapping;texture.wrapT=THREE.RepeatWrapping;
     const material=new THREE.SpriteMaterial({map:texture,transparent:true,alphaTest:.22,depthWrite:true,depthTest:true,toneMapped:false});
-    const sprite=new THREE.Sprite(material);sprite.name='pixel_qb_production_v7';sprite.center.set(.5,0);sprite.position.set(0,.02,0);sprite.scale.set(3.72,4.96,1);sprite.renderOrder=3;qbGroup.add(sprite);
-    if(fallbackRig)fallbackRig.visible=false;Object.assign(controller,{ready:true,sprite,texture});setFrame(controller,'idle',0,'N');console.info('[Gridiron Legends] Retro aiming QB sprite v7 active');
+    const sprite=new THREE.Sprite(material);sprite.name='pixel_qb_production_v8';sprite.center.set(.5,0);sprite.position.set(0,.02,0);sprite.scale.set(3.72,4.96,1);sprite.renderOrder=3;qbGroup.add(sprite);
+    if(fallbackRig)fallbackRig.visible=false;Object.assign(controller,{ready:true,sprite,texture});setFrame(controller,'idle',0,'N');console.info('[Gridiron Legends] Isolated-cell Retro QB sprite v8 active');
   }).catch(error=>{controller.failed=true;if(fallbackRig)fallbackRig.visible=true;console.warn('[Gridiron Legends] Pixel QB failed, using 3D fallback.',error);});
   return controller;
 }
+
 export function updatePixelQB(controller,dt,{state,moving=false,aiming=false,throwing=false,sliding=false,power=false}){
   if(!controller?.ready)return;
   const vx=(controller.group.position.x-controller.prev.x)/Math.max(dt,.001),vz=(controller.group.position.z-controller.prev.z)/Math.max(dt,.001);controller.prev.copy(controller.group.position);
@@ -252,6 +290,7 @@ export function updatePixelQB(controller,dt,{state,moving=false,aiming=false,thr
   if((state==='SCRAMBLE'||state==='RUN')&&lateralBurst&&controller.jukeLock<=0){controller.jukeAction=vx>0?'jukeL':'jukeR';controller.jukeLock=JUKE_VISUAL_TIME;}
   if(sliding&&controller.slideLock<=0)controller.slideLock=SLIDE_VISUAL_TIME;
   if(state!=='SCRAMBLE'&&state!=='RUN'){controller.jukeLock=0;controller.jukeAction=null;}
+
   let action='idle';
   if(sliding||controller.slideLock>0)action='slide';
   else if(throwing)action='throw';
@@ -260,11 +299,13 @@ export function updatePixelQB(controller,dt,{state,moving=false,aiming=false,thr
   else if((state==='SCRAMBLE'||state==='RUN')&&power)action='power';
   else if((state==='POCKET'||state==='AIMING')&&(moving||speed>.3))action='dropback';
   else if((state==='SCRAMBLE'||state==='RUN')&&(moving||speed>.3))action='run';
+
   let direction=controller.direction||'N';
   if(action==='dropback')direction=pocketDirection(vx);
   else if(['jukeL','jukeR','power','aim','throw'].includes(action))direction=['N','NE','NW'].includes(direction)?direction:'N';
   else if(action==='idle'&&state==='PRE_SNAP')direction='N';
   else if(speed>.3)direction=stabilizeDirection(controller,directionFromVelocity(vx,vz,direction),dt);
+
   const changed=action!==controller.action,directionChanged=direction!==controller.direction;
   if(changed){controller.action=action;controller.elapsed=0;controller.frame=0;}else controller.elapsed+=dt;
   controller.direction=direction;
