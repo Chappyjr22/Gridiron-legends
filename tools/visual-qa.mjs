@@ -110,7 +110,7 @@ async function dragThrowTouch(page, dx = 36, dy = -185) {
   await snap(page);
   await backUpPocket(page, 260);
   await dragThrowTouch(page, -52, -210);
-  await page.waitForTimeout(850);
+  await page.waitForTimeout(950);
   await closeWithVideo(page, 'throw');
 }
 
@@ -130,6 +130,17 @@ async function dragThrowTouch(page, dx = 36, dy = -185) {
   await closeWithVideo(page, 'scramble');
 }
 
+// Explicit right-running visual regression for detached sleeve-number artifacts.
+{
+  const page = await openFresh('run-right');
+  await snap(page);
+  await backUpPocket(page);
+  await page.locator('#tuckBtn').click();
+  await holdKey(page, 'ArrowRight', 420);
+  await page.waitForTimeout(100);
+  await closeWithVideo(page, 'run-right');
+}
+
 // Juke left and right in one continuous clip.
 {
   const page = await openFresh('juke');
@@ -137,9 +148,9 @@ async function dragThrowTouch(page, dx = 36, dy = -185) {
   await backUpPocket(page);
   await page.locator('#tuckBtn').click();
   await page.keyboard.press('KeyQ');
-  await page.waitForTimeout(420);
+  await page.waitForTimeout(500);
   await page.keyboard.press('KeyE');
-  await page.waitForTimeout(420);
+  await page.waitForTimeout(500);
   await closeWithVideo(page, 'juke');
 }
 
@@ -154,7 +165,7 @@ async function dragThrowTouch(page, dx = 36, dy = -185) {
   if (!box) throw new Error('power button missing');
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
-  await page.waitForTimeout(430);
+  await page.waitForTimeout(520);
   await page.mouse.up();
   await page.waitForTimeout(100);
   await closeWithVideo(page, 'power');
@@ -167,7 +178,7 @@ async function dragThrowTouch(page, dx = 36, dy = -185) {
   await backUpPocket(page);
   await page.locator('#tuckBtn').click();
   await page.locator('#slideBtn').click();
-  await page.waitForTimeout(720);
+  await page.waitForTimeout(760);
   await closeWithVideo(page, 'slide');
 }
 
