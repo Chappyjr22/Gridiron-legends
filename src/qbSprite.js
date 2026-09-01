@@ -1,14 +1,14 @@
 import * as THREE from 'three';
 import { QB_BASE_ATLAS } from './qbSpriteBase.js';
 import { QB_AUTHORED_PASS_ATLAS } from './qbAuthoredSheets.js';
-import { QB_AUTHORED_RUN_RIGHT_ATLAS } from './qbRunRightSheet.js';
+import { QB_AUTHORED_RUN_RIGHT_POSE } from './qbRunRightSheet.js';
 
 const DIRS = ['N','NE','E','SE','S','SW','W','NW'];
+const FRAME_W = 96;
+const FRAME_H = 128;
 const PASS_FRAMES = 8;
-const RUN_RIGHT_FRAMES = 6;
 const AIM_FPS = 8;
 const RELEASE_FPS = 12;
-const RUN_FPS = 10;
 
 function loadImage(src) {
   return new Promise((resolve, reject) => {
@@ -19,21 +19,19 @@ function loadImage(src) {
   });
 }
 
-function makeFrameTexture(image, frame, count) {
-  const width = Math.round((image.naturalWidth || image.width) / count);
-  const height = image.naturalHeight || image.height;
+function makeDisplaySprite() {
   const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-
+  canvas.width = FRAME_W;
+  canvas.height = FRAME_H;
   const ctx = canvas.getContext('2d', { alpha: true });
   ctx.imageSmoothingEnabled = false;
-  ctx.clearRect(0, 0, width, height);
-  ctx.drawImage(image, frame * width, 0, width, height, 0, 0, width, height);
 
-  // Every gameplay frame is a complete authored bitmap. Keep it as a permanent
-  // CanvasTexture so Three.js never has to swap atlas maps, reinterpret raw RGBA,
-  // or rebuild a player's body at runtime.
+  const staging = document.createElement('canvas');
+  staging.width = FRAME_W;
+  staging.height = FRAME_H;
+  const stagingCtx = staging.getContext('2d', { alpha: true });
+  stagingCtx.imageSmoothingEnabled = false;
+
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.magFilter = THREE.NearestFilter;
@@ -41,11 +39,7 @@ function makeFrameTexture(image, frame, count) {
   texture.generateMipmaps = false;
   texture.wrapS = THREE.ClampToEdgeWrapping;
   texture.wrapT = THREE.ClampToEdgeWrapping;
-  texture.needsUpdate = true;
-  return texture;
-}
 
-function makeFrameSprite(texture, name) {
   const material = new THREE.SpriteMaterial({
     map: texture,
     transparent: true,
@@ -56,50 +50,100 @@ function makeFrameSprite(texture, name) {
   });
 
   const sprite = new THREE.Sprite(material);
-  sprite.name = name;
+  sprite.name = 'pixel_qb_single_pose_sprite';
   sprite.center.set(0.5, 0);
-  sprite.position.set(0, 0, 0);
-  sprite.scale.set(1, 1, 1);
+  sprite.position.set(0, 0.02, 0);
+  sprite.scale.set(3.72, 4.96, 1);
   sprite.renderOrder = 3;
   sprite.frustumCulled = false;
-  sprite.visible = false;
-  return sprite;
+  sprite.visible = true;
+
+  return { canvas, ctx, staging, stagingCtx, texture, material, sprite };
 }
 
-function makeSpriteSet(image, count, prefix, root) {
-  return Array.from({ length: count }, (_, frame) => {
-    const sprite = makeFrameSprite(makeFrameTexture(image, frame, count), `${prefix}_${frame}`);
-    root.add(sprite);
-    return sprite;
+function atlasPose(image, frame, count) {
+  return { type: 'atlas', image, frame, count };
+}
+
+function imagePose(image) {
+  return { type: 'image', image };
+}
+
+function drawPose(controller, pose) {
+  if (!pose?.image || !controller?.stagingCtx || !controller?.ctx) return false;
+
+  const { stagingCtx, staging, ctx } = controller;
+  stagingCtx.clearRect(0, 0, FRAME_W, FRAME_H);
+
+  try {
+    if (pose.type === 'atlas') {
+      const sourceWidth = Math.round((pose.image.naturalWidth || pose.image.width) / pose.count);
+      const sourceHeight = pose.image.naturalHeight || pose.image.height;
+      stagingCtx.drawImage(
+        pose.image,
+        pose.frame * sourceWidth, 0, sourceWidth, sourceHeight,
+        0, 0, FRAME_W, FRAME_H,
+      );
+    } else {
+      stagingCtx.drawImage(
+        pose.image,
+        0, 0,
+        pose.image.naturalWidth || pose.image.width,
+        pose.image.naturalHeight || pose.image.height,
+        0, 0, FRAME_W, FRAME_H,
+      );
+    }
+  } catch (error) {
+    console.warn('[Gridiron Legends] QB pose draw failed; keeping last valid pose.', error);
+    return false;
+  }
+
+  // The live sprite is never cleared until a complete replacement pose exists.
+  // Missing or invalid states therefore leave the last good player visible.
+  ctx.clearRect(0, 0, FRAME_W, FRAME_H);
+  ctx.drawImage(staging, 0, 0);
+  controller.texture.needsUpdate = true;
+  controller.sprite.visible = true;
+  return true;
+}
+
+export function setQBPose(controller, poseName) {
+  if (!controller?.ready) return false;
+  const pose = controller.poseRegistry?.[poseName];
+  if (!pose) {
+    console.warn(`[Gridiron Legends] Missing QB pose: ${poseName}; keeping ${controller.currentPose || 'last valid pose'}`);
+    return false;
+  }
+  if (controller.currentPose === poseName) return true;
+  if (!drawPose(controller, pose)) return false;
+  controller.currentPose = poseName;
+  return true;
+}
+
+function registerBaseDirections(controller, baseImage) {
+  DIRS.forEach((direction, frame) => {
+    controller.poseRegistry[`base_${direction}`] = atlasPose(baseImage, frame, DIRS.length);
   });
 }
 
-function dirIndex(direction) {
-  const index = DIRS.indexOf(direction);
-  return index < 0 ? 0 : index;
-}
+function registerProductionPoses(controller, baseImage, passImage, runRightImage) {
+  registerBaseDirections(controller, baseImage);
 
-function setFrame(controller, sheet, frame) {
-  const frames = controller.frames[sheet];
-  if (!frames?.length) return;
+  controller.poseRegistry.idle_rear = atlasPose(baseImage, 0, DIRS.length);
+  controller.poseRegistry.dropback_rear = atlasPose(passImage, 0, PASS_FRAMES);
+  controller.poseRegistry.aim_set_rear = atlasPose(passImage, 0, PASS_FRAMES);
+  controller.poseRegistry.aim_load_rear = atlasPose(passImage, 1, PASS_FRAMES);
+  controller.poseRegistry.aim_cock_rear = atlasPose(passImage, 2, PASS_FRAMES);
+  controller.poseRegistry.aim_hold_rear = atlasPose(passImage, 3, PASS_FRAMES);
+  controller.poseRegistry.release_stride_rear = atlasPose(passImage, 4, PASS_FRAMES);
+  controller.poseRegistry.release_throw_rear = atlasPose(passImage, 5, PASS_FRAMES);
+  controller.poseRegistry.release_follow_rear = atlasPose(passImage, 6, PASS_FRAMES);
+  controller.poseRegistry.release_finish_rear = atlasPose(passImage, 7, PASS_FRAMES);
 
-  const safeFrame = Math.max(0, Math.min(frames.length - 1, frame));
-  const target = frames[safeFrame];
-
-  if (controller.activeFrame !== target) {
-    if (controller.activeFrame) controller.activeFrame.visible = false;
-    controller.spriteRoot.visible = true;
-    target.visible = true;
-    target.material.opacity = 1;
-    controller.activeFrame = target;
-  }
-
-  controller.sheet = sheet;
-  controller.frame = safeFrame;
-}
-
-function showBaseDirection(controller, direction) {
-  setFrame(controller, 'base', dirIndex(direction));
+  // Dedicated rear tuck art comes next. Until then, keep the known-good complete
+  // rear silhouette rather than constructing a fake running body at runtime.
+  controller.poseRegistry.scramble_rear = atlasPose(baseImage, 0, DIRS.length);
+  controller.poseRegistry.run_right = imagePose(runRightImage);
 }
 
 function directionFromVelocity(x, z, fallback = 'N') {
@@ -108,12 +152,6 @@ function directionFromVelocity(x, z, fallback = 'N') {
   const octant = Math.round(angle / (Math.PI / 4));
   const index = (octant + 8) % 8;
   return ['N','NW','W','SW','S','SE','E','NE'][index];
-}
-
-function pocketDirection(vx) {
-  if (vx > 1.0) return 'NW';
-  if (vx < -1.0) return 'NE';
-  return 'N';
 }
 
 function stabilizeDirection(controller, candidate, dt) {
@@ -139,29 +177,48 @@ function stabilizeDirection(controller, candidate, dt) {
   return controller.direction || 'N';
 }
 
+function installPoseDebug(controller) {
+  if (new URLSearchParams(window.location.search).get('qbPoseDebug') !== '1') return;
+
+  window.__gridironQB = {
+    poses: () => Object.keys(controller.poseRegistry),
+    current: () => controller.currentPose,
+    setPose: (name) => {
+      controller.forcedPose = name;
+      return setQBPose(controller, name);
+    },
+    clearPose: () => {
+      controller.forcedPose = null;
+      return true;
+    },
+  };
+  console.info('[Gridiron Legends] QB pose debug API active');
+}
+
 export function attachPixelQB(qbGroup, fallbackRig) {
-  const root = new THREE.Group();
-  root.name = 'pixel_qb_fullframe_root';
-  root.position.set(0, 0.02, 0);
-  root.scale.set(3.72, 4.96, 1);
-  root.visible = true;
-  qbGroup.add(root);
+  const display = makeDisplaySprite();
+  qbGroup.add(display.sprite);
 
   const controller = {
     ready: false,
     failed: false,
-    sprite: root,
-    spriteRoot: root,
-    frames: {},
+    sprite: display.sprite,
+    spriteRoot: display.sprite,
+    canvas: display.canvas,
+    ctx: display.ctx,
+    staging: display.staging,
+    stagingCtx: display.stagingCtx,
+    texture: display.texture,
+    material: display.material,
+    poseRegistry: {},
+    currentPose: null,
+    forcedPose: null,
     images: [],
-    activeFrame: null,
     group: qbGroup,
     fallbackRig,
     action: 'idle',
     direction: 'N',
     elapsed: 0,
-    frame: 0,
-    sheet: 'base',
     prev: qbGroup.position.clone(),
     pendingDirection: null,
     pendingDirectionTime: 0,
@@ -170,22 +227,21 @@ export function attachPixelQB(qbGroup, fallbackRig) {
   Promise.all([
     loadImage(QB_BASE_ATLAS),
     loadImage(QB_AUTHORED_PASS_ATLAS),
-    loadImage(QB_AUTHORED_RUN_RIGHT_ATLAS),
+    loadImage(QB_AUTHORED_RUN_RIGHT_POSE),
   ]).then(([baseImage, passImage, runRightImage]) => {
     controller.images = [baseImage, passImage, runRightImage];
-    controller.frames.base = makeSpriteSet(baseImage, DIRS.length, 'qb_base', root);
-    controller.frames.pass = makeSpriteSet(passImage, PASS_FRAMES, 'qb_pass', root);
-    controller.frames.runRight = makeSpriteSet(runRightImage, RUN_RIGHT_FRAMES, 'qb_run_right', root);
-
-    if (fallbackRig) fallbackRig.visible = false;
+    registerProductionPoses(controller, baseImage, passImage, runRightImage);
     controller.ready = true;
-    showBaseDirection(controller, 'N');
-    console.info('[Gridiron Legends] Permanent full-frame CanvasTexture QB runtime active');
+
+    if (!setQBPose(controller, 'idle_rear')) throw new Error('Could not render initial QB pose');
+    if (fallbackRig) fallbackRig.visible = false;
+    installPoseDebug(controller);
+    console.info('[Gridiron Legends] Single-canvas authored QB pose runtime active');
   }).catch((error) => {
     controller.failed = true;
-    root.visible = false;
+    display.sprite.visible = false;
     if (fallbackRig) fallbackRig.visible = true;
-    console.warn('[Gridiron Legends] Authored QB frame decode failed, using fallback.', error);
+    console.warn('[Gridiron Legends] Authored QB pose runtime failed, using fallback.', error);
   });
 
   return controller;
@@ -193,6 +249,11 @@ export function attachPixelQB(qbGroup, fallbackRig) {
 
 export function updatePixelQB(controller, dt, { state, moving = false, aiming = false, throwing = false, sliding = false, power = false }) {
   if (!controller?.ready) return;
+
+  if (controller.forcedPose) {
+    setQBPose(controller, controller.forcedPose);
+    return;
+  }
 
   const vx = (controller.group.position.x - controller.prev.x) / Math.max(dt, 0.001);
   const vz = (controller.group.position.z - controller.prev.z) / Math.max(dt, 0.001);
@@ -218,19 +279,21 @@ export function updatePixelQB(controller, dt, { state, moving = false, aiming = 
 
   if (action === 'aim') {
     controller.direction = 'N';
-    setFrame(controller, 'pass', Math.min(3, Math.floor(controller.elapsed * AIM_FPS)));
+    const aimPoses = ['aim_set_rear', 'aim_load_rear', 'aim_cock_rear', 'aim_hold_rear'];
+    setQBPose(controller, aimPoses[Math.min(3, Math.floor(controller.elapsed * AIM_FPS))]);
     return;
   }
 
   if (action === 'throw') {
     controller.direction = 'N';
-    setFrame(controller, 'pass', 4 + Math.min(2, Math.floor(controller.elapsed * RELEASE_FPS)));
+    const releasePoses = ['release_stride_rear', 'release_throw_rear', 'release_follow_rear', 'release_finish_rear'];
+    setQBPose(controller, releasePoses[Math.min(3, Math.floor(controller.elapsed * RELEASE_FPS))]);
     return;
   }
 
   if (action === 'dropback') {
-    controller.direction = pocketDirection(vx);
-    showBaseDirection(controller, controller.direction);
+    controller.direction = 'N';
+    setQBPose(controller, 'dropback_rear');
     return;
   }
 
@@ -239,26 +302,35 @@ export function updatePixelQB(controller, dt, { state, moving = false, aiming = 
     controller.direction = stabilizeDirection(controller, candidate, dt);
 
     if (controller.direction === 'E') {
-      setFrame(controller, 'runRight', Math.floor(controller.elapsed * RUN_FPS) % RUN_RIGHT_FRAMES);
+      setQBPose(controller, 'run_right');
       return;
     }
 
-    showBaseDirection(controller, controller.direction);
+    if (controller.direction === 'N') {
+      setQBPose(controller, 'scramble_rear');
+      return;
+    }
+
+    setQBPose(controller, `base_${controller.direction}`);
     return;
   }
 
   if (action === 'slide') {
-    showBaseDirection(controller, ['W','NW','SW'].includes(controller.direction) ? 'W' : 'E');
+    setQBPose(controller, ['W','NW','SW'].includes(controller.direction) ? 'base_W' : 'base_E');
     return;
   }
 
   if (action === 'power') {
-    showBaseDirection(controller, 'N');
+    setQBPose(controller, 'scramble_rear');
     return;
   }
 
-  if (state === 'PRE_SNAP') controller.direction = 'N';
-  else if (speed > 0.3) controller.direction = stabilizeDirection(controller, directionFromVelocity(vx, vz, controller.direction), dt);
+  if (state === 'PRE_SNAP') {
+    controller.direction = 'N';
+    setQBPose(controller, 'idle_rear');
+    return;
+  }
 
-  showBaseDirection(controller, controller.direction);
+  if (speed > 0.3) controller.direction = stabilizeDirection(controller, directionFromVelocity(vx, vz, controller.direction), dt);
+  setQBPose(controller, controller.direction === 'N' ? 'idle_rear' : `base_${controller.direction}`);
 }
