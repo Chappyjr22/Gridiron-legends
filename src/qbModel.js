@@ -112,7 +112,12 @@ function applyPresentationPose(controller) {
       break;
     }
     case 'slide': {
-      sprite.position.y -= [0,.04,.10,.17][Math.min(frame,3)];
+      // Keep the foot anchor above the field. The atlas supplies the actual
+      // fall/extension pose; presentation only gives it a little extra width.
+      const w=[1,1.02,1.05,1.08][Math.min(frame,3)];
+      const h=[1,.98,.94,.90][Math.min(frame,3)];
+      sprite.scale.set(BASE_SPRITE_W*w,BASE_SPRITE_H*h,1);
+      sprite.position.y += [0,.004,.008,.012][Math.min(frame,3)];
       break;
     }
     case 'power': {
