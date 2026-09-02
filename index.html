@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>Gridiron Legends v46</title>
+<title>Gridiron Legends v47</title>
 <style>
   :root{--ink:#080b0c;--panel:#101719;--panel2:#182225;--cream:#f5edcf;--gold:#f4c542;--green:#2c7a3f;--green2:#205b31;--blue:#2868a8;--red:#a83232;--muted:#9ca9a5;--line:#3d4d48;}
   *{box-sizing:border-box;}
@@ -48,6 +48,8 @@
   .team-ratings{display:flex;gap:8px;text-align:center;}
   .team-ratings b{display:block;color:var(--gold);font-size:13px;}
   .team-ratings span{font-size:7px;color:var(--muted);text-transform:uppercase;}
+  .opponent-picker{display:grid;grid-template-columns:minmax(180px,.8fr) 1.2fr;gap:12px;align-items:center;}
+  .opponent-preview{min-height:42px;}
   .roster-details{margin-top:10px;border-top:1px solid #2d3b38;padding-top:8px;}
   .roster-details summary{cursor:pointer;color:var(--gold);font-size:9px;font-weight:900;text-transform:uppercase;}
   .roster-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:8px;}
@@ -76,7 +78,7 @@
   .icon-btn{width:38px;height:34px;align-self:center;margin-right:7px;border:2px solid #52615c;background:#172022;color:var(--gold);padding:0;box-shadow:none;font-size:17px;}
   .momentum-label{font-size:10px;color:var(--gold);text-align:center;background:#101817;padding:3px 4px;flex:0 0 auto;display:none;border-bottom:1px solid #33413d;}
   .rotate-hint{display:none;font-size:10px;color:var(--gold);text-align:center;padding:3px;background:#111;flex:0 0 auto;}
-  @media (orientation:portrait){.rotate-hint{display:block;}.title-shell{grid-template-columns:1fr;text-align:center}.brand-lockup{text-align:center}.brand-title{font-size:58px}.menu-stack{width:min(360px,90vw);margin:auto}.setup-grid{grid-template-columns:1fr}.setting-block.full{grid-column:auto}.team-picker{grid-template-columns:1fr}.roster-grid{grid-template-columns:repeat(2,1fr)}.topbar{grid-template-columns:1fr auto 1fr}.team-name{display:none}.game-clock{padding:4px 6px;gap:6px}.situation{display:none}}
+  @media (orientation:portrait){.rotate-hint{display:block;}.title-shell{grid-template-columns:1fr;text-align:center}.brand-lockup{text-align:center}.brand-title{font-size:58px}.menu-stack{width:min(360px,90vw);margin:auto}.setup-grid{grid-template-columns:1fr}.setting-block.full{grid-column:auto}.team-picker,.opponent-picker{grid-template-columns:1fr}.roster-grid{grid-template-columns:repeat(2,1fr)}.topbar{grid-template-columns:1fr auto 1fr}.team-name{display:none}.game-clock{padding:4px 6px;gap:6px}.situation{display:none}}
   .field-container{position:relative;flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:0;background:#050706;}
   canvas{max-width:100%;max-height:100%;width:auto;height:auto;display:block;touch-action:none;background:#2f6b32;image-rendering:pixelated;}
   .floating-snap{position:absolute;left:50%;bottom:13px;transform:translateX(-50%);background:var(--gold);color:#171307;border:3px solid #fff1a4;padding:11px 22px;font-size:12px;font-weight:900;box-shadow:4px 4px 0 rgba(0,0,0,.65);white-space:nowrap;}
@@ -132,7 +134,7 @@
           <button id="btn-menu-settings">Settings</button>
           <button id="btn-start-editor">Formation Lab</button>
         </div>
-        <div class="menu-version">Prototype v46</div>
+        <div class="menu-version">Prototype v47</div>
       </div>
     </div>
   </div>
@@ -158,6 +160,20 @@
                 <div class="team-ratings"><div><b id="team-off-rating">0</b><span>Off</span></div><div><b id="team-def-rating">0</b><span>Def</span></div><div><b id="team-ovr-rating">0</b><span>Ovr</span></div></div>
               </div>
               <details class="roster-details"><summary>View 12-player star roster</summary><div class="roster-grid" id="team-roster"></div></details>
+            </div>
+          </div>
+        </div>
+        <div class="setting-block full" id="opponent-setting">
+          <span class="label">Choose Opponent</span>
+          <div class="opponent-picker">
+            <div>
+              <select id="opponent-select" class="team-select" aria-label="Choose your opponent"></select>
+              <p class="setting-help">Random Opponent picks a different eligible franchise at kickoff.</p>
+            </div>
+            <div class="team-preview opponent-preview" id="opponent-preview">
+              <div class="team-badge" id="opponent-preview-badge">?</div>
+              <div><div class="team-preview-name" id="opponent-preview-name">Random Opponent</div><div class="team-preview-meta" id="opponent-preview-meta">Opponent revealed at kickoff</div></div>
+              <div class="team-ratings"><div><b id="opponent-off-rating">?</b><span>Off</span></div><div><b id="opponent-def-rating">?</b><span>Def</span></div><div><b id="opponent-ovr-rating">?</b><span>Ovr</span></div></div>
             </div>
           </div>
         </div>
@@ -439,10 +455,11 @@ function momentumLabel(){
   return 'Gridiron - even fight';
 }
 
-const game={playerScore:0,cpuScore:0,quarter:1,quarterMinutes:3,clock:180,overtime:false,otRound:0,down:1,distance:10,los:20,firstDownYard:30,phase:'menu',message:'',thrown:false,cameraYard:20,playCall:null,passMode:'drag',throwType:'lob',difficulty:'medium',momentum:0,paused:false,centerYfield:0,carrierSince:0,blitzer:null,tackle:null,possession:'player',practice:false,showRoutes:true,firstHalfReceiver:'player',secondHalfReceiver:'cpu',userTeamId:'bos',cpuTeamId:'ny1'};
+const game={playerScore:0,cpuScore:0,quarter:1,quarterMinutes:3,clock:180,overtime:false,otRound:0,down:1,distance:10,los:20,firstDownYard:30,phase:'menu',message:'',thrown:false,cameraYard:20,playCall:null,passMode:'drag',throwType:'lob',difficulty:'medium',momentum:0,paused:false,centerYfield:0,carrierSince:0,blitzer:null,tackle:null,possession:'player',practice:false,showRoutes:true,firstHalfReceiver:'player',secondHalfReceiver:'cpu',userTeamId:'bos',cpuTeamId:'ny1',opponentChoice:'random'};
 const League=window.GridironLeague;
 let franchise=League.loadFranchise()||League.createFranchise(game.userTeamId);
 game.userTeamId=franchise.userTeamId||game.userTeamId;
+try{game.opponentChoice=localStorage.getItem('gridironLegendsOpponentChoice')||'random';}catch(e){}
 let userTeam=League.findTeamState(franchise,game.userTeamId)||franchise.teams[0];
 let cpuTeam=League.findTeamState(franchise,game.cpuTeamId)||franchise.teams[1];
 let players={},decor=[],ball={inFlight:false},ballCarrier=null,breakCooldown=0;
@@ -499,6 +516,11 @@ function chooseOpponent(){
   const candidates=franchise.teams.filter(team=>team.id!==game.userTeamId);
   return candidates[Math.floor(Math.random()*candidates.length)]||candidates[0];
 }
+function resolveOpponentChoice(){
+  if(game.opponentChoice==='random')return chooseOpponent();
+  const selected=League.findTeamState(franchise,game.opponentChoice);
+  return selected&&selected.id!==game.userTeamId?selected:chooseOpponent();
+}
 function updateTeamPreview(teamId){
   const team=League.findTeamState(franchise,teamId)||franchise.teams[0];
   const source=League.findTeam(team.id);
@@ -549,6 +571,53 @@ function populateTeamSelect(){
   });
   select.value=game.userTeamId;
   updateTeamPreview(game.userTeamId);
+}
+function updateOpponentPreview(){
+  const badge=document.getElementById('opponent-preview-badge');
+  const name=document.getElementById('opponent-preview-name');
+  const meta=document.getElementById('opponent-preview-meta');
+  const selected=game.opponentChoice==='random'?null:League.findTeamState(franchise,game.opponentChoice);
+  if(!selected||selected.id===game.userTeamId){
+    badge.textContent='?';
+    badge.style.setProperty('--team-primary','#293634');
+    badge.style.setProperty('--team-accent','#f4c542');
+    name.textContent='Random Opponent';
+    meta.textContent='Opponent revealed at kickoff';
+    document.getElementById('opponent-off-rating').textContent='?';
+    document.getElementById('opponent-def-rating').textContent='?';
+    document.getElementById('opponent-ovr-rating').textContent='?';
+    return;
+  }
+  badge.textContent=selected.abbr;
+  badge.style.setProperty('--team-primary',selected.colors.primary);
+  badge.style.setProperty('--team-accent',selected.colors.accent);
+  name.textContent=League.fullName(selected);
+  meta.textContent=League.divisionName(selected)+'  |  OC '+selected.coaches.oc.rating+'  |  DC '+selected.coaches.dc.rating;
+  document.getElementById('opponent-off-rating').textContent=selected.ratings.offense;
+  document.getElementById('opponent-def-rating').textContent=selected.ratings.defense;
+  document.getElementById('opponent-ovr-rating').textContent=selected.ratings.overall;
+}
+function populateOpponentSelect(){
+  const select=document.getElementById('opponent-select');
+  if(game.opponentChoice===game.userTeamId||!League.findTeam(game.opponentChoice))game.opponentChoice='random';
+  select.innerHTML='<option value="random">Random Opponent</option>';
+  ['legacy','frontier'].forEach(conference=>{
+    ['east','north','south','west'].forEach(division=>{
+      const teams=League.TEAMS.filter(team=>team.conference===conference&&team.division===division&&team.id!==game.userTeamId);
+      if(!teams.length)return;
+      const group=document.createElement('optgroup');
+      group.label=League.CONFERENCES[conference].name+' '+division[0].toUpperCase()+division.slice(1);
+      teams.forEach(team=>{
+        const option=document.createElement('option');
+        option.value=team.id;
+        option.textContent=League.fullName(team);
+        group.appendChild(option);
+      });
+      select.appendChild(group);
+    });
+  });
+  select.value=game.opponentChoice;
+  updateOpponentPreview();
 }
 
 function makeTeamSpriteSheet(team,skinIndex){
@@ -760,7 +829,7 @@ function returnToMainMenu(){
 function startNewGame(){
   game.practice=false;
   userTeam=League.findTeamState(franchise,game.userTeamId)||franchise.teams[0];
-  cpuTeam=chooseOpponent();
+  cpuTeam=resolveOpponentChoice();
   game.cpuTeamId=cpuTeam.id;
   syncMatchupUI();
   game.playerScore=0;
@@ -785,7 +854,7 @@ function startNewGame(){
 function startPractice(){
   game.practice=true;
   userTeam=League.findTeamState(franchise,game.userTeamId)||franchise.teams[0];
-  cpuTeam=chooseOpponent();
+  cpuTeam=resolveOpponentChoice();
   game.cpuTeamId=cpuTeam.id;
   syncMatchupUI();
   game.playerScore=0;
@@ -1891,9 +1960,19 @@ document.getElementById('team-select').addEventListener('change',event=>{
   franchise.userTeamId=game.userTeamId;
   League.saveFranchise(franchise);
   userTeam=League.findTeamState(franchise,game.userTeamId)||franchise.teams[0];
+  if(game.opponentChoice===game.userTeamId){
+    game.opponentChoice='random';
+    try{localStorage.setItem('gridironLegendsOpponentChoice','random');}catch(e){}
+  }
   if(cpuTeam.id===userTeam.id)cpuTeam=chooseOpponent();
   updateTeamPreview(game.userTeamId);
+  populateOpponentSelect();
   syncMatchupUI();
+});
+document.getElementById('opponent-select').addEventListener('change',event=>{
+  game.opponentChoice=event.target.value;
+  try{localStorage.setItem('gridironLegendsOpponentChoice',game.opponentChoice);}catch(e){}
+  updateOpponentPreview();
 });
 document.getElementById('btn-snap').addEventListener('click',onSnap);
 document.getElementById('btn-continue').addEventListener('click',()=>{
@@ -1943,6 +2022,7 @@ function openSetup(settingsOnly=false){
   document.getElementById('btn-start-play').style.display=settingsOnly?'none':'block';
   document.getElementById('quarter-setting').style.display=settingsOnly?'none':'block';
   document.getElementById('team-setting').style.display=settingsOnly?'none':'block';
+  document.getElementById('opponent-setting').style.display=settingsOnly?'none':'block';
 }
 function closeSetup(){
   document.getElementById('setup-screen').classList.remove('show');
@@ -1980,6 +2060,7 @@ document.getElementById('btn-main-menu').addEventListener('click',()=>{
   returnToMainMenu();
 });
 populateTeamSelect();
+populateOpponentSelect();
 syncMatchupUI();
 updateHUD();
 })();
