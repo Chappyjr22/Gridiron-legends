@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>Gridiron Legends v47</title>
+<title>Gridiron Legends v48</title>
 <style>
   :root{--ink:#080b0c;--panel:#101719;--panel2:#182225;--cream:#f5edcf;--gold:#f4c542;--green:#2c7a3f;--green2:#205b31;--blue:#2868a8;--red:#a83232;--muted:#9ca9a5;--line:#3d4d48;}
   *{box-sizing:border-box;}
@@ -81,7 +81,8 @@
   @media (orientation:portrait){.rotate-hint{display:block;}.title-shell{grid-template-columns:1fr;text-align:center}.brand-lockup{text-align:center}.brand-title{font-size:58px}.menu-stack{width:min(360px,90vw);margin:auto}.setup-grid{grid-template-columns:1fr}.setting-block.full{grid-column:auto}.team-picker,.opponent-picker{grid-template-columns:1fr}.roster-grid{grid-template-columns:repeat(2,1fr)}.topbar{grid-template-columns:1fr auto 1fr}.team-name{display:none}.game-clock{padding:4px 6px;gap:6px}.situation{display:none}}
   .field-container{position:relative;flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:0;background:#050706;}
   canvas{max-width:100%;max-height:100%;width:auto;height:auto;display:block;touch-action:none;background:#2f6b32;image-rendering:pixelated;}
-  .floating-snap{position:absolute;left:50%;bottom:13px;transform:translateX(-50%);background:var(--gold);color:#171307;border:3px solid #fff1a4;padding:11px 22px;font-size:12px;font-weight:900;box-shadow:4px 4px 0 rgba(0,0,0,.65);white-space:nowrap;}
+  .presnap-hint{position:absolute;left:50%;bottom:13px;transform:translateX(-50%);background:rgba(5,8,8,.9);color:var(--cream);border:2px solid var(--gold);padding:8px 13px;font-size:9px;font-weight:900;letter-spacing:.05em;box-shadow:3px 3px 0 rgba(0,0,0,.65);white-space:nowrap;text-transform:uppercase;pointer-events:none;}
+  .presnap-hint span{color:var(--gold);}
   .overlay{position:absolute;inset:0;background:rgba(2,5,4,.72);display:none;align-items:center;justify-content:center;padding:14px;backdrop-filter:blur(1px);}
   .overlay.show{display:flex;}
   .card{background:var(--panel);border:3px solid var(--cream);padding:14px;width:100%;max-width:480px;max-height:92%;display:flex;flex-direction:column;box-shadow:7px 7px 0 rgba(0,0,0,.62);}
@@ -134,7 +135,7 @@
           <button id="btn-menu-settings">Settings</button>
           <button id="btn-start-editor">Formation Lab</button>
         </div>
-        <div class="menu-version">Prototype v47</div>
+        <div class="menu-version">Prototype v48</div>
       </div>
     </div>
   </div>
@@ -237,7 +238,7 @@
   <div class="momentum-label" id="momentum-label"></div>
   <div class="field-container">
     <canvas id="field" width="800" height="380"></canvas>
-    <button id="btn-snap" class="floating-snap" style="display:none">Snap ball</button>
+    <div id="presnap-hint" class="presnap-hint" style="display:none">Drag from QB to pass <span>|</span> Tap RB to run</div>
     <div id="edit-panel" style="display:none;position:absolute;left:0;right:0;bottom:0;background:#1b2126;border-top:1px solid #333c43;padding:10px;border-radius:0 0 12px 12px;">
       <p style="font-size:12px;color:#9aa1a8;margin:0 0 8px;text-align:center">Drag any player to reposition. x = lateral position, y = yards from the line of scrimmage.</p>
       <textarea id="edit-json" readonly style="width:100%;height:70px;font-family:monospace;font-size:11px;background:#0d1013;color:#eee;border:1px solid #3a4148;border-radius:6px;padding:6px;box-sizing:border-box;"></textarea>
@@ -392,22 +393,22 @@ const PLAY_ICONS={
   run:'<svg viewBox="0 0 56 40" width="52" height="36"><line x1="14" y1="30" x2="14" y2="18" stroke-width="2"/><line x1="42" y1="30" x2="42" y2="18" stroke-width="2"/><line x1="28" y1="34" x2="28" y2="6" stroke-width="3"/><path d="M21 13 L28 4 L35 13" stroke-width="3" fill="none"/></svg>'
 };
 const PLAYS={
-  slants:{name:'Quick slants',
+  slants:{name:'Quick slants',runOption:'handoff',rbX:228,
     routes:{wr1:[{x:45,y:2},{x:150,y:6}],wr2:[{x:335,y:1},{x:350,y:3}],rb:[{x:230,y:1},{x:250,y:2}]},
     defenders:{wr1:['cb1'],wr2:['cb2'],rb:['lb1']}},
-  deep:{name:'Deep shot',
+  deep:{name:'Deep shot',runOption:'pitch',rbX:252,
     routes:{wr1:[{x:45,y:5}],wr2:[{x:345,y:20}],te:[{x:290,y:3},{x:245,y:12}],rb:[{x:230,y:1},{x:250,y:2}]},
     defenders:{wr1:['cb1'],wr2:['cb2','s1'],te:['lb1']}},
-  mesh:{name:'Mesh crossers',
+  mesh:{name:'Mesh crossers',runOption:'handoff',rbX:228,
     routes:{wr1:[{x:45,y:3},{x:280,y:5}],wr2:[{x:335,y:3},{x:100,y:5}],te:[{x:290,y:1},{x:335,y:2}],rb:[{x:230,y:1},{x:250,y:2}]},
     defenders:{wr1:['cb1'],wr2:['cb2'],te:['lb1'],rb:['s1']}},
-  verticals:{name:'Four verticals',
+  verticals:{name:'Four verticals',runOption:'pitch',rbX:248,
     routes:{wr1:[{x:45,y:22}],wr3:[{x:115,y:22}],te:[{x:260,y:20}],wr2:[{x:345,y:22}],rb:[{x:230,y:1},{x:250,y:2}]},
     defenders:{wr1:['cb1'],wr3:['s1'],te:['lb1'],wr2:['cb2']}},
-  screen:{name:'Screen pass',
+  screen:{name:'Screen pass',runOption:'pitch',rbX:260,
     routes:{rb:[{x:280,y:1}]},
     defenders:{rb:['cb1']}},
-  run:{name:'Inside run',routes:{},defenders:{}}
+  run:{name:'Inside run',runOption:'handoff',rbX:228,routes:{},defenders:{}}
 };
 
 const DL_CONFIG=[
@@ -455,14 +456,14 @@ function momentumLabel(){
   return 'Gridiron - even fight';
 }
 
-const game={playerScore:0,cpuScore:0,quarter:1,quarterMinutes:3,clock:180,overtime:false,otRound:0,down:1,distance:10,los:20,firstDownYard:30,phase:'menu',message:'',thrown:false,cameraYard:20,playCall:null,passMode:'drag',throwType:'lob',difficulty:'medium',momentum:0,paused:false,centerYfield:0,carrierSince:0,blitzer:null,tackle:null,possession:'player',practice:false,showRoutes:true,firstHalfReceiver:'player',secondHalfReceiver:'cpu',userTeamId:'bos',cpuTeamId:'ny1',opponentChoice:'random'};
+const game={playerScore:0,cpuScore:0,quarter:1,quarterMinutes:3,clock:180,overtime:false,otRound:0,down:1,distance:10,los:20,firstDownYard:30,phase:'menu',message:'',thrown:false,cameraYard:20,playCall:null,passMode:'drag',throwType:'lob',difficulty:'medium',momentum:0,paused:false,centerYfield:0,carrierSince:0,blitzer:null,tackle:null,possession:'player',practice:false,showRoutes:true,firstHalfReceiver:'player',secondHalfReceiver:'cpu',userTeamId:'bos',cpuTeamId:'ny1',opponentChoice:'random',runActive:false,runType:'handoff'};
 const League=window.GridironLeague;
 let franchise=League.loadFranchise()||League.createFranchise(game.userTeamId);
 game.userTeamId=franchise.userTeamId||game.userTeamId;
 try{game.opponentChoice=localStorage.getItem('gridironLegendsOpponentChoice')||'random';}catch(e){}
 let userTeam=League.findTeamState(franchise,game.userTeamId)||franchise.teams[0];
 let cpuTeam=League.findTeamState(franchise,game.cpuTeamId)||franchise.teams[1];
-let players={},decor=[],ball={inFlight:false},ballCarrier=null,breakCooldown=0;
+let players={},decor=[],ball={inFlight:false},ballCarrier=null,breakCooldown=0,runExchange=null,pendingTapThrow=null;
 let continueAction=null;
 let editMode=false, dragEntity=null;
 function allEntities(){return [...Object.values(players),...decor];}
@@ -697,17 +698,21 @@ function initPlay(){
   decor.forEach((e,i)=>{e.skin=(i+(e.team===DEF?2:0))%SKIN_PALETTES.length;});
   ballCarrier=players.qb;
   ball={inFlight:false};
+  runExchange=null;
+  pendingTapThrow=null;
   game.phase='callsheet';
   game.message='';
   game.thrown=false;
   game.playCall=null;
+  game.runActive=false;
+  game.runType='handoff';
   game.blitzer=null;
   game.tackle=null;
   game.possession='player';
   game.cameraYard=los;
   hideAllOverlays();
   document.getElementById('callsheet-overlay').classList.add('show');
-  document.getElementById('btn-snap').style.display='none';
+  document.getElementById('presnap-hint').style.display='none';
   updateHUD();
 }
 function hideAllOverlays(){
@@ -764,9 +769,11 @@ function choosePlay(p){
   game.playCall=p;
   game.phase='presnap';
   document.getElementById('callsheet-overlay').classList.remove('show');
-  const btn=document.getElementById('btn-snap');
-  btn.textContent='Snap - '+PLAYS[p].name;
-  btn.style.display='block';
+  const play=PLAYS[p];
+  players.rb.x=play.rbX||228;
+  const hint=document.getElementById('presnap-hint');
+  hint.innerHTML=(p==='run'?'Tap the field to run':'Drag from QB to pass')+' <span>|</span> Tap RB to '+play.runOption;
+  hint.style.display='block';
 }
 function resetDownsAt(los){
   game.los=clamp(los,1,99);
@@ -798,7 +805,7 @@ function showResult(message,nextAction,buttonLabel='Continue'){
   game.message=message;
   game.phase='result';
   continueAction=nextAction;
-  document.getElementById('btn-snap').style.display='none';
+  document.getElementById('presnap-hint').style.display='none';
   document.getElementById('overlay-msg').textContent=game.message;
   document.getElementById('btn-continue').textContent=buttonLabel;
   const resultCard=document.getElementById('result-card');
@@ -1092,12 +1099,23 @@ function startOpponentPossession(startField,reason){
   showResult(result.message,()=>finishOpponentPossession(result.playerStart));
 }
 function onSnap(){
+  if(game.phase!=='presnap')return false;
   game.phase='live';game.snapTime=performance.now();
-  document.getElementById('btn-snap').style.display='none';
-  if(game.playCall==='run'){game.thrown=true;ballCarrier=players.rb;game.carrierSince=performance.now();}
-  else if(Math.random()<currentDiff().blitzChance){
+  document.getElementById('presnap-hint').style.display='none';
+  if(Math.random()<currentDiff().blitzChance){
     game.blitzer=Math.random()<0.5?'lb1':'s1';
   }
+  return true;
+}
+function startRunOption(){
+  if(!onSnap())return;
+  const now=performance.now();
+  const play=PLAYS[game.playCall];
+  game.thrown=true;
+  game.runActive=true;
+  game.runType=play.runOption||'handoff';
+  ballCarrier=null;
+  runExchange={type:game.runType,startTime:now,duration:game.runType==='pitch'?240:110};
 }
 function releaseThrow(t){
   if(game.thrown||game.phase!=='live')return;
@@ -1147,7 +1165,7 @@ function resolveTackle(tackler){
   const yardGained=Math.round(ballCarrier.yfield/XPX-game.los);
   let label;
   if(ballCarrier===players.qb)label=yardGained<0?'Sacked':'Scramble';
-  else if(game.playCall==='run')label='Run';
+  else if(game.runActive)label=game.runType==='pitch'?'Pitch':'Run';
   else label='Catch';
   if(!tackler){endPlay(yardGained,label);return;}
   const now=performance.now();
@@ -1162,7 +1180,7 @@ function resolveOutOfBounds(){
   const yardGained=Math.round(ballCarrier.yfield/XPX-game.los);
   let label;
   if(ballCarrier===players.qb)label=yardGained<0?'Sacked':'Scramble';
-  else if(game.playCall==='run')label='Run';
+  else if(game.runActive)label=game.runType==='pitch'?'Pitch':'Run';
   else label='Catch';
   steering=false;steerAnchor=null;steerCurrent=null;
   endPlay(yardGained,label,true);
@@ -1203,6 +1221,20 @@ function tick(now){
     const playDef=PLAYS[game.playCall];
     const screenMult=(game.playCall==='screen'&&t<1.3)?0.25:1;
     breakCooldown=Math.max(0,breakCooldown-dt);
+
+    if(runExchange&&now-runExchange.startTime>=runExchange.duration){
+      runExchange=null;
+      ballCarrier=players.rb;
+      players.rb.action='carry';
+      players.rb.actionStart=now;
+      game.carrierSince=now;
+    }
+    if(pendingTapThrow&&now>=pendingTapThrow.releaseAt){
+      const pending=pendingTapThrow;
+      pendingTapThrow=null;
+      const target=pending.playerKey?toCanvas(players[pending.playerKey]):pending.target;
+      releaseThrow({x:target.cx??target.x,y:target.cy??target.y});
+    }
 
     DL_KEYS.forEach(key=>{
       const dl=players[key];
@@ -1253,7 +1285,7 @@ function tick(now){
         pursuers=pursuers.concat(releasedDL);
         if(game.blitzer)pursuers.push(players[game.blitzer]);
       } else {
-        if(game.playCall==='run'){
+        if(game.runActive){
           if(lb1.state==='approach'){
             if(reacted&&lb1.yfield<=game.centerYfield+3*XPX){
               lb1.state='engaged';
@@ -1314,7 +1346,7 @@ function tick(now){
             if(distance<nearest){nearest=distance;nearestDefender=def;}
           });
           if(nearest<TACKLE_R){
-            const breakChance = diff.breakTackle + (game.playCall==='run'&&ballCarrier===players.rb?diff.runBreakBonus:0);
+            const breakChance = diff.breakTackle + (game.runActive&&ballCarrier===players.rb?diff.runBreakBonus:0);
             if(Math.random()<breakChance){
               breakCooldown=0.45;
               ballCarrier.breakSlowUntil=now+BREAK_SLOW_MS;
@@ -1797,6 +1829,17 @@ function draw(){
   drawPlayer(players.te,OFF,ballCarrier===players.te);
   drawPlayer(players.wr2,OFF,ballCarrier===players.wr2);
   drawPlayer(players.qb,OFF,ballCarrier===players.qb);
+  if(runExchange){
+    const progress=clamp((performance.now()-runExchange.startTime)/runExchange.duration,0,1);
+    const from=toCanvas(players.qb),to=toCanvas(players.rb);
+    const bx=from.cx+(to.cx-from.cx)*progress;
+    const lift=runExchange.type==='pitch'?Math.sin(Math.PI*progress)*12:0;
+    const by=from.cy+(to.cy-from.cy)*progress-lift;
+    ctx.fillStyle='#7a4a26';
+    ctx.beginPath();ctx.ellipse(bx,by,4.5,2.7,0.5,0,7);ctx.fill();
+    ctx.strokeStyle='#fff';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(bx-1.5,by);ctx.lineTo(bx+1.5,by);ctx.stroke();
+  }
   drawTackleImpact();
   if(aiming&&aimTarget){
     const {cx,cy}=toCanvas(players.qb);
@@ -1870,15 +1913,40 @@ function pointerPos(ev){
   const r=canvas.getBoundingClientRect();
   return {x:(ev.clientX-r.left)*(canvas.width/r.width), y:(ev.clientY-r.top)*(canvas.height/r.height)};
 }
+function pointNearPlayer(point,player,radius=32){
+  const pos=toCanvas(player);
+  return Math.hypot(point.x-pos.cx,point.y-pos.cy)<=radius;
+}
+function beginTapPass(point){
+  const routes=Object.keys(PLAYS[game.playCall]?.routes||{});
+  let playerKey=null,best=Infinity;
+  routes.forEach(key=>{
+    const pos=toCanvas(players[key]);
+    const distance=Math.hypot(point.x-pos.cx,point.y-pos.cy);
+    if(distance<best){best=distance;playerKey=key;}
+  });
+  pendingTapThrow={playerKey:best<=36?playerKey:null,target:{x:point.x,y:point.y},releaseAt:performance.now()+240};
+}
 canvas.addEventListener('pointerdown',ev=>{
   if(editMode){
     canvas.setPointerCapture(ev.pointerId);
     dragEntity=findNearEntity(pointerPos(ev));
     return;
   }
-  if(game.phase!=='live'||game.paused)return;
+  if((game.phase!=='live'&&game.phase!=='presnap')||game.paused)return;
   canvas.setPointerCapture(ev.pointerId);
   const p=pointerPos(ev);
+  if(game.phase==='presnap'){
+    if(game.playCall==='run'||pointNearPlayer(p,players.rb)){
+      startRunOption();
+      steering=true;steerAnchor={x:p.x,y:p.y};steerCurrent={x:p.x,y:p.y};
+      return;
+    }
+    onSnap();
+    if(game.passMode==='tap')beginTapPass(p);
+    else {aiming=true;aimStartedAt=performance.now();aimTarget=p;}
+    return;
+  }
   if(!game.thrown){
     if(game.passMode==='tap'){
       releaseThrow(p);
@@ -1974,7 +2042,6 @@ document.getElementById('opponent-select').addEventListener('change',event=>{
   try{localStorage.setItem('gridironLegendsOpponentChoice',game.opponentChoice);}catch(e){}
   updateOpponentPreview();
 });
-document.getElementById('btn-snap').addEventListener('click',onSnap);
 document.getElementById('btn-continue').addEventListener('click',()=>{
   const action=continueAction;
   continueAction=null;
@@ -2049,7 +2116,7 @@ document.getElementById('btn-start-editor').addEventListener('click',()=>{
   initPlay();
   editMode=true;
   hideAllOverlays();
-  document.getElementById('btn-snap').style.display='none';
+  document.getElementById('presnap-hint').style.display='none';
   document.getElementById('edit-panel').style.display='block';
   updateEditJSON();
   ensureLoopStarted();
