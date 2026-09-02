@@ -14,6 +14,19 @@ A browser-first, pixel-art American football game focused on fast arcade gamepla
 - Multiple player skin tones
 - Practice mode and formation lab
 
+## League foundation
+
+The in-progress league system includes:
+
+- 32 original franchises based in real football cities
+- Legacy and Frontier conferences
+- North, South, East, and West divisions
+- 12 star-player roster slots per team
+- Generated names, ages, ratings, development traits, contracts, and jersey numbers
+- Offensive and defensive coordinator ratings
+- Coordinator-scaled generic offense and defense ratings
+- Persistent local franchise data and team selection
+
 ## Local development
 
 ```bash
@@ -31,6 +44,6 @@ Vite outputs the deployable site to `dist/`.
 
 ## Project direction
 
-The current prototype is the gameplay foundation for Gridiron Legends. Planned systems include teams, conferences, divisions, compact star-player rosters, coaching staffs, franchise mode, and career mode.
+The current prototype is the gameplay foundation for Gridiron Legends. Planned systems include schedules, standings, roster management, player progression, franchise mode, and career mode.
 
 The abandoned 3D prototype is preserved on the `legacy-3d` branch.
