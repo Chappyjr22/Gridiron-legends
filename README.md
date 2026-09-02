@@ -1,25 +1,18 @@
 # Gridiron Legends
 
-Browser-first retro 3D American football prototype built with HTML, CSS, JavaScript, Three.js, and Vite.
+A browser-first, pixel-art American football game focused on fast arcade gameplay, readable football strategy, and future franchise and career modes.
 
-## Prototype v0.1
+## Current playable build
 
-Current playable slice includes:
-
-- Behind-the-offense camera
-- Las Vegas Outlaws vs Denver Mountaineers presentation
-- Responsive retro scorebug
-- QB pocket movement
-- Four receiver routes with receiver badges
-- Pull-back, aim, and release passing
-- Visible pass arc and landing target
-- Catch detection and automatic ball-carrier control
-- Tuck-and-run QB scrambling
-- QB slide
-- Hold-to-power move state
-- Basic defensive pursuit and tackling
-- First downs, touchdowns, ball spot, downs, and play clock
-- Desktop and touch controls
+- Four-quarter game loop with adjustable 2 to 5 minute quarters
+- Passing and running plays
+- Desktop and mobile pointer controls
+- Simulated opponent possessions, punts, extra points, and field goals
+- Four-down logic, scoring, turnovers, and field position
+- Multiple difficulty levels
+- Pixel-art players, animation states, field, stadium, end zones, and goal posts
+- Multiple player skin tones
+- Practice mode and formation lab
 
 ## Local development
 
@@ -36,29 +29,8 @@ npm run build
 
 Vite outputs the deployable site to `dist/`.
 
-## Cloudflare Pages
+## Project direction
 
-Connect this GitHub repository to Cloudflare Pages with:
+The current prototype is the gameplay foundation for Gridiron Legends. Planned systems include teams, conferences, divisions, compact star-player rosters, coaching staffs, franchise mode, and career mode.
 
-- Production branch: `main`
-- Build command: `npm run build`
-- Build output directory: `dist`
-
-## Desktop controls
-
-- WASD / Arrow keys: move
-- Space: snap
-- Drag on the field: pull back, aim, release to throw
-- R: tuck and run
-- Shift: QB slide
-
-## Mobile controls
-
-- Virtual stick: movement
-- SNAP: start the play
-- Drag on the field: pull back, aim, release
-- TUCK & RUN: scramble
-- SLIDE: QB slide
-- Hold POWER: power move
-
-The purpose of v0.1 is to tune the camera, movement, passing feel, field visibility, and mobile control layout before expanding into full football logic, Franchise Mode, and Career Mode.
+The abandoned 3D prototype is preserved on the `legacy-3d` branch.
