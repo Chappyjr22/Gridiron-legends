@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>Gridiron Legends v50</title>
+<title>Gridiron Legends v51</title>
 <style>
   :root{--ink:#080b0c;--panel:#101719;--panel2:#182225;--cream:#f5edcf;--gold:#f4c542;--green:#2c7a3f;--green2:#205b31;--blue:#2868a8;--red:#a83232;--muted:#9ca9a5;--line:#3d4d48;}
   *{box-sizing:border-box;}
@@ -156,7 +156,7 @@
           <button id="btn-menu-settings">Settings</button>
           <button id="btn-start-editor">Formation Lab</button>
         </div>
-        <div class="menu-version">Prototype v50</div>
+        <div class="menu-version">Prototype v51</div>
       </div>
     </div>
   </div>
@@ -417,6 +417,9 @@ const SPRITE_ANCHOR_X=32;
 const SPRITE_ANCHOR_Y=55;
 const spriteImage=new Image();
 const spriteSheets={off:[],def:[]};
+const presnapSpriteImage=new Image();
+const presnapSpriteSheets={off:[],def:[]};
+const PRESNAP_COLUMNS={qb:0,rb:1,wr:2,ol:3};
 const SKIN_SOURCE=['247,196,145','243,186,134','236,182,135','238,175,118','213,148,95'];
 const SKIN_PALETTES=[
   [[247,196,145],[243,186,134],[236,182,135],[238,175,118],[213,148,95]],
@@ -424,7 +427,7 @@ const SKIN_PALETTES=[
   [[204,137,88],[184,112,67],[171,101,59],[151,82,47],[115,58,33]],
   [[158,98,64],[137,77,52],[124,68,46],[105,55,38],[75,36,26]]
 ];
-let spritesReady=false;
+let spritesReady=false,presnapSpritesReady=false;
 const goalPostImage=new Image();
 let goalPostReady=false;
 goalPostImage.onload=function(){goalPostReady=true;};
@@ -552,9 +555,14 @@ function applyUniform(team,target){
 }
 function rebuildSpriteSheets(){
   if(!spriteImage.complete||!spriteImage.naturalWidth)return;
-  spriteSheets.off=SKIN_PALETTES.map((_,i)=>makeTeamSpriteSheet(OFF,i));
-  spriteSheets.def=SKIN_PALETTES.map((_,i)=>makeTeamSpriteSheet(DEF,i));
+  spriteSheets.off=SKIN_PALETTES.map((_,i)=>makeTeamSpriteSheet(OFF,i,spriteImage,false));
+  spriteSheets.def=SKIN_PALETTES.map((_,i)=>makeTeamSpriteSheet(DEF,i,spriteImage,false));
   spritesReady=true;
+  if(presnapSpriteImage.complete&&presnapSpriteImage.naturalWidth){
+    presnapSpriteSheets.off=SKIN_PALETTES.map((_,i)=>makeTeamSpriteSheet(OFF,i,presnapSpriteImage,true));
+    presnapSpriteSheets.def=SKIN_PALETTES.map((_,i)=>makeTeamSpriteSheet(DEF,i,presnapSpriteImage,true));
+    presnapSpritesReady=true;
+  }
 }
 function rosterPlayer(team,slot){return team?.roster?.find(player=>player.slot===slot)||null;}
 function rosterNumber(team,slot,fallback){return String(rosterPlayer(team,slot)?.number??fallback);}
@@ -721,19 +729,23 @@ function closeLeagueHub(){
   document.getElementById('start-screen').classList.add('show');
 }
 
-function makeTeamSpriteSheet(team,skinIndex){
+function makeTeamSpriteSheet(team,skinIndex,sourceImage=spriteImage,expandedSkin=false){
   const out=document.createElement('canvas');
-  out.width=spriteImage.width;out.height=spriteImage.height;
+  out.width=sourceImage.width;out.height=sourceImage.height;
   const outCtx=out.getContext('2d',{willReadFrequently:true});
   outCtx.imageSmoothingEnabled=false;
-  outCtx.drawImage(spriteImage,0,0);
+  outCtx.drawImage(sourceImage,0,0);
   const image=outCtx.getImageData(0,0,out.width,out.height);
   const data=image.data;
   const uniformRamp=team.ramp||colorRamp(team.jersey);
   for(let i=0;i<data.length;i+=4){
     if(data[i+3]===0)continue;
     const r=data[i],g=data[i+1],b=data[i+2];
-    const skinSlot=SKIN_SOURCE.indexOf(r+','+g+','+b);
+    let skinSlot=SKIN_SOURCE.indexOf(r+','+g+','+b);
+    if(skinSlot<0&&expandedSkin&&r>95&&r>g*1.08&&g>b*1.05&&r-b>40){
+      const light=r+g+b;
+      skinSlot=light>560?0:light>500?1:light>440?2:light>370?3:4;
+    }
     if(skinSlot>=0){
       const color=SKIN_PALETTES[skinIndex][skinSlot];
       data[i]=color[0];data[i+1]=color[1];data[i+2]=color[2];
@@ -746,6 +758,10 @@ function makeTeamSpriteSheet(team,skinIndex){
   outCtx.putImageData(image,0,0);
   return out;
 }
+presnapSpriteImage.onload=function(){
+  rebuildSpriteSheets();
+};
+presnapSpriteImage.src='presnap_positions_left.png';
 spriteImage.onload=function(){
   rebuildSpriteSheets();
 };
@@ -771,12 +787,12 @@ function initPlay(){
   game.centerYfield=los*XPX;
   breakCooldown=0;
   players={
-    qb:ratedEntity({x:191,yfield:(los-3.4)*XPX,num:rosterNumber(userTeam,'QB','7')},userTeam,'QB','offense'),
-    rb:ratedEntity({x:228,yfield:(los-3.4)*XPX,num:rosterNumber(userTeam,'RB','22'),routeIdx:0},userTeam,'RB','offense'),
-    wr1:ratedEntity({x:39,yfield:(los-1.6)*XPX,num:rosterNumber(userTeam,'WR1','81'),routeIdx:0},userTeam,'WR1','offense'),
-    wr3:ratedEntity({x:85,yfield:(los-0.3)*XPX,num:'15',routeIdx:0},userTeam,null,'offense'),
-    te:ratedEntity({x:293,yfield:(los-0.2)*XPX,num:rosterNumber(userTeam,'TE','87'),routeIdx:0},userTeam,'TE','offense'),
-    wr2:ratedEntity({x:333,yfield:(los-1.7)*XPX,num:rosterNumber(userTeam,'WR2','84'),routeIdx:0},userTeam,'WR2','offense'),
+    qb:ratedEntity({x:191,yfield:(los-3.4)*XPX,num:rosterNumber(userTeam,'QB','7'),presnapRole:'qb'},userTeam,'QB','offense'),
+    rb:ratedEntity({x:228,yfield:(los-3.4)*XPX,num:rosterNumber(userTeam,'RB','22'),routeIdx:0,presnapRole:'rb'},userTeam,'RB','offense'),
+    wr1:ratedEntity({x:39,yfield:(los-1.6)*XPX,num:rosterNumber(userTeam,'WR1','81'),routeIdx:0,presnapRole:'wr'},userTeam,'WR1','offense'),
+    wr3:ratedEntity({x:85,yfield:(los-0.3)*XPX,num:'15',routeIdx:0,presnapRole:'wr'},userTeam,null,'offense'),
+    te:ratedEntity({x:293,yfield:(los-0.2)*XPX,num:rosterNumber(userTeam,'TE','87'),routeIdx:0,presnapRole:'wr'},userTeam,'TE','offense'),
+    wr2:ratedEntity({x:333,yfield:(los-1.7)*XPX,num:rosterNumber(userTeam,'WR2','84'),routeIdx:0,presnapRole:'wr'},userTeam,'WR2','offense'),
     cb1:ratedEntity({x:48,yfield:(los+2.9)*XPX,num:rosterNumber(cpuTeam,'DB1','24')},cpuTeam,'DB1','defense'),
     cb2:ratedEntity({x:336,yfield:(los+3.2)*XPX,num:rosterNumber(cpuTeam,'DB2','21')},cpuTeam,'DB2','defense'),
     s1:ratedEntity({x:100,yfield:(los+8.8)*XPX,num:'1'},cpuTeam,null,'defense'),
@@ -789,9 +805,9 @@ function initPlay(){
     players[c.key]=ratedEntity({x:c.startX,yfield:(los+0.7)*XPX,num:c.num,state:'approach',engageStart:0,engageDur:0,blockerX:c.blockerX,blockRating:positionRating(userTeam,blockerSlots[index],'offense')},cpuTeam,dlSlots[index],'defense');
   });
   decor=[
-    ratedEntity({x:157,yfield:(los-1)*XPX,team:OFF,num:rosterNumber(userTeam,'OL1','65')},userTeam,'OL1','offense'),ratedEntity({x:170,yfield:(los-0.5)*XPX,team:OFF,num:'66'},userTeam,null,'offense'),
-    ratedEntity({x:192,yfield:(los-0.2)*XPX,team:OFF,num:'67'},userTeam,null,'offense'),ratedEntity({x:215,yfield:(los-0.5)*XPX,team:OFF,num:'68'},userTeam,null,'offense'),
-    ratedEntity({x:235,yfield:(los-0.9)*XPX,team:OFF,num:rosterNumber(userTeam,'OL2','69')},userTeam,'OL2','offense'),
+    ratedEntity({x:157,yfield:(los-1)*XPX,team:OFF,num:rosterNumber(userTeam,'OL1','65'),presnapRole:'ol'},userTeam,'OL1','offense'),ratedEntity({x:170,yfield:(los-0.5)*XPX,team:OFF,num:'66',presnapRole:'ol'},userTeam,null,'offense'),
+    ratedEntity({x:192,yfield:(los-0.2)*XPX,team:OFF,num:'67',presnapRole:'ol'},userTeam,null,'offense'),ratedEntity({x:215,yfield:(los-0.5)*XPX,team:OFF,num:'68',presnapRole:'ol'},userTeam,null,'offense'),
+    ratedEntity({x:235,yfield:(los-0.9)*XPX,team:OFF,num:rosterNumber(userTeam,'OL2','69'),presnapRole:'ol'},userTeam,'OL2','offense'),
     ratedEntity({x:155,yfield:(los+2.7)*XPX,team:DEF,num:'51'},cpuTeam,null,'defense'),ratedEntity({x:233,yfield:(los+2.8)*XPX,team:DEF,num:'52'},cpuTeam,null,'defense'),
     ratedEntity({x:277,yfield:(los+8.8)*XPX,team:DEF,num:'3'},cpuTeam,null,'defense')
   ];
@@ -1584,12 +1600,16 @@ function drawPlayer(e,team,highlight,isDecor){
   ctx.fillStyle='rgba(0,0,0,0.25)';
   ctx.beginPath();ctx.ellipse(cx,cy+12,isDiving?15:10,3.2,0,0,7);ctx.fill();
   if(spritesReady){
-    const frame=playerFrame(e,!!isDecor);
-    const sheets=team===DEF?spriteSheets.def:spriteSheets.off;
+    const usePresnapSprite=presnapSpritesReady&&team===OFF&&e.presnapRole&&
+      (game.phase==='callsheet'||game.phase==='presnap');
+    const frame=usePresnapSprite?{row:0,col:PRESNAP_COLUMNS[e.presnapRole]}:playerFrame(e,!!isDecor);
+    const sheets=usePresnapSprite
+      ?(team===DEF?presnapSpriteSheets.def:presnapSpriteSheets.off)
+      :(team===DEF?spriteSheets.def:spriteSheets.off);
     const sheet=sheets[e.skin??0]||sheets[0];
     const anchorX=SPRITE_DRAW*(SPRITE_ANCHOR_X/SPRITE_CELL);
     const anchorY=SPRITE_DRAW*(SPRITE_ANCHOR_Y/SPRITE_CELL);
-    const sourceFacing=((frame.row===0&&frame.col>=2)||frame.row===3)?'right':'left';
+    const sourceFacing=usePresnapSprite?'left':(((frame.row===0&&frame.col>=2)||frame.row===3)?'right':'left');
     const desiredFacing=e.facing||(team===DEF?'right':'left');
     const mirrorFrame=sourceFacing!==desiredFacing;
     ctx.save();
