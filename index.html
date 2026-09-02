@@ -315,8 +315,8 @@
   </div>
   </div>
 </div>
-<script src="./league.js"></script>
-<script>
+<script type="module">
+import './league.js';
 document.addEventListener('touchmove',function(e){
   if(e.target.closest('.card')||e.target.closest('#edit-panel'))return;
   e.preventDefault();
