@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>Gridiron Legends v51</title>
+<title>Gridiron Legends v52</title>
 <style>
   :root{--ink:#080b0c;--panel:#101719;--panel2:#182225;--cream:#f5edcf;--gold:#f4c542;--green:#2c7a3f;--green2:#205b31;--blue:#2868a8;--red:#a83232;--muted:#9ca9a5;--line:#3d4d48;}
   *{box-sizing:border-box;}
@@ -156,7 +156,7 @@
           <button id="btn-menu-settings">Settings</button>
           <button id="btn-start-editor">Formation Lab</button>
         </div>
-        <div class="menu-version">Prototype v51</div>
+        <div class="menu-version">Prototype v52</div>
       </div>
     </div>
   </div>
@@ -420,6 +420,9 @@ const spriteSheets={off:[],def:[]};
 const presnapSpriteImage=new Image();
 const presnapSpriteSheets={off:[],def:[]};
 const PRESNAP_COLUMNS={qb:0,rb:1,wr:2,ol:3};
+const defensePresnapSpriteImage=new Image();
+const defensePresnapSpriteSheets=[];
+const DEFENSE_PRESNAP_COLUMNS={dl:0,cb:1,s:2};
 const SKIN_SOURCE=['247,196,145','243,186,134','236,182,135','238,175,118','213,148,95'];
 const SKIN_PALETTES=[
   [[247,196,145],[243,186,134],[236,182,135],[238,175,118],[213,148,95]],
@@ -427,7 +430,7 @@ const SKIN_PALETTES=[
   [[204,137,88],[184,112,67],[171,101,59],[151,82,47],[115,58,33]],
   [[158,98,64],[137,77,52],[124,68,46],[105,55,38],[75,36,26]]
 ];
-let spritesReady=false,presnapSpritesReady=false;
+let spritesReady=false,presnapSpritesReady=false,defensePresnapSpritesReady=false;
 const goalPostImage=new Image();
 let goalPostReady=false;
 goalPostImage.onload=function(){goalPostReady=true;};
@@ -562,6 +565,10 @@ function rebuildSpriteSheets(){
     presnapSpriteSheets.off=SKIN_PALETTES.map((_,i)=>makeTeamSpriteSheet(OFF,i,presnapSpriteImage,true));
     presnapSpriteSheets.def=SKIN_PALETTES.map((_,i)=>makeTeamSpriteSheet(DEF,i,presnapSpriteImage,true));
     presnapSpritesReady=true;
+  }
+  if(defensePresnapSpriteImage.complete&&defensePresnapSpriteImage.naturalWidth){
+    defensePresnapSpriteSheets.splice(0,defensePresnapSpriteSheets.length,...SKIN_PALETTES.map((_,i)=>makeTeamSpriteSheet(DEF,i,defensePresnapSpriteImage,true)));
+    defensePresnapSpritesReady=true;
   }
 }
 function rosterPlayer(team,slot){return team?.roster?.find(player=>player.slot===slot)||null;}
@@ -762,6 +769,10 @@ presnapSpriteImage.onload=function(){
   rebuildSpriteSheets();
 };
 presnapSpriteImage.src='presnap_positions_left.png';
+defensePresnapSpriteImage.onload=function(){
+  rebuildSpriteSheets();
+};
+defensePresnapSpriteImage.src='defense_presnap_positions_left.png';
 spriteImage.onload=function(){
   rebuildSpriteSheets();
 };
@@ -793,23 +804,23 @@ function initPlay(){
     wr3:ratedEntity({x:85,yfield:(los-0.3)*XPX,num:'15',routeIdx:0,presnapRole:'wr'},userTeam,null,'offense'),
     te:ratedEntity({x:293,yfield:(los-0.2)*XPX,num:rosterNumber(userTeam,'TE','87'),routeIdx:0,presnapRole:'wr'},userTeam,'TE','offense'),
     wr2:ratedEntity({x:333,yfield:(los-1.7)*XPX,num:rosterNumber(userTeam,'WR2','84'),routeIdx:0,presnapRole:'wr'},userTeam,'WR2','offense'),
-    cb1:ratedEntity({x:48,yfield:(los+2.9)*XPX,num:rosterNumber(cpuTeam,'DB1','24')},cpuTeam,'DB1','defense'),
-    cb2:ratedEntity({x:336,yfield:(los+3.2)*XPX,num:rosterNumber(cpuTeam,'DB2','21')},cpuTeam,'DB2','defense'),
-    s1:ratedEntity({x:100,yfield:(los+8.8)*XPX,num:'1'},cpuTeam,null,'defense'),
+    cb1:ratedEntity({x:48,yfield:(los+2.9)*XPX,num:rosterNumber(cpuTeam,'DB1','24'),presnapRole:'cb'},cpuTeam,'DB1','defense'),
+    cb2:ratedEntity({x:336,yfield:(los+3.2)*XPX,num:rosterNumber(cpuTeam,'DB2','21'),presnapRole:'cb'},cpuTeam,'DB2','defense'),
+    s1:ratedEntity({x:100,yfield:(los+8.8)*XPX,num:'1',presnapRole:'s'},cpuTeam,null,'defense'),
     lb1:ratedEntity({x:192,yfield:(los+3.2)*XPX,num:rosterNumber(cpuTeam,'LB','50'),state:'approach',engageStart:0,engageDur:0},cpuTeam,'LB','defense')
   };
   DL_CONFIG[0].num=rosterNumber(cpuTeam,'DL1','90');
   DL_CONFIG[1].num=rosterNumber(cpuTeam,'DL2','93');
   const dlSlots=['DL1','DL2',null,null],blockerSlots=[null,'OL1',null,'OL2'];
   DL_CONFIG.forEach((c,index)=>{
-    players[c.key]=ratedEntity({x:c.startX,yfield:(los+0.7)*XPX,num:c.num,state:'approach',engageStart:0,engageDur:0,blockerX:c.blockerX,blockRating:positionRating(userTeam,blockerSlots[index],'offense')},cpuTeam,dlSlots[index],'defense');
+    players[c.key]=ratedEntity({x:c.startX,yfield:(los+0.7)*XPX,num:c.num,state:'approach',engageStart:0,engageDur:0,blockerX:c.blockerX,blockRating:positionRating(userTeam,blockerSlots[index],'offense'),presnapRole:'dl'},cpuTeam,dlSlots[index],'defense');
   });
   decor=[
     ratedEntity({x:157,yfield:(los-1)*XPX,team:OFF,num:rosterNumber(userTeam,'OL1','65'),presnapRole:'ol'},userTeam,'OL1','offense'),ratedEntity({x:170,yfield:(los-0.5)*XPX,team:OFF,num:'66',presnapRole:'ol'},userTeam,null,'offense'),
     ratedEntity({x:192,yfield:(los-0.2)*XPX,team:OFF,num:'67',presnapRole:'ol'},userTeam,null,'offense'),ratedEntity({x:215,yfield:(los-0.5)*XPX,team:OFF,num:'68',presnapRole:'ol'},userTeam,null,'offense'),
     ratedEntity({x:235,yfield:(los-0.9)*XPX,team:OFF,num:rosterNumber(userTeam,'OL2','69'),presnapRole:'ol'},userTeam,'OL2','offense'),
     ratedEntity({x:155,yfield:(los+2.7)*XPX,team:DEF,num:'51'},cpuTeam,null,'defense'),ratedEntity({x:233,yfield:(los+2.8)*XPX,team:DEF,num:'52'},cpuTeam,null,'defense'),
-    ratedEntity({x:277,yfield:(los+8.8)*XPX,team:DEF,num:'3'},cpuTeam,null,'defense')
+    ratedEntity({x:277,yfield:(los+8.8)*XPX,team:DEF,num:'3',presnapRole:'s'},cpuTeam,null,'defense')
   ];
   Object.entries(players).forEach(([key,e])=>{e.skin=SKIN_BY_POSITION[key]??0;});
   decor.forEach((e,i)=>{e.skin=(i+(e.team===DEF?2:0))%SKIN_PALETTES.length;});
@@ -1600,16 +1611,24 @@ function drawPlayer(e,team,highlight,isDecor){
   ctx.fillStyle='rgba(0,0,0,0.25)';
   ctx.beginPath();ctx.ellipse(cx,cy+12,isDiving?15:10,3.2,0,0,7);ctx.fill();
   if(spritesReady){
-    const usePresnapSprite=presnapSpritesReady&&team===OFF&&e.presnapRole&&
-      (game.phase==='callsheet'||game.phase==='presnap');
-    const frame=usePresnapSprite?{row:0,col:PRESNAP_COLUMNS[e.presnapRole]}:playerFrame(e,!!isDecor);
-    const sheets=usePresnapSprite
-      ?(team===DEF?presnapSpriteSheets.def:presnapSpriteSheets.off)
-      :(team===DEF?spriteSheets.def:spriteSheets.off);
+    const isPresnapPhase=game.phase==='callsheet'||game.phase==='presnap';
+    const useOffensePresnap=presnapSpritesReady&&isPresnapPhase&&team===OFF&&PRESNAP_COLUMNS[e.presnapRole]!==undefined;
+    const useDefensePresnap=defensePresnapSpritesReady&&isPresnapPhase&&team===DEF&&DEFENSE_PRESNAP_COLUMNS[e.presnapRole]!==undefined;
+    const usePositionPresnap=useOffensePresnap||useDefensePresnap;
+    const frame=useOffensePresnap
+      ?{row:0,col:PRESNAP_COLUMNS[e.presnapRole]}
+      :useDefensePresnap
+        ?{row:0,col:DEFENSE_PRESNAP_COLUMNS[e.presnapRole]}
+        :playerFrame(e,!!isDecor);
+    const sheets=useOffensePresnap
+      ?presnapSpriteSheets.off
+      :useDefensePresnap
+        ?defensePresnapSpriteSheets
+        :(team===DEF?spriteSheets.def:spriteSheets.off);
     const sheet=sheets[e.skin??0]||sheets[0];
     const anchorX=SPRITE_DRAW*(SPRITE_ANCHOR_X/SPRITE_CELL);
     const anchorY=SPRITE_DRAW*(SPRITE_ANCHOR_Y/SPRITE_CELL);
-    const sourceFacing=usePresnapSprite?'left':(((frame.row===0&&frame.col>=2)||frame.row===3)?'right':'left');
+    const sourceFacing=usePositionPresnap?'left':(((frame.row===0&&frame.col>=2)||frame.row===3)?'right':'left');
     const desiredFacing=e.facing||(team===DEF?'right':'left');
     const mirrorFrame=sourceFacing!==desiredFacing;
     ctx.save();
