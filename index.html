@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>Gridiron Legends v52</title>
+<title>Gridiron Legends v53</title>
 <style>
   :root{--ink:#080b0c;--panel:#101719;--panel2:#182225;--cream:#f5edcf;--gold:#f4c542;--green:#2c7a3f;--green2:#205b31;--blue:#2868a8;--red:#a83232;--muted:#9ca9a5;--line:#3d4d48;}
   *{box-sizing:border-box;}
@@ -156,7 +156,7 @@
           <button id="btn-menu-settings">Settings</button>
           <button id="btn-start-editor">Formation Lab</button>
         </div>
-        <div class="menu-version">Prototype v52</div>
+        <div class="menu-version">Prototype v53</div>
       </div>
     </div>
   </div>
@@ -464,10 +464,10 @@ const PLAYS={
 };
 
 const DL_CONFIG=[
-  {key:'dl1',num:'90',startX:188,blockerX:192},
-  {key:'dl2',num:'93',startX:160,blockerX:157},
-  {key:'dl3',num:'95',startX:214,blockerX:215},
-  {key:'dl4',num:'97',startX:241,blockerX:235}
+  {key:'dl1',num:'90',startX:188,blockerX:189},
+  {key:'dl2',num:'93',startX:160,blockerX:163},
+  {key:'dl3',num:'95',startX:214,blockerX:207},
+  {key:'dl4',num:'97',startX:241,blockerX:224}
 ];
 const DL_KEYS=DL_CONFIG.map(c=>c.key);
 const DIFFICULTIES={
@@ -801,12 +801,12 @@ function initPlay(){
     qb:ratedEntity({x:191,yfield:(los-3.4)*XPX,num:rosterNumber(userTeam,'QB','7'),presnapRole:'qb'},userTeam,'QB','offense'),
     rb:ratedEntity({x:228,yfield:(los-3.4)*XPX,num:rosterNumber(userTeam,'RB','22'),routeIdx:0,presnapRole:'rb'},userTeam,'RB','offense'),
     wr1:ratedEntity({x:39,yfield:(los-1.6)*XPX,num:rosterNumber(userTeam,'WR1','81'),routeIdx:0,presnapRole:'wr'},userTeam,'WR1','offense'),
-    wr3:ratedEntity({x:85,yfield:(los-0.3)*XPX,num:'15',routeIdx:0,presnapRole:'wr'},userTeam,null,'offense'),
-    te:ratedEntity({x:293,yfield:(los-0.2)*XPX,num:rosterNumber(userTeam,'TE','87'),routeIdx:0,presnapRole:'wr'},userTeam,'TE','offense'),
+    wr3:ratedEntity({x:84,yfield:(los-0.7)*XPX,num:'15',routeIdx:0,presnapRole:'wr'},userTeam,null,'offense'),
+    te:ratedEntity({x:293,yfield:(los-0.6)*XPX,num:rosterNumber(userTeam,'TE','87'),routeIdx:0,presnapRole:'wr'},userTeam,'TE','offense'),
     wr2:ratedEntity({x:333,yfield:(los-1.7)*XPX,num:rosterNumber(userTeam,'WR2','84'),routeIdx:0,presnapRole:'wr'},userTeam,'WR2','offense'),
     cb1:ratedEntity({x:48,yfield:(los+2.9)*XPX,num:rosterNumber(cpuTeam,'DB1','24'),presnapRole:'cb'},cpuTeam,'DB1','defense'),
     cb2:ratedEntity({x:336,yfield:(los+3.2)*XPX,num:rosterNumber(cpuTeam,'DB2','21'),presnapRole:'cb'},cpuTeam,'DB2','defense'),
-    s1:ratedEntity({x:100,yfield:(los+8.8)*XPX,num:'1',presnapRole:'s'},cpuTeam,null,'defense'),
+    s1:ratedEntity({x:156,yfield:(los+7.5)*XPX,num:'1',presnapRole:'s'},cpuTeam,null,'defense'),
     lb1:ratedEntity({x:192,yfield:(los+3.2)*XPX,num:rosterNumber(cpuTeam,'LB','50'),state:'approach',engageStart:0,engageDur:0},cpuTeam,'LB','defense')
   };
   DL_CONFIG[0].num=rosterNumber(cpuTeam,'DL1','90');
@@ -816,11 +816,11 @@ function initPlay(){
     players[c.key]=ratedEntity({x:c.startX,yfield:(los+0.7)*XPX,num:c.num,state:'approach',engageStart:0,engageDur:0,blockerX:c.blockerX,blockRating:positionRating(userTeam,blockerSlots[index],'offense'),presnapRole:'dl'},cpuTeam,dlSlots[index],'defense');
   });
   decor=[
-    ratedEntity({x:157,yfield:(los-1)*XPX,team:OFF,num:rosterNumber(userTeam,'OL1','65'),presnapRole:'ol'},userTeam,'OL1','offense'),ratedEntity({x:170,yfield:(los-0.5)*XPX,team:OFF,num:'66',presnapRole:'ol'},userTeam,null,'offense'),
-    ratedEntity({x:192,yfield:(los-0.2)*XPX,team:OFF,num:'67',presnapRole:'ol'},userTeam,null,'offense'),ratedEntity({x:215,yfield:(los-0.5)*XPX,team:OFF,num:'68',presnapRole:'ol'},userTeam,null,'offense'),
-    ratedEntity({x:235,yfield:(los-0.9)*XPX,team:OFF,num:rosterNumber(userTeam,'OL2','69'),presnapRole:'ol'},userTeam,'OL2','offense'),
-    ratedEntity({x:155,yfield:(los+2.7)*XPX,team:DEF,num:'51'},cpuTeam,null,'defense'),ratedEntity({x:233,yfield:(los+2.8)*XPX,team:DEF,num:'52'},cpuTeam,null,'defense'),
-    ratedEntity({x:277,yfield:(los+8.8)*XPX,team:DEF,num:'3',presnapRole:'s'},cpuTeam,null,'defense')
+    ratedEntity({x:163,yfield:(los-1.3)*XPX,team:OFF,num:rosterNumber(userTeam,'OL1','60'),presnapRole:'ol'},userTeam,'OL1','offense'),ratedEntity({x:176,yfield:(los-1)*XPX,team:OFF,num:'66',presnapRole:'ol'},userTeam,null,'offense'),
+    ratedEntity({x:189,yfield:(los-0.7)*XPX,team:OFF,num:'67',presnapRole:'ol'},userTeam,null,'offense'),ratedEntity({x:207,yfield:(los-0.9)*XPX,team:OFF,num:'68',presnapRole:'ol'},userTeam,null,'offense'),
+    ratedEntity({x:224,yfield:(los-1.1)*XPX,team:OFF,num:rosterNumber(userTeam,'OL2','79'),presnapRole:'ol'},userTeam,'OL2','offense'),
+    ratedEntity({x:157,yfield:(los+2.4)*XPX,team:DEF,num:'51'},cpuTeam,null,'defense'),ratedEntity({x:241,yfield:(los+2)*XPX,team:DEF,num:'52'},cpuTeam,null,'defense'),
+    ratedEntity({x:223,yfield:(los+6.8)*XPX,team:DEF,num:'3',presnapRole:'s'},cpuTeam,null,'defense')
   ];
   Object.entries(players).forEach(([key,e])=>{e.skin=SKIN_BY_POSITION[key]??0;});
   decor.forEach((e,i)=>{e.skin=(i+(e.team===DEF?2:0))%SKIN_PALETTES.length;});
