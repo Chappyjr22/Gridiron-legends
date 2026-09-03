@@ -48,3 +48,4 @@ export const OFF={jersey:'#2f6fb0',helmet:'#0c2c4a',stripe:'#ffffff'};
 export const DEF={jersey:'#a32d2d',helmet:'#1a1a1a',stripe:'#c9a227'};
 
 export function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+export function ratingMultiplier(rating,range=0.2){return clamp(1+((rating-75)/25)*range,1-range,1+range);}
