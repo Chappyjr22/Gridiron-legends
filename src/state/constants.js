@@ -49,3 +49,13 @@ export const DEF={jersey:'#a32d2d',helmet:'#1a1a1a',stripe:'#c9a227'};
 
 export function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
 export function ratingMultiplier(rating,range=0.2){return clamp(1+((rating-75)/25)*range,1-range,1+range);}
+// Pure (no game-state dependency) so both the simulation engine and the HUD's
+// fourth-down overlay can import it without one depending on the other.
+export function fieldGoalChance(distance){
+  if(distance<30)return 0.97;
+  if(distance<40)return 0.90;
+  if(distance<50)return 0.75;
+  if(distance<60)return 0.50;
+  if(distance<65)return 0.08;
+  return 0;
+}
