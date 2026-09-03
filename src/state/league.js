@@ -1,12 +1,9 @@
-(function(){
-'use strict';
-
-const CONFERENCES={
+export const CONFERENCES={
   legacy:{id:'legacy',name:'Legacy Conference'},
   frontier:{id:'frontier',name:'Frontier Conference'}
 };
 
-const TEAMS=[
+export const TEAMS=[
   {id:'bos',city:'Boston',name:'Harborhawks',abbr:'BOS',conference:'legacy',division:'east',colors:{primary:'#174a7e',secondary:'#dce8ef',accent:'#d44a3a'}},
   {id:'buf',city:'Buffalo',name:'Snowcats',abbr:'BUF',conference:'legacy',division:'east',colors:{primary:'#2458a6',secondary:'#eef5ff',accent:'#ef4c3f'}},
   {id:'mia',city:'Miami',name:'Tidebreakers',abbr:'MIA',conference:'legacy',division:'east',colors:{primary:'#087f83',secondary:'#f2f1df',accent:'#ef7f32'}},
@@ -52,9 +49,9 @@ const FIRST_NAMES=['Marcus','Andre','Devin','Malik','Darius','Jalen','Isaiah','C
 const LAST_NAMES=['Carter','Brooks','Hayes','Bennett','Reed','Foster','Mitchell','Price','Warren','Coleman','Turner','Ward','Simmons','Porter','Griffin','Marshall','Parker','Ellis','Stone','Cross','Freeman','Banks','Morris','Holland','Lawson','Grant','Wells','Harris','Owens','Bryant','Dawson','Webb'];
 const COACH_FIRST=['Arthur','Calvin','Derek','Franklin','Graham','Harold','Isaac','Leon','Martin','Quentin','Russell','Victor','Wesley','Avery','Bryan','Cliff'];
 const COACH_LAST=['Maddox','Mercer','Holt','Keene','Rhodes','Sutton','Vaughn','Pierce','Dalton','Morrow','Barrett','Callahan','Hawkins','Boone','Fletcher','Cobb'];
-const ROSTER_SLOTS=['QB','RB','WR1','WR2','TE','OL1','OL2','DL1','DL2','LB','DB1','DB2'];
+export const ROSTER_SLOTS=['QB','RB','WR1','WR2','TE','OL1','OL2','DL1','DL2','LB','DB1','DB2'];
 const NUMBER_RANGES={QB:[1,19],RB:[20,49],WR1:[0,19],WR2:[0,19],TE:[80,89],OL1:[60,79],OL2:[60,79],DL1:[90,99],DL2:[50,99],LB:[40,59],DB1:[20,39],DB2:[20,39]};
-const REGULAR_SEASON_WEEKS=17;
+export const REGULAR_SEASON_WEEKS=17;
 
 function hashString(value){
   let hash=2166136261;
@@ -184,7 +181,7 @@ function createSchedule(teams,season){
 
 function normalizeRecord(record){return {...emptyRecord(),...(record||{})};}
 
-function ensureLeagueState(franchise){
+export function ensureLeagueState(franchise){
   if(!franchise||!Array.isArray(franchise.teams))return null;
   franchise.schemaVersion=2;
   franchise.season=Math.max(1,Number(franchise.season)||1);
@@ -197,7 +194,7 @@ function ensureLeagueState(franchise){
   return franchise;
 }
 
-function createFranchise(userTeamId='bos',season=1){
+export function createFranchise(userTeamId='bos',season=1){
   const teams=TEAMS.map(team=>createTeamState(team,season));
   return {
     schemaVersion:2,
@@ -212,13 +209,13 @@ function createFranchise(userTeamId='bos',season=1){
   };
 }
 
-function findTeam(id){return TEAMS.find(team=>team.id===id)||TEAMS[0];}
-function findTeamState(franchise,id){return franchise?.teams?.find(team=>team.id===id)||null;}
-function fullName(team){return team.city+' '+team.name;}
+export function findTeam(id){return TEAMS.find(team=>team.id===id)||TEAMS[0];}
+export function findTeamState(franchise,id){return franchise?.teams?.find(team=>team.id===id)||null;}
+export function fullName(team){return team.city+' '+team.name;}
 function conferenceName(id){return CONFERENCES[id]?.name||id;}
-function divisionName(team){return conferenceName(team.conference)+' '+team.division[0].toUpperCase()+team.division.slice(1);}
+export function divisionName(team){return conferenceName(team.conference)+' '+team.division[0].toUpperCase()+team.division.slice(1);}
 
-function getWeekGames(franchise,week=franchise?.week||1){
+export function getWeekGames(franchise,week=franchise?.week||1){
   return (franchise?.schedule||[]).filter(game=>game.week===Number(week));
 }
 
@@ -232,7 +229,7 @@ function scoringDrive(offense,defense,random,homeBonus=0){
   return 0;
 }
 
-function simulateScore(franchise,game){
+export function simulateScore(franchise,game){
   const home=findTeamState(franchise,game.homeTeamId);
   const away=findTeamState(franchise,game.awayTeamId);
   if(!home||!away)return {homeScore:0,awayScore:0};
@@ -261,7 +258,7 @@ function applyResultToRecord(team,opponent,pointsFor,pointsAgainst){
   if(team.conference===opponent.conference&&team.division===opponent.division)record['division'+result]++;
 }
 
-function recordGameResult(franchise,gameId,homeScore,awayScore,source='simulation'){
+export function recordGameResult(franchise,gameId,homeScore,awayScore,source='simulation'){
   const game=(franchise?.schedule||[]).find(item=>item.id===gameId);
   if(!game||game.status==='completed')return false;
   const home=findTeamState(franchise,game.homeTeamId);
@@ -278,7 +275,7 @@ function recordGameResult(franchise,gameId,homeScore,awayScore,source='simulatio
   return true;
 }
 
-function simulateWeek(franchise,week=franchise?.week||1,excludeTeamId=null){
+export function simulateWeek(franchise,week=franchise?.week||1,excludeTeamId=null){
   const completed=[];
   getWeekGames(franchise,week).forEach(game=>{
     if(game.status==='completed'||(excludeTeamId&&(game.homeTeamId===excludeTeamId||game.awayTeamId===excludeTeamId)))return;
@@ -294,7 +291,7 @@ function recordPercentage(record,prefix=''){
   return games?(wins+ties*0.5)/games:0;
 }
 
-function standings(franchise,conference=null){
+export function standings(franchise,conference=null){
   return (franchise?.teams||[]).filter(team=>!conference||team.conference===conference).slice().sort((a,b)=>{
     const aRecord=normalizeRecord(a.record),bRecord=normalizeRecord(b.record);
     return recordPercentage(bRecord)-recordPercentage(aRecord)
@@ -306,14 +303,14 @@ function standings(franchise,conference=null){
   });
 }
 
-function advanceWeek(franchise){
+export function advanceWeek(franchise){
   const games=getWeekGames(franchise,franchise.week);
   if(!games.length||games.some(game=>game.status!=='completed'))return false;
   if(franchise.week<REGULAR_SEASON_WEEKS)franchise.week++;
   return true;
 }
 
-function loadFranchise(){
+export function loadFranchise(){
   try{
     const raw=localStorage.getItem('gridironLegendsFranchiseV1');
     if(!raw)return null;
@@ -323,29 +320,7 @@ function loadFranchise(){
   }catch(error){return null;}
 }
 
-function saveFranchise(franchise){
+export function saveFranchise(franchise){
   try{localStorage.setItem('gridironLegendsFranchiseV1',JSON.stringify(ensureLeagueState(franchise)));return true;}
   catch(error){return false;}
 }
-
-window.GridironLeague={
-  CONFERENCES,
-  TEAMS,
-  ROSTER_SLOTS,
-  REGULAR_SEASON_WEEKS,
-  createFranchise,
-  ensureLeagueState,
-  findTeam,
-  findTeamState,
-  fullName,
-  divisionName,
-  getWeekGames,
-  simulateScore,
-  simulateWeek,
-  recordGameResult,
-  standings,
-  advanceWeek,
-  loadFranchise,
-  saveFranchise
-};
-})();
