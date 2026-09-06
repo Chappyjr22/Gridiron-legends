@@ -15,7 +15,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install
+      - run: npm ci
       - run: node --check src/state/league.js
       - run: node tests/data.test.mjs
       - run: node tests/save-compatibility.test.mjs
