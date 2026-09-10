@@ -286,7 +286,7 @@ export function simulateWeek(franchise,week=franchise?.week||1,excludeTeamId=nul
 }
 
 function recordPercentage(record,prefix=''){
-  const wins=record[prefix+'Wins']||0,losses=record[prefix+'Losses']||0,ties=record[prefix+'Ties']||0;
+  const wins=record[prefix?prefix+'Wins':'wins']||0,losses=record[prefix?prefix+'Losses':'losses']||0,ties=record[prefix?prefix+'Ties':'ties']||0;
   const games=wins+losses+ties;
   return games?(wins+ties*0.5)/games:0;
 }
@@ -323,4 +323,8 @@ export function loadFranchise(){
 export function saveFranchise(franchise){
   try{localStorage.setItem('gridironLegendsFranchiseV1',JSON.stringify(ensureLeagueState(franchise)));return true;}
   catch(error){return false;}
+}
+
+export function refreshRatings(franchise){
+  franchise.teams.forEach(team=>{team.ratings=calculateRatings(team.roster,team.coaches);});
 }
