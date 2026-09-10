@@ -5,7 +5,13 @@ import { momentumLabel } from '../state/difficulty.js';
 // Holds the callback the "Continue" button should invoke (set by showResult,
 // read/cleared by main.js's button wiring). A plain exported object rather
 // than a rebindable `let`, since main.js reads it from this module.
-export const resultFlow={continueAction:null};
+export const resultFlow={continueAction:null,readyAt:0};
+export function continueResult(event={}){
+  if(event.detail>1||performance.now()<resultFlow.readyAt)return;
+  const action=resultFlow.continueAction;
+  resultFlow.continueAction=null;
+  if(action)action();
+}
 
 export function hideAllOverlays(){
   ['callsheet-overlay','result-overlay','fourth-down-overlay','pause-overlay'].forEach(id=>document.getElementById(id).classList.remove('show'));
@@ -18,14 +24,14 @@ export function formatClock(){
   return mins+':'+String(secs).padStart(2,'0');
 }
 export function formatFieldPosition(los){
-  const spot=Math.round(clamp(los,0,100));
+  const spot=los>0&&los<100?clamp(Math.round(los),1,99):Math.round(clamp(los,0,100));
   if(spot===50)return '50';
   return spot<50?'OWN '+spot:'OPP '+(100-spot);
 }
 export function updateHUD(){
   const dn=['','1st','2nd','3rd','4th'][game.down];
   const distanceLabel=game.firstDownYard>=100?'Goal':Math.max(1,Math.round(game.distance));
-  document.getElementById('hud-down').innerHTML='<strong>'+(dn||'')+(dn?' &amp; ':'')+distanceLabel+'</strong>';
+  document.getElementById('hud-down').innerHTML='<strong>'+(game.possession==='cpu'?'Opponent ball':!dn?'Turnover':dn+' &amp; '+distanceLabel)+'</strong>';
   document.getElementById('hud-ball').textContent=formatFieldPosition(game.los);
   document.getElementById('hud-user-score').textContent=game.playerScore;
   document.getElementById('hud-cpu-score').textContent=game.cpuScore;
@@ -41,6 +47,7 @@ export function showResult(message,nextAction,buttonLabel='Continue'){
   game.message=message;
   game.phase='result';
   resultFlow.continueAction=nextAction;
+  resultFlow.readyAt=performance.now()+400;
   document.getElementById('presnap-hint').style.display='none';
   document.getElementById('overlay-msg').textContent=game.message;
   document.getElementById('btn-continue').textContent=buttonLabel;
