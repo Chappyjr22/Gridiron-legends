@@ -20,7 +20,11 @@ Data, save compatibility, gameplay regression, career lifecycle tests and Vite p
 
 Local Playwright reaches the test runner but cannot launch Chromium because its binary is missing. The Cloud browser refuses the internal preview (`ERR_BLOCKED_BY_CLIENT`). Consequently, new UI visuals, actual mobile touch/scrolling and on-field feel after these changes are not yet verified. Existing screenshots in `docs/audit/live-evidence/` show the **baseline**, not this build.
 
-Browser tests include explicitly labeled deterministic engine fixtures; those are integration tests and must not be reported as manual gameplay. Keep the PR a draft until CI and visual review are complete. Production remains unchanged.
+GitHub Actions passed all checks on application commit `a640fc19117c944c42c4677e1e3b3e4273799dcf`, including all 14 Chromium browser tests. The suite covers existing controls, mobile touch tapping, career creation, progression, upgrades and checkpoint resume. [Passing run](https://github.com/Chappyjr22/Gridiron-legends/actions/runs/34464986507) and [three career screenshots](https://github.com/Chappyjr22/Gridiron-legends/actions/runs/34464986507/artifacts/10147140868) are available for review; artifacts expire after 14 days. The screenshots have not been visually inspected in this session because artifact download failed.
+
+Browser tests include explicitly labeled deterministic engine fixtures; those are integration tests and must not be reported as manual gameplay. Keep [PR #8](https://github.com/Chappyjr22/Gridiron-legends/pull/8) a draft until visual review and manual gameplay verification of the changed build are complete. Production remains unchanged.
+
+Publication note: source and tests were published through GitHub's contents API because terminal Git authentication was unavailable. Local grouped commits and remote per-file commits have different histories. Do not force-push the local history. Baseline live-audit screenshots and the expanded ledger remain in the local audit checkout and were not included in the remote PR; they are not evidence of this changed build.
 
 ## Next gameplay work, in order
 
