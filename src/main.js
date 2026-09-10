@@ -1,8 +1,10 @@
+import { game } from './state/gameState.js';
+import { initCareer } from './ui/career.js';
 // Application entry point: wires the pieces that would otherwise need a
 // circular import between modules, registers the handful of top-level
 // "start screen" button routes, and kicks off the initial render.
 import './state/league.js';
-import { updateHUD, resultFlow } from './ui/hud.js';
+import { updateHUD, continueResult } from './ui/hud.js';
 import { uiHooks, initPlay, attemptFieldGoal, simulatePunt } from './simulation/engine.js';
 import { renderFormationMenu } from './ui/playbook.js';
 import { syncMatchupUI, returnToMainMenu, populateTeamSelect, populateOpponentSelect } from './ui/menus.js';
@@ -11,7 +13,7 @@ import { enterFormationLab } from './ui/formationLab.js';
 import './input/pointer.js';
 
 document.addEventListener('touchmove',function(e){
-  if(e.target.closest('.card')||e.target.closest('#edit-panel'))return;
+  if(e.target.closest('.card')||e.target.closest('.setup-panel')||e.target.closest('#edit-panel'))return;
   e.preventDefault();
 },{passive:false});
 document.addEventListener('gesturestart',function(e){e.preventDefault();});
@@ -27,11 +29,7 @@ uiHooks.returnToMainMenu=returnToMainMenu;
 document.getElementById('btn-league-hub').addEventListener('click',openLeagueHub);
 document.getElementById('btn-start-editor').addEventListener('click',enterFormationLab);
 
-document.getElementById('btn-continue').addEventListener('click',()=>{
-  const action=resultFlow.continueAction;
-  resultFlow.continueAction=null;
-  if(action)action();
-});
+document.getElementById('btn-continue').addEventListener('click',continueResult);
 document.getElementById('btn-go-for-it').addEventListener('click',initPlay);
 document.getElementById('btn-field-goal').addEventListener('click',attemptFieldGoal);
 document.getElementById('btn-punt').addEventListener('click',simulatePunt);
@@ -40,3 +38,13 @@ populateTeamSelect();
 populateOpponentSelect();
 syncMatchupUI();
 updateHUD();
+
+initCareer();
+
+// An interrupted mobile session stays paused until the player resumes it.
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden&&['presnap','live','tackle'].includes(game.phase)){
+    game.paused=true;
+    document.getElementById('pause-overlay').classList.add('show');
+  }
+});
