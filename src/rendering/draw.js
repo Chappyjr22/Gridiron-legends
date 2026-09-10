@@ -1,3 +1,4 @@
+import { simulationNow } from '../state/clock.js';
 import { canvas, ctx } from './canvas.js';
 import { game, entities } from '../state/gameState.js';
 import { XPX, BASE_X, LAT_MIN, LAT_MAX, DL_KEYS, OFF, DEF, CATCH_TOL_BASE, MIN_PULL, clamp, ratingMultiplier } from '../state/constants.js';
@@ -21,7 +22,7 @@ export function drawArcPath(x0,y0,x1,y1,arcHeight,color,width){
 }
 function drawTackleImpact(){
   if(game.phase!=='tackle'||!game.tackle)return;
-  const elapsed=performance.now()-game.tackle.startTime;
+  const elapsed=simulationNow()-game.tackle.startTime;
   if(elapsed>=190)return;
   const carrierPos=toCanvas(game.tackle.carrier);
   const tacklerPos=toCanvas(game.tackle.tackler);
@@ -75,7 +76,7 @@ export function draw(){
   const jitterOn=(game.phase==='live');
   entities.decor.forEach((d,i)=>{
     if(jitterOn&&!d.isPursuing){
-      const j=Math.sin(performance.now()/160+i*1.7)*1.4;
+      const j=Math.sin(simulationNow()/160+i*1.7)*1.4;
       drawPlayer({x:d.x+j,yfield:d.yfield,num:d.num,skin:d.skin},d.team,false,true);
     } else {
       drawPlayer(d,d.team,false,!d.isPursuing);
@@ -94,7 +95,7 @@ export function draw(){
   drawPlayer(entities.players.wr2,OFF,entities.ballCarrier===entities.players.wr2);
   drawPlayer(entities.players.qb,OFF,entities.ballCarrier===entities.players.qb);
   if(entities.runExchange){
-    const progress=clamp((performance.now()-entities.runExchange.startTime)/entities.runExchange.duration,0,1);
+    const progress=clamp((simulationNow()-entities.runExchange.startTime)/entities.runExchange.duration,0,1);
     const from=toCanvas(entities.players.qb),to=toCanvas(entities.players.rb);
     const bx=from.cx+(to.cx-from.cx)*progress;
     const lift=entities.runExchange.type==='pitch'?Math.sin(Math.PI*progress)*12:0;
@@ -158,8 +159,8 @@ export function draw(){
     ctx.fillStyle='#fff';
     ctx.beginPath();ctx.arc(interaction.steerCurrent.x,interaction.steerCurrent.y,9,0,7);ctx.fill();
   }
-  if(entities.ball.inFlight&&performance.now()>=entities.ball.startTime){
-    const p=Math.min(1,(performance.now()-entities.ball.startTime)/entities.ball.duration);
+  if(entities.ball.inFlight&&simulationNow()>=entities.ball.startTime){
+    const p=Math.min(1,(simulationNow()-entities.ball.startTime)/entities.ball.duration);
     const bx=entities.ball.fromX+(entities.ball.toX-entities.ball.fromX)*p;
     const byf=entities.ball.fromY+(entities.ball.toY-entities.ball.fromY)*p;
     const {cx,cy}=toCanvas({x:bx,yfield:byf});
