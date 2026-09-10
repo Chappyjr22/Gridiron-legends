@@ -147,8 +147,9 @@
   .career-panel button{min-height:44px;}
   .career-panel p{margin:9px 0;}
   .career-form-grid,.career-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .career-form-grid>div{display:flex;flex-direction:column;gap:5px;}
   .career-form-grid label{display:flex;flex-direction:column;gap:5px;color:var(--gold);}
-  .career-form-grid input,.career-form-grid select{width:100%;min-height:44px;padding:10px;background:#080c0d;color:var(--cream);border:2px solid var(--line);font:inherit;touch-action:manipulation;}
+  .career-form-grid input,.career-form-grid select{width:100%;min-height:44px;padding:10px;background:#080c0d;color:var(--cream);border:2px solid var(--line);font:inherit;font-size:16px;touch-action:manipulation;}
   .career-player-card{padding:20px;margin-bottom:16px;background:linear-gradient(100deg,var(--career-color,#174a7e),#101719);border:2px solid var(--gold);}
   .career-player-card h3{font-size:28px;margin:6px 0;overflow-wrap:anywhere;}
   .career-player-card progress{width:100%;height:10px;accent-color:var(--gold);}
@@ -158,9 +159,9 @@
   .career-kicker{font-weight:bold;text-transform:uppercase;font-size:12px;letter-spacing:.08em;}
   .career-muted{color:#aeb8b4;font-size:12px;}
   .career-upgrades{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:12px;}
-  .career-upgrades button{padding:10px 5px;font-size:11px;}
+  .career-upgrades button{padding:10px 5px;font-size:12px;}
   .career-upgrades strong{display:block;font-size:22px;margin:6px 0;color:var(--gold);}
-  .career-upgrades small{display:block;font-size:10px;text-transform:none;line-height:1.4;}
+  .career-upgrades small{display:block;font-size:12px;text-transform:none;line-height:1.4;}
   .career-section summary{cursor:pointer;color:var(--gold);font-weight:bold;min-height:28px;}
   .career-list-row{display:flex;gap:12px;justify-content:space-between;border-bottom:1px solid #273330;padding:10px 0;font-size:12px;}
   .career-list-row b{white-space:nowrap;}
@@ -309,13 +310,13 @@
   <form id="career-create">
    <p>Start as a rookie quarterback. Call the plays and control the offense as your QB builds a career.</p>
    <div class="career-form-grid">
-    <label>Player name<input id="career-name" maxlength="28" required autocomplete="off" placeholder="Your name"></label>
-    <label>Jersey number<input id="career-number" type="number" min="0" max="19" value="7" required></label>
-    <label>Team<select id="career-team"></select></label>
-    <label>Playing style<select id="career-archetype"><option value="precision">Precision passer</option><option value="power">Strong arm</option><option value="quick">Quick release</option></select></label>
-    <label>Appearance<select id="career-skin"><option value="0">Skin tone 1</option><option value="1">Skin tone 2</option><option value="2" selected>Skin tone 3</option><option value="3">Skin tone 4</option></select></label>
-    <label>Difficulty<select id="career-difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option><option value="gridiron">Gridiron</option></select></label>
-    <label>Quarter length<select id="career-minutes"><option value="2">2 minutes</option><option value="3">3 minutes</option><option value="4">4 minutes</option><option value="5">5 minutes</option></select></label>
+    <div><label for="career-name">Player name</label><input id="career-name" maxlength="28" required autocomplete="off" placeholder="Your name"></div>
+    <div><label for="career-number">Jersey number</label><input id="career-number" type="number" min="0" max="19" value="7" required></div>
+    <div><label for="career-team">Team</label><select id="career-team"></select></div>
+    <div><label for="career-archetype">Playing style</label><select id="career-archetype"><option value="precision">Precision passer</option><option value="power">Strong arm</option><option value="quick">Quick release</option></select></div>
+    <div><label for="career-skin">Appearance</label><select id="career-skin"><option value="0">Skin tone 1</option><option value="1">Skin tone 2</option><option value="2" selected>Skin tone 3</option><option value="3">Skin tone 4</option></select></div>
+    <div><label for="career-difficulty">Difficulty</label><select id="career-difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option><option value="gridiron">Gridiron</option></select></div>
+    <div><label for="career-minutes">Quarter length</label><select id="career-minutes"><option value="2">2 minutes</option><option value="3">3 minutes</option><option value="4">4 minutes</option><option value="5">5 minutes</option></select></div>
    </div>
    <p class="career-muted">Precision improves placement. Arm strength improves velocity. Quick release shortens your windup.</p>
    <p id="career-create-error" role="alert"></p><button class="btn-primary" type="submit">Begin rookie season</button>
