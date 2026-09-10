@@ -1,0 +1,72 @@
+import assert from 'node:assert/strict';
+import {harness} from './helpers/engine.mjs';
+import {createFranchise,standings} from '../src/state/league.js';
+import {contrastingOpponent} from '../src/rendering/uniforms.js';
+let checks=0;
+async function test(name,fn){await fn(await harness());console.log('ok - '+name);checks++;}
+await test('paused flight, route delays, and animations retain simulation time',async h=>{
+ h.engine.startPractice();h.engine.choosePlay('trips_verticals');h.engine.onSnap();h.engine.releaseThrow({x:120,y:39});h.step();
+ const {simulationNow}=await h.load('src/state/clock.js');const before=simulationNow();
+ h.game.paused=true;h.step(10000);assert.equal(simulationNow(),before);
+ h.game.paused=false;h.step();assert.equal(simulationNow(),before+16);assert.equal(h.entities.ball.inFlight,true);
+});
+await test('tackle short of goal line cannot round into touchdown',async h=>{
+ h.engine.startNewGame();h.engine.startPlayerDrive(93);h.engine.choosePlay('trips_inside');h.game.phase='live';h.game.runActive=true;h.game.thrown=true;h.game.carrierSince=h.now-2000;
+ h.entities.ballCarrier=h.entities.players.rb;Object.assign(h.entities.ballCarrier,{x:190,yfield:99.6*28});Object.assign(h.entities.players.cb1,{x:190,yfield:99.6*28});
+ h.step();assert.equal(h.game.phase,'tackle');h.step(801);assert.equal(h.game.playerScore,0);assert.ok(h.game.los<100&&h.game.los>99);
+ h.engine.initPlay();h.engine.endPlay(1,'Run',false,100);assert.equal(h.game.playerScore,6);
+});
+for(const [name,x,y] of [['back end line',39,111],['sideline',354,25]])await test('receiver beyond '+name+' cannot complete a pass',async h=>{
+ h.engine.startNewGame();h.engine.startPlayerDrive(20);h.engine.choosePlay('trips_verticals');h.engine.onSnap();
+ Object.assign(h.entities.players.wr1,{x,yfield:y*28});
+ h.entities.ball={inFlight:true,toX:x,toY:y*28,startTime:h.now-1000,duration:100};h.game.thrown=true;h.step();
+ assert.equal(h.game.playerScore,0);assert.match(h.game.message,/Incomplete/);assert.equal(h.game.los,20);
+});
+await test('cancellation releases Formation Lab selection',async h=>{
+ await h.load('src/input/pointer.js');h.engine.startPractice();h.editState.editMode=true;h.event('pointerdown');assert.ok(h.editState.dragEntity);
+ h.event('pointercancel');const x=h.entities.players.qb.x;h.event('pointermove',{clientY:150});assert.equal(h.entities.players.qb.x,x);assert.equal(h.editState.dragEntity,null);
+});
+await test('selected matchup and Tap instruction are accurate',async h=>{
+ const hub=await h.load('src/ui/leagueHub.js');hub.renderLeagueSchedule();assert.match(h.element('league-schedule-list').innerHTML,/user-game/);
+ h.engine.startPractice();h.game.passMode='tap';h.engine.choosePlay('ace_stick');assert.match(h.element('presnap-hint').innerHTML,/Tap a receiver/);
+});
+await test('kick action and result transition cannot be double-activated',async h=>{
+ h.engine.startNewGame();h.engine.startPlayerDrive(30);h.game.down=4;h.hud.showFourthDown();h.engine.attemptFieldGoal();const clock=h.game.clock;
+ h.engine.attemptFieldGoal();assert.equal(h.game.clock,clock);h.hud.continueResult();assert.equal(h.game.possession,'player');
+ h.step(401);h.hud.continueResult();assert.equal(h.game.possession,'cpu');
+});
+await test('CPU touchdown recap reports the actual scoring distance',async h=>{
+ h.engine.startNewGame();h.setRandom(0.2);h.engine.startOpponentPossession(76,'Turnover');
+ assert.match(h.game.message,/touchdown/);assert.match(h.game.message,/24 yards/);
+});
+await test('turnover HUD has a possession label and one yard is singular',async h=>{
+ h.engine.startNewGame();h.engine.startPlayerDrive(20);h.engine.endPlay(1,'Run');assert.match(h.game.message,/1 yard\./);
+ h.engine.initPlay();h.game.down=4;h.engine.endPlay(0,'INCOMPLETE');assert.match(h.element('hud-down').innerHTML,/Turnover/);
+});
+const f=createFranchise();const [a,b]=f.teams;a.record.wins=10;a.record.losses=1;b.record.wins=1;b.record.losses=10;b.record.pointsFor=200;
+assert.ok(standings(f).indexOf(a)<standings(f).indexOf(b));
+const bos=f.teams.find(t=>t.id==='bos'),dal=f.teams.find(t=>t.id==='dal');assert.notEqual(contrastingOpponent(bos,dal).colors.primary,dal.colors.primary);assert.equal(dal.colors.primary,'#234a72');
+
+await test('all 18 plays still resolve on all four difficulties',async h=>{
+ const {PLAYS}=await h.load('src/data/plays.js');
+ for(const difficulty of ['easy','medium','hard','gridiron'])for(const [key,play] of Object.entries(PLAYS)){
+  h.engine.startPractice();h.game.difficulty=difficulty;h.engine.choosePlay(key);
+  if(play.type==='run')h.engine.startRunOption();else{h.engine.onSnap();h.engine.releaseThrow({x:300,y:120});}
+  let steps=0;while(['live','tackle'].includes(h.game.phase)&&steps++<1200)h.step(50);
+  assert.equal(h.game.phase,'result',key+' '+difficulty);
+ }
+});
+
+await test('a second pointer cannot steal aim or cancel the primary gesture',async h=>{
+ await h.load('src/input/pointer.js');h.engine.startPractice();h.engine.choosePlay('trips_slants');
+ h.event('pointerdown');const before={...h.interaction.aimTarget};
+ h.event('pointerdown',{pointerId:2,clientX:100,clientY:100});h.event('pointermove',{pointerId:2,clientX:100,clientY:100});
+ h.event('pointercancel',{pointerId:2});assert.equal(h.interaction.aiming,true);assert.equal(h.interaction.aimTarget.x,before.x);assert.equal(h.interaction.aimTarget.y,before.y);
+ h.event('pointercancel');assert.equal(h.interaction.aiming,false);
+});
+await test('a paused throw cannot be released by a delayed pointer-up',async h=>{
+ h.engine.startPractice();h.engine.choosePlay('trips_verticals');h.engine.onSnap();h.game.paused=true;
+ h.engine.releaseThrow({x:100,y:39});assert.equal(h.game.thrown,false);
+});
+
+console.log(`${checks+2} gameplay/league checks passed.`);
