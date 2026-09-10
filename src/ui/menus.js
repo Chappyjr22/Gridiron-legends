@@ -1,9 +1,10 @@
+import { contrastingOpponent } from '../rendering/uniforms.js';
 import * as League from '../state/league.js';
 import { game, teamState } from '../state/gameState.js';
 import { OFF, DEF } from '../state/constants.js';
 import { applyUniform, rebuildSpriteSheets } from '../rendering/spriteSheets.js';
 import { END_ZONE_STYLE } from '../rendering/field.js';
-import { chooseOpponent, startNewGame, startPractice, ensureLoopStarted } from '../simulation/engine.js';
+import { uiHooks, chooseOpponent, startNewGame, startPractice, ensureLoopStarted } from '../simulation/engine.js';
 import { hideAllOverlays, updateHUD } from './hud.js';
 import { editState } from '../input/editState.js';
 
@@ -24,7 +25,7 @@ export function updateTeamPreview(teamId){
 }
 export function syncMatchupUI(){
   applyUniform(teamState.userTeam,OFF);
-  applyUniform(teamState.cpuTeam,DEF);
+  applyUniform(contrastingOpponent(teamState.userTeam,teamState.cpuTeam),DEF);
   document.getElementById('hud-user-name').textContent=teamState.userTeam.name;
   document.getElementById('hud-user-name').title=League.fullName(teamState.userTeam);
   document.getElementById('hud-cpu-name').textContent=teamState.cpuTeam.name;
@@ -106,6 +107,7 @@ export function populateOpponentSelect(){
   updateOpponentPreview();
 }
 export function returnToMainMenu(){
+  if(game.career)uiHooks.leaveCareer?.();
   game.paused=false;
   game.phase='menu';
   hideAllOverlays();
@@ -126,6 +128,10 @@ const difficultyHelp={
 };
 document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>{
   game.passMode=b.dataset.mode;syncActive('[data-mode]','mode',game.passMode);
+  if(game.phase==='presnap'){
+    const hint=document.getElementById('presnap-hint');
+    hint.innerHTML=hint.innerHTML.replace(/Drag from QB to pass|Tap a receiver to pass/,game.passMode==='tap'?'Tap a receiver to pass':'Drag from QB to pass');
+  }
 }));
 document.querySelectorAll('[data-type]').forEach(b=>b.addEventListener('click',()=>{
   game.throwType=b.dataset.type;syncActive('[data-type]','type',game.throwType);
