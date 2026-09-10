@@ -1,3 +1,4 @@
+import { simulationNow } from '../state/clock.js';
 import { canvas, ctx } from './canvas.js';
 import { game, entities } from '../state/gameState.js';
 import { XPX, BASE_X, MISSED_TACKLE_DIVE_MS, MISSED_TACKLE_DOWN_MS, SPRITE_CELL, SPRITE_DRAW, SPRITE_ANCHOR_X, SPRITE_ANCHOR_Y, OFF, DEF } from '../state/constants.js';
@@ -26,7 +27,7 @@ export function drawHelmet(cx,cy,team){
   ctx.beginPath();ctx.arc(cx-6,cy-0.5,1.1,0,7);ctx.fill();
 }
 export function playerFrame(e,isDecor){
-  const now=performance.now();
+  const now=simulationNow();
   if(e.action==='tackled'){
     const elapsed=now-e.actionStart;
     return elapsed<140?{row:4,col:3}:{row:4,col:4};
@@ -73,7 +74,7 @@ export function drawPlayer(e,team,highlight,isDecor){
   let cx=position.cx,cy=position.cy;
   if(cx<-30||cx>canvas.width+30)return;
   if(e.action==='tackle'&&game.tackle){
-    const elapsed=performance.now()-e.actionStart;
+    const elapsed=simulationNow()-e.actionStart;
     const target=toCanvas(game.tackle.carrier);
     const dx=target.cx-cx,dy=target.cy-cy;
     const distance=Math.hypot(dx,dy);
@@ -86,7 +87,7 @@ export function drawPlayer(e,team,highlight,isDecor){
     cx+=ux*reach*driveEase;
     cy+=uy*reach*driveEase;
   }
-  const actionElapsed=performance.now()-(e.actionStart||0);
+  const actionElapsed=simulationNow()-(e.actionStart||0);
   const isDiving=(e.action==='tackle'&&actionElapsed>=65)||(e.action==='missedTackle'&&actionElapsed<MISSED_TACKLE_DOWN_MS);
   if(highlight){
     ctx.fillStyle='rgba(255,209,102,0.16)';
