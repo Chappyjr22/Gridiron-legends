@@ -21,7 +21,7 @@ assert.ok(c.points>0);const before=C.careerPlayer(c).attributes.accuracy;assert.
 c.activeMatch=C.nextMatch(c).id;assert.equal(C.upgrade(c,'arm'),false);c.activeMatch=null;
 // A full winning season reaches all three playoff rounds and preserves identity next season.
 while(!c.postseason?.champion){const g=C.nextMatch(c);assert.ok(g);c.activeMatch=g.id;assert.ok(C.completeCareerGame(c,g.id,28,7,emptyMatch()));}
-assert.equal(c.postseason.champion,c.teamId);assert.equal(c.history.length,20);assert.equal(c.awards.length,1);
+assert.equal(c.postseason.champion,c.teamId);assert.equal(c.history.length,20);assert.equal(c.awards.filter(a=>a.title==='League champion').length,1);assert.equal(c.awards.filter(a=>a.title==='Rookie debut').length,1);
 const lifetime=c.totals.games,attrs={...C.careerPlayer(c).attributes};assert.ok(C.startNextSeason(c));assert.equal(c.league.season,2);assert.equal(c.league.week,1);assert.equal(c.playerId,id);assert.equal(c.totals.games,lifetime);assert.equal(c.seasonStats.games,0);assert.deepEqual(C.careerPlayer(c).attributes,attrs);
 // A losing season still resolves the bracket and permits another season.
 const losing=C.createCareer({name:'Second Player',teamId:'dal'});for(let i=0;i<17;i++){const g=C.nextMatch(losing);losing.activeMatch=g.id;C.completeCareerGame(losing,g.id,0,42,emptyMatch());}
