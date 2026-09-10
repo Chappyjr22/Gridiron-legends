@@ -1,7 +1,10 @@
+import { isClockPaused, pauseClock } from './clock.js';
 import * as League from './league.js';
 
 // Core mutable game/session state, shared across simulation, rendering, input, and UI.
 export const game={playerScore:0,cpuScore:0,quarter:1,quarterMinutes:3,clock:180,overtime:false,otRound:0,down:1,distance:10,los:20,firstDownYard:30,phase:'menu',message:'',thrown:false,cameraYard:20,playCall:null,formation:null,playbookView:'formations',passMode:'drag',throwType:'lob',difficulty:'medium',momentum:0,paused:false,centerYfield:0,carrierSince:0,blitzer:null,tackle:null,possession:'player',practice:false,showRoutes:true,firstHalfReceiver:'player',secondHalfReceiver:'cpu',userTeamId:'bos',cpuTeamId:'ny1',opponentChoice:'random',runActive:false,runType:'handoff',runPathIndex:0};
+
+Object.defineProperty(game, 'paused', {enumerable:true, get:isClockPaused, set:pauseClock});
 
 const initialFranchise=League.loadFranchise()||League.createFranchise(game.userTeamId);
 game.userTeamId=initialFranchise.userTeamId||game.userTeamId;
