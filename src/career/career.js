@@ -79,7 +79,9 @@ export function completeCareerGame(c,gameId,userScore,cpuScore,matchStats){
  const xp=40+(userScore>cpuScore?30:0)+Math.min(60,Math.floor(Math.max(0,stats.passingYards)/10))+Math.min(60,stats.passingTD*15);
  c.xp+=xp;let gained=0;while(c.xp>=100){c.xp-=100;c.level++;c.points++;gained++;}
  c.lastResult={gameId,season:c.league.season,week:match.week,userScore,cpuScore,xp,levels:gained,stats,opponentId:home?match.awayTeamId:match.homeTeamId};
- c.history.push(c.lastResult);c.activeMatch=null;c.checkpoint=null;
+ c.history.push(c.lastResult);
+ if(c.history.length===1)c.awards.push({season:c.league.season,title:'Rookie debut'});
+ c.activeMatch=null;c.checkpoint=null;
  if(!match.round){League.simulateWeek(c.league,c.league.week,c.teamId);if(c.league.week<17)League.advanceWeek(c.league);else seedPlayoffs(c);}
  progressPostseason(c);return c.lastResult;
 }
