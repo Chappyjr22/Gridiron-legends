@@ -22,6 +22,7 @@ function showCareer(){
  game.paused=false;game.phase='menu';hideAllOverlays();
  el('game-view').style.display='none';el('start-screen').classList.remove('show');el('career-screen').classList.add('show');render();
 }
+function recordLabel(t){return `${t.record.wins}–${t.record.losses}${t.record.ties?'–'+t.record.ties:''}`;}
 function rosterName(p){return [p.firstName,p.lastName].filter(Boolean).join(' ');}
 function render(){
  el('career-create').hidden=!!career;el('career-hub').hidden=!career;
@@ -29,7 +30,7 @@ function render(){
  const player=Career.careerPlayer(career),team=League.findTeamState(career.league,career.teamId),match=Career.nextMatch(career);
  el('career-player-name').textContent=rosterName(player);el('career-player-detail').textContent=`#${player.number} QB · ${Career.ARCHETYPES[player.archetype].name} · ${team.city} ${team.name}`;
  el('career-player-card').style.setProperty('--career-color',team.colors.primary);
- el('career-season').textContent=`Season ${career.league.season} · ${career.postseason?'Playoffs':`Week ${career.league.week}`} · ${team.record.wins}–${team.record.losses}`;
+ el('career-season').textContent=`Season ${career.league.season} · ${career.postseason?'Playoffs':`Week ${career.league.week}`} · ${recordLabel(team)}`;
  el('career-level').textContent=`Level ${career.level} · ${career.xp}/100 XP · ${career.points} upgrade ${career.points===1?'point':'points'}`;
  el('career-xp').value=career.xp;
  const s=career.seasonStats;el('career-stat-line').textContent=`${s.passingYards} YDS · ${s.passingTD} TD · ${s.interceptions} INT`;
@@ -42,7 +43,7 @@ function render(){
  if(match){
   const opponent=League.findTeamState(career.league,match.homeTeamId===career.teamId?match.awayTeamId:match.homeTeamId);
   el('career-next-opponent').textContent=`${match.homeTeamId===career.teamId?'vs':'at'} ${opponent.city} ${opponent.name}`;
-  el('career-matchup').textContent=`${opponent.record.wins}–${opponent.record.losses} · Defense ${opponent.ratings.defense} · ${match.round===3?'Championship':match.round===2?'Conference final':match.round===1?'Conference semifinal':`Week ${match.week}`}`;
+  el('career-matchup').textContent=`${recordLabel(opponent)} · Defense ${opponent.ratings.defense} · ${match.round===3?'Championship':match.round===2?'Conference final':match.round===1?'Conference semifinal':`Week ${match.week}`}`;
   el('career-play').textContent=career.checkpoint?'Resume game':'Play next game';
  }else if(career.postseason?.champion){
   const champion=League.findTeamState(career.league,career.postseason.champion);el('career-next-opponent').textContent=career.postseason.champion===career.teamId?'You are league champions!':`${champion.city} ${champion.name} win the title`;
@@ -57,7 +58,7 @@ function render(){
  }
  const teammates=team.roster.filter(p=>['RB','WR1','WR2','TE'].includes(p.slot));
  el('career-teammates').innerHTML=teammates.map(p=>`<div class="career-list-row"><span>${escape(p.slot)} · #${p.number} ${escape(rosterName(p))}</span><b>${p.rating}</b></div>`).join('');
- el('career-standings').innerHTML=League.standings(career.league,team.conference).map((t,i)=>`<div class="career-list-row ${t.id===team.id?'career-selected':''}"><span>${i+1}. ${escape(t.abbr)} ${escape(t.name)}</span><b>${t.record.wins}–${t.record.losses}</b></div>`).join('');
+ el('career-standings').innerHTML=League.standings(career.league,team.conference).map((t,i)=>`<div class="career-list-row ${t.id===team.id?'career-selected':''}"><span>${i+1}. ${escape(t.abbr)} ${escape(t.name)}</span><b>${recordLabel(t)}</b></div>`).join('');
  el('career-history').innerHTML=career.history.slice(-8).reverse().map(r=>`<div class="career-list-row"><span>S${r.season} · ${r.week>17?'Playoffs':`Week ${r.week}`}</span><b>${r.userScore}–${r.cpuScore}</b></div>`).join('')||'<p>Your first game is waiting.</p>';
  el('career-awards').textContent=career.awards.map(a=>`Season ${a.season}: ${a.title}`).join(' · ')||'First milestone: finish your rookie game.';
 }
