@@ -1,11 +1,34 @@
 import {test,expect} from '@playwright/test';
-async function create(page){
+async function create(page,difficulty='medium'){
  await page.goto('/');await page.getByRole('button',{name:'Career Mode',exact:true}).click();
  await page.getByLabel('Player name',{exact:true}).fill('Rookie Legend');
  await page.getByLabel('Team',{exact:true}).selectOption('bos');
+ await page.getByLabel('Difficulty',{exact:true}).selectOption(difficulty);
  await page.getByRole('button',{name:'Begin rookie season'}).click();
  await expect(page.locator('#career-player-name')).toHaveText('Rookie Legend');
 }
+test('career difficulty matches pause UI and persists independently of exhibition',async({page})=>{
+ await create(page,'easy');
+ await page.getByRole('button',{name:'Play next game'}).click();
+ await page.getByRole('button',{name:'Pause',exact:true}).click();
+ const pause=page.locator('#pause-overlay');
+ await expect(pause.locator('[data-diff="easy"]')).toHaveClass(/active/);
+ expect(await page.evaluate(async()=>(await import('/src/state/gameState.js')).game.difficulty)).toBe('easy');
+ await pause.getByRole('button',{name:'Hard',exact:true}).click();
+ // Change difficulty without advancing a play, then restore the previous checkpoint.
+ await page.reload();
+ await page.getByRole('button',{name:'Career Mode',exact:true}).click();
+ await page.getByRole('button',{name:'Resume game'}).click();
+ await page.getByRole('button',{name:'Pause',exact:true}).click();
+ await expect(pause.locator('[data-diff="hard"]')).toHaveClass(/active/);
+ expect(await page.evaluate(async()=>(await import('/src/state/gameState.js')).game.difficulty)).toBe('hard');
+ await pause.getByRole('button',{name:'Main menu',exact:true}).click();
+ await page.getByRole('button',{name:'Settings',exact:true}).click();
+ await expect(page.locator('#setup-screen [data-diff="medium"]')).toHaveClass(/active/);
+ const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('gridironLegendsCareerV1')));
+ expect(saved.settings.difficulty).toBe('hard');
+ expect(saved.checkpoint.game.difficulty).toBe('hard');
+});
 test('career creation, three weekly results, reload and upgrade',async({page})=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));await create(page);
  await page.screenshot({path:'test-results/career-desktop.png',fullPage:true});
