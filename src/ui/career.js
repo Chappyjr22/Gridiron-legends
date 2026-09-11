@@ -1,3 +1,4 @@
+import {paintMenuPlayer} from './menuArt.js';
 import * as Career from '../career/career.js';
 import * as League from '../state/league.js';
 import {game,teamState} from '../state/gameState.js';
@@ -10,6 +11,7 @@ const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
 function persist(){
  const ok=Career.saveCareer(career);
  el('career-save-status').textContent=ok?'Saved on this device.':'Could not save. Keep this tab open and export a backup before leaving.';
+ el('career-quiet-save').textContent=ok?'Saved on this device':'Save failed. Open Save & backup.';
  el('career-save-status').classList.toggle('save-error',!ok);
  el('game-save-status').textContent=ok?'':'Career could not save. Return to Career and export a backup.';
  return ok;
@@ -19,21 +21,42 @@ function restoreExhibition(){
  game.career=false;
 }
 function showCareer(){
+ setCareerTab('home');
  game.paused=false;game.phase='menu';hideAllOverlays();
  el('game-view').style.display='none';el('start-screen').classList.remove('show');el('career-screen').classList.add('show');render();
 }
 function recordLabel(t){return `${t.record.wins}–${t.record.losses}${t.record.ties?'–'+t.record.ties:''}`;}
 function rosterName(p){return [p.firstName,p.lastName].filter(Boolean).join(' ');}
+function updateTitle(){
+ const player=career?Career.careerPlayer(career):null;
+ const team=career?League.findTeamState(career.league,career.teamId):teamState.userTeam;
+ el('career-menu-label').textContent=career?'Continue Career':'Start Career';
+ el('career-menu-detail').textContent=career?`QB #${player.number} · ${career.postseason?'Playoffs':`Week ${career.league.week}`}`:'Your player. Your season.';
+ paintMenuPlayer(el('title-player'),team,player?.skin??2);
+}
+function setCareerTab(tab){
+ for(const button of document.querySelectorAll('[data-career-tab]')){
+  const active=button.dataset.careerTab===tab;
+  button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;
+  button.classList.toggle('gold',active);button.classList.toggle('blue',!active);
+  el(`career-${button.dataset.careerTab}-panel`).hidden=!active;
+ }
+}
 function render(){
+ updateTitle();
  el('career-create').hidden=!!career;el('career-hub').hidden=!career;
  if(!career)return;
  const player=Career.careerPlayer(career),team=League.findTeamState(career.league,career.teamId),match=Career.nextMatch(career);
  el('career-player-name').textContent=rosterName(player);el('career-player-detail').textContent=`#${player.number} QB · ${Career.ARCHETYPES[player.archetype].name} · ${team.city} ${team.name}`;
- el('career-player-card').style.setProperty('--career-color',team.colors.primary);
+ el('career-screen').style.setProperty('--career-color',team.colors.primary);
+ el('career-jersey-number').textContent=player.number;
+ paintMenuPlayer(el('career-player-sprite'),team,player.skin);
+ el('career-user-abbr').textContent=team.abbr;el('career-user-record').textContent=recordLabel(team);
+ el('career-open-player').textContent=career.points?`${career.points} upgrade ${career.points===1?'point':'points'}`:'View your player';
  el('career-season').textContent=`Season ${career.league.season} · ${career.postseason?'Playoffs':`Week ${career.league.week}`} · ${recordLabel(team)}`;
  el('career-level').textContent=`Level ${career.level} · ${career.xp}/100 XP · ${career.points} upgrade ${career.points===1?'point':'points'}`;
  el('career-xp').value=career.xp;
- const s=career.seasonStats;el('career-stat-line').textContent=`${s.passingYards} YDS · ${s.passingTD} TD · ${s.interceptions} INT`;
+ const s=career.seasonStats;el('career-yards').textContent=s.passingYards;el('career-td').textContent=s.passingTD;el('career-int').textContent=s.interceptions;el('career-stat-line').textContent=`${s.passingYards} YDS · ${s.passingTD} TD · ${s.interceptions} INT`;
  el('career-completions').textContent=`${s.completions}/${s.attempts} completed · ${s.sacks} sacks · ${s.games} games`;
  const t=career.totals;el('career-lifetime').textContent=`Career: ${t.passingYards} passing yards · ${t.passingTD} TD · ${t.games} games`;
  const descriptions={accuracy:'Tighter placement',arm:'Faster throws',release:'Less windup time'};
@@ -42,14 +65,15 @@ function render(){
  el('career-play').hidden=!match;el('career-next-season').hidden=!career.postseason?.champion;
  if(match){
   const opponent=League.findTeamState(career.league,match.homeTeamId===career.teamId?match.awayTeamId:match.homeTeamId);
+  el('career-opponent-abbr').textContent=opponent.abbr;el('career-opponent-record').textContent=recordLabel(opponent);el('career-screen').style.setProperty('--opponent-color',opponent.colors.primary);
   el('career-next-opponent').textContent=`${match.homeTeamId===career.teamId?'vs':'at'} ${opponent.city} ${opponent.name}`;
   el('career-matchup').textContent=`${recordLabel(opponent)} · Defense ${opponent.ratings.defense} · ${match.round===3?'Championship':match.round===2?'Conference final':match.round===1?'Conference semifinal':`Week ${match.week}`}`;
   el('career-play').textContent=career.checkpoint?'Resume game':'Play next game';
  }else if(career.postseason?.champion){
-  const champion=League.findTeamState(career.league,career.postseason.champion);el('career-next-opponent').textContent=career.postseason.champion===career.teamId?'You are league champions!':`${champion.city} ${champion.name} win the title`;
+  const champion=League.findTeamState(career.league,career.postseason.champion);el('career-opponent-abbr').textContent=champion.abbr;el('career-opponent-record').textContent='CHAMPION';el('career-screen').style.setProperty('--opponent-color',champion.colors.primary);el('career-next-opponent').textContent=career.postseason.champion===career.teamId?'You are league champions!':`${champion.city} ${champion.name} win the title`;
   el('career-matchup').textContent='Season complete. Your player and upgrades carry into next season.';
  }
- const last=career.lastResult;el('career-last-result').hidden=!last;
+ const last=career.lastResult;el('career-home-motto').hidden=!!last;el('career-last-result').hidden=!last;
  if(last){
   const opp=League.findTeamState(career.league,last.opponentId);
   el('career-result-title').textContent=`${last.userScore>last.cpuScore?'WIN':'LOSS'} · ${team.abbr} ${last.userScore} – ${opp.abbr} ${last.cpuScore}`;
@@ -76,6 +100,20 @@ function launch(){
  persist();ensureLoopStarted();
 }
 export function initCareer(){
+ for(const button of document.querySelectorAll('[data-career-tab]')){
+  button.addEventListener('click',()=>setCareerTab(button.dataset.careerTab));
+  button.addEventListener('keydown',event=>{
+   const tabs=[...document.querySelectorAll('[data-career-tab]')];let next;
+   if(event.key==='ArrowRight')next=(tabs.indexOf(button)+1)%tabs.length;
+   else if(event.key==='ArrowLeft')next=(tabs.indexOf(button)+tabs.length-1)%tabs.length;
+   else if(event.key==='Home')next=0;else if(event.key==='End')next=tabs.length-1;else return;
+   event.preventDefault();setCareerTab(tabs[next].dataset.careerTab);tabs[next].focus();
+  });
+ }
+ el('career-open-player').addEventListener('click',()=>{setCareerTab('player');el('career-player-tab').focus();});
+ el('career-open-backups').addEventListener('click',()=>el('career-backups').showModal());
+ el('career-close-backups').addEventListener('click',()=>el('career-backups').close());
+ updateTitle();
  el('career-team').innerHTML=League.TEAMS.map(t=>`<option value="${t.id}">${escape(League.fullName(t))}</option>`).join('');
  el('btn-career').addEventListener('click',showCareer);
  el('career-back').addEventListener('click',()=>{restoreExhibition();el('career-screen').classList.remove('show');el('start-screen').classList.add('show');});

@@ -47,6 +47,7 @@ test('career creation, three weekly results, reload and upgrade',async({page})=>
   await page.reload();await page.getByRole('button',{name:'Career Mode',exact:true}).click();
   await expect(page.locator('#career-season')).toContainText(`Week ${week+1}`);
  }
+ await page.getByRole('tab',{name:'Player',exact:true}).click();
  await expect(page.locator('#career-lifetime')).toContainText('75 passing yards');
  const upgrade=page.locator('[data-upgrade="accuracy"]');await expect(upgrade).toBeEnabled();await upgrade.click();await expect(upgrade.locator('strong')).toHaveText('84');
  await page.screenshot({path:'test-results/career-after-three-weeks.png',fullPage:true});

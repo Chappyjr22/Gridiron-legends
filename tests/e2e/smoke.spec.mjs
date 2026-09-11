@@ -50,6 +50,8 @@ test.describe('main menu', () => {
     await page.goto('/');
     await expect(page.locator('#btn-new-game')).toBeVisible();
     await expect(page.locator('#btn-practice')).toBeVisible();
+    await expect(page.locator('#btn-extras')).toBeVisible();
+    await page.click('#btn-extras');
     await expect(page.locator('#btn-league-hub')).toBeVisible();
     await expect(page.locator('#btn-menu-settings')).toBeVisible();
     await expect(page.locator('#btn-start-editor')).toBeVisible();
@@ -59,6 +61,7 @@ test.describe('main menu', () => {
   test('League Hub opens and returns to the main menu', async ({ page }) => {
     const errors = trackPageErrors(page);
     await page.goto('/');
+    await page.click('#btn-extras');
     await page.click('#btn-league-hub');
     await expect(page.locator('#league-screen')).toHaveClass(/show/);
     await expect(page.locator('#league-schedule-list .matchup-row').first()).toBeVisible();
@@ -189,6 +192,7 @@ test.describe('Formation Lab', () => {
   test('opens, allows dragging a player, and Done returns to the main menu', async ({ page }) => {
     const errors = trackPageErrors(page);
     await page.goto('/');
+    await page.click('#btn-extras');
     await page.click('#btn-start-editor');
     await expect(page.locator('#edit-panel')).toBeVisible();
     const before = JSON.parse(await page.locator('#edit-json').inputValue());

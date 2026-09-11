@@ -172,31 +172,34 @@
   @media(max-width:640px){.career-form-grid,.career-grid{grid-template-columns:1fr;}.career-panel{max-height:94dvh;padding:14px;}.career-player-card{padding:14px;}.career-footer{align-items:stretch;flex-direction:column;}.career-panel .panel-heading h2{font-size:20px;}.career-panel .panel-heading button{font-size:11px;}}
 
 </style>
+<link rel="stylesheet" href="./src/ui/stadium.css">
+<link rel="preload" href="./assets/ui/Jersey10-Regular.ttf" as="font" type="font/ttf" crossorigin>
 </head>
 <body>
 <div class="app">
   <div class="rotate-hint">Rotate your phone to landscape for the full field view</div>
 
   <div id="start-screen" class="screen show title-screen">
-    <div class="title-shell">
-      <div class="brand-lockup">
-        <div class="brand-kicker">Arcade Football</div>
-        <h1 class="brand-title">Gridiron <span>Legends</span></h1>
-        <p class="brand-sub">Call the play. Make the throw. Become a legend.</p>
+    <div class="stadium-home">
+      <div class="title-art">
+        <h1><img class="game-wordmark" src="./assets/ui/wordmark.webp" alt="Gridiron Legends" width="1774" height="887"></h1>
+        <p class="stadium-tagline">Your next chapter</p>
+        <canvas id="title-player" class="menu-player" width="64" height="64" aria-label="Your quarterback"></canvas>
       </div>
-      <div>
-        <div class="menu-stack">
-          <button id="btn-career" class="btn-primary">Career Mode</button>
-          <button id="btn-new-game" class="btn-primary">New Game</button>
-          <button id="btn-practice">Practice</button>
-          <button id="btn-league-hub">League Hub</button>
-          <button id="btn-menu-settings">Settings</button>
-          <button id="btn-start-editor">Formation Lab</button>
-        </div>
-        <div class="menu-version">Prototype v54</div>
-      </div>
+      <nav class="stadium-menu" aria-label="Main menu">
+        <button id="btn-career" class="sports-button gold" aria-label="Career Mode"><span id="career-menu-label">Start Career</span><small id="career-menu-detail">Your player. Your season.</small><span class="menu-arrow" aria-hidden="true">▶</span></button>
+        <button id="btn-new-game" class="sports-button">Quick Play <span aria-hidden="true">▶</span></button>
+        <button id="btn-practice" class="sports-button">Practice <span aria-hidden="true">▶</span></button>
+        <div class="stadium-utilities"><button id="btn-menu-settings" class="sports-button blue">Settings</button><button id="btn-extras" class="sports-button blue">Extras</button></div>
+      </nav>
     </div>
   </div>
+  <dialog id="extras-dialog" class="sports-dialog" aria-labelledby="extras-heading">
+    <h2 id="extras-heading">Extras</h2>
+    <button id="btn-league-hub" class="sports-button">League Hub</button>
+    <button id="btn-start-editor" class="sports-button">Formation Lab</button>
+    <button id="btn-extras-close" class="sports-button blue">Back</button>
+  </dialog>
 
   <div id="setup-screen" class="screen setup-screen">
     <div class="setup-panel">
@@ -306,9 +309,9 @@
 
   <section id="career-screen" class="screen setup-screen" aria-label="Career Mode">
  <div class="setup-panel career-panel">
-  <div class="panel-heading"><div><h2>Rookie Career</h2><p>Your player. Your season.</p></div><button id="career-back">Main menu</button></div>
-  <form id="career-create">
-   <p>Start as a rookie quarterback. Call the plays and control the offense as your QB builds a career.</p>
+  <header class="career-header"><h2>My Career</h2><span id="career-season"></span><button id="career-back" class="sports-button blue">Main menu</button></header>
+  <form id="career-create" class="career-enrollment">
+<h3>Make your debut</h3><p>Create your quarterback and lead the offense.</p>
    <div class="career-form-grid">
     <div><label for="career-name">Player name</label><input id="career-name" maxlength="28" required autocomplete="off" placeholder="Your name"></div>
     <div><label for="career-number">Jersey number</label><input id="career-number" type="number" min="0" max="19" value="7" required></div>
@@ -321,25 +324,52 @@
    <p class="career-muted">Precision improves placement. Arm strength improves velocity. Quick release shortens your windup.</p>
    <p id="career-create-error" role="alert"></p><button class="btn-primary" type="submit">Begin rookie season</button>
   </form>
+
   <div id="career-hub" hidden>
-   <div class="career-player-card" id="career-player-card"><span id="career-season"></span><h3 id="career-player-name"></h3><p id="career-player-detail"></p><p id="career-level"></p><progress id="career-xp" max="100" value="0" aria-label="Progress to next level"></progress></div>
-   <div class="career-grid">
-    <div>
-     <section class="career-section"><span class="career-kicker">Next up</span><h3 id="career-next-opponent"></h3><p id="career-matchup"></p><button id="career-play" class="btn-primary">Play next game</button><button id="career-next-season" class="btn-primary" hidden>Start next season</button></section>
-     <section class="career-section" id="career-last-result" hidden><span class="career-kicker">Last game</span><h3 id="career-result-title"></h3><p id="career-result-stats"></p><p class="career-gold" id="career-result-xp"></p></section>
-     <section class="career-section"><span class="career-kicker">This season</span><h3 id="career-stat-line"></h3><p id="career-completions"></p><p id="career-lifetime"></p><p id="career-awards"></p></section>
-     <section class="career-section"><span class="career-kicker">Develop your QB</span><div id="career-upgrades" class="career-upgrades"></div><p class="career-muted">Each point adds 2 to an attribute. Upgrades unlock between games.</p></section>
+   <div class="locker-layout">
+    <section class="career-player-card" id="career-player-card">
+      <h3 id="career-player-name"></h3><p id="career-player-detail"></p>
+      <p id="career-level"></p><progress id="career-xp" max="100" value="0" aria-label="Progress to next level"></progress>
+      <div class="locker-jersey" aria-hidden="true"><span id="career-jersey-number"></span></div>
+      <canvas id="career-player-sprite" class="menu-player" width="64" height="64" aria-label="Your player in team colors"></canvas>
+    </section>
+    <div id="career-home-panel" class="career-page home-boards" role="tabpanel" aria-labelledby="career-home-tab">
+     <section class="match-board paper-board">
+       <span class="board-kicker">Next game</span>
+       <div class="helmet-matchup"><div><svg class="helmet" viewBox="0 0 100 82" aria-hidden="true"><use href="#helmet-icon"/></svg><strong id="career-user-abbr"></strong><small id="career-user-record"></small></div><b>VS</b><div><svg class="helmet opponent-helmet" viewBox="0 0 100 82" aria-hidden="true"><use href="#helmet-icon"/></svg><strong id="career-opponent-abbr"></strong><small id="career-opponent-record"></small></div></div>
+       <h3 id="career-next-opponent"></h3><p id="career-matchup"></p>
+       <button id="career-play" class="sports-button field-green">Play next game</button><button id="career-next-season" class="sports-button gold" hidden>Start next season</button>
+     </section>
+     <section class="stat-board paper-board"><span class="board-kicker">Season stats</span>
+       <h3 id="career-stat-line" class="sr-only"></h3>
+       <div class="season-numbers"><div><strong id="career-yards">0</strong><span>YDS</span></div><div><strong id="career-td">0</strong><span>TD</span></div><div><strong id="career-int">0</strong><span>INT</span></div></div>
+       <button id="career-open-player" class="sports-button gold">Develop your QB</button>
+       <div id="career-last-result" hidden><span class="board-kicker">Last game</span><h3 id="career-result-title"></h3><p id="career-result-stats"></p><p id="career-result-xp"></p></div>
+       <p class="rookie-motto" id="career-home-motto">Every legend<br>starts somewhere.</p>
+     </section>
     </div>
-    <div>
-     <details class="career-section" open><summary>Your teammates</summary><div id="career-teammates"></div></details>
-     <details class="career-section"><summary>Conference standings</summary><p class="career-muted">Top four in each conference reach the playoffs.</p><div id="career-standings"></div></details>
-     <details class="career-section"><summary>Recent games</summary><div id="career-history"></div></details>
-    </div>
+    <section id="career-player-panel" class="career-page paper-board career-scroll" role="tabpanel" aria-labelledby="career-player-tab" hidden>
+      <h3>Develop your quarterback</h3><div id="career-upgrades" class="career-upgrades"></div><p class="career-muted">Each point adds 2 to an attribute. Upgrades unlock between games.</p>
+      <h3>Career record</h3><p id="career-completions"></p><p id="career-lifetime"></p><p id="career-awards"></p>
+    </section>
+    <section id="career-league-panel" class="career-page paper-board career-scroll" role="tabpanel" aria-labelledby="career-league-tab" hidden>
+      <h3>Conference standings</h3><p>Top four teams reach the playoffs.</p><div id="career-standings"></div>
+      <h3>Your teammates</h3><div id="career-teammates"></div><h3>Recent games</h3><div id="career-history"></div>
+    </section>
    </div>
+   <nav class="career-nav" role="tablist" aria-label="Career views">
+    <button id="career-home-tab" class="sports-button gold" role="tab" aria-selected="true" aria-controls="career-home-panel" data-career-tab="home">Home</button>
+    <button id="career-player-tab" class="sports-button blue" role="tab" aria-selected="false" aria-controls="career-player-panel" data-career-tab="player" tabindex="-1">Player</button>
+    <button id="career-league-tab" class="sports-button blue" role="tab" aria-selected="false" aria-controls="career-league-panel" data-career-tab="league" tabindex="-1">League</button>
+   </nav>
   </div>
+  <div class="career-save-bar"><span id="career-quiet-save" role="status">Saved on this device</span><button id="career-open-backups">Save &amp; backup</button></div>
+  <dialog id="career-backups" class="sports-dialog" aria-labelledby="backup-heading"><h2 id="backup-heading">Career save</h2>
   <footer class="career-footer"><p id="career-save-status" role="status">Career saves on this device. Quick games keep their existing save.</p><div class="career-backup-actions"><button id="career-export">Export backup</button><button id="career-import">Restore backup</button><input id="career-backup-file" type="file" accept=".json,application/json" hidden></div></footer>
+<button id="career-close-backups" class="sports-button blue">Back</button></dialog>
  </div>
 </section>
+<svg width="0" height="0" class="svg-definitions" aria-hidden="true"><defs><symbol id="helmet-icon" viewBox="0 0 100 82"><path d="M9 49V29L20 12 38 5h23l18 12 8 22v12H55v21H30L13 60Z" fill="currentColor" stroke="#101e36" stroke-width="5" stroke-linejoin="miter"/><path d="M26 13h22v8H26v8H18V21Z" fill="#fff8dc" opacity=".75"/><path d="M58 42h35v10H69v12h24v9H57" fill="none" stroke="#101e36" stroke-width="5"/><path d="M53 8h9v26h-9Z" fill="#f7edcc"/><path d="M40 46h11v14H40Z" fill="#101e36"/></symbol></defs></svg>
 <div id="game-save-status" role="status"></div>
 
 <div id="game-view" class="game-view">
