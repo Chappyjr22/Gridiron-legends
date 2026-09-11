@@ -12,8 +12,9 @@ test('second-finger juke works while steering stays captured',async({browser})=>
  const box=await page.locator('#field').boundingBox(),button=await page.locator('#btn-juke-up').boundingBox();
  const cdp=await context.newCDPSession(page),first={x:box.x+box.width*0.5,y:box.y+box.height*0.6,id:1};
  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[first]});
+ expect(await page.evaluate(async()=>(await import('/src/input/interactionState.js')).interaction.steering)).toBe(true);
  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[first,{x:button.x+button.width/2,y:button.y+button.height/2,id:2}]});
- await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[first]});
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[{x:button.x+button.width/2,y:button.y+button.height/2,id:2}]});
  await expect.poll(()=>page.evaluate(async()=>(await import('/src/state/gameState.js')).entities.ballCarrier.x)).toBeLessThan(175);
  expect(await page.evaluate(async()=>(await import('/src/input/interactionState.js')).interaction.steering)).toBe(true);
  await page.screenshot({path:'test-results/juke-landscape.png'});
