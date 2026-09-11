@@ -53,7 +53,7 @@ await test('a defender two yards away cannot end the play',async h=>{
 });
 await test('dives move physically, miss a cut, and detect swept contact',async h=>{
  const c=await h.load('src/simulation/contact.js');
- const d={x:0,yfield:0},runner={x:0,yfield:40};assert.equal(c.startDive(d,runner,1000),true);
+ const d={x:0,yfield:0},runner={x:0,yfield:40};assert.equal(c.startDive(d,runner,1000),true);assert.equal(d.facing,'left');
  assert.equal(c.touching(d,runner),false);assert.equal(c.advanceDive(d,runner,0.05,1050),false);assert.equal(d.yfield,12.5);
  runner.x=50;assert.equal(c.advanceDive(d,runner,0.13,1180),false);assert.equal(d.x,0);
  const other={x:0,yfield:0};c.startDive(other,{x:0,yfield:40},1000);assert.equal(c.advanceDive(other,{x:0,yfield:40},0.18,1180),true);

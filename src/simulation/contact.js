@@ -15,6 +15,7 @@ export function startDive(def,carrier,now){
  const distance=separation(def,carrier);
  if(distance<=CONTACT_RADIUS||distance>DIVE_REACH||now<(def.nextDiveAt||0))return false;
  def.dive={vx:(carrier.x-def.x)/distance*DIVE_SPEED,vy:(carrier.yfield-def.yfield)/distance*DIVE_SPEED,until:now+DIVE_DURATION};
+ if(Math.abs(carrier.yfield-def.yfield)>0.5)def.facing=carrier.yfield>def.yfield?'left':'right';
  def.action='dive';def.actionStart=now;def.nextDiveAt=now+1400;
  return true;
 }
