@@ -30,6 +30,7 @@ export function playerFrame(e,isDecor){
   const now=simulationNow();
   if(e.action==='drop')return {row:4,col:2};
   if(e.action==='deflect')return {row:4,col:1};
+  if(e.action==='diveWindup')return {row:1,col:4};
   if(e.action==='dive')return {row:4,col:5};
   if(e.action==='tackled'){
     const elapsed=now-e.actionStart;
@@ -92,6 +93,9 @@ export function drawPlayer(e,team,highlight,isDecor){
   }
   const actionElapsed=simulationNow()-(e.actionStart||0);
   const isDiving=e.action==='dive'||(e.action==='tackle'&&actionElapsed>=65)||(e.action==='missedTackle'&&actionElapsed<MISSED_TACKLE_DOWN_MS);
+  if(e.action==='diveWindup'){
+    ctx.strokeStyle='#ffd166';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(cx,cy+12,13,5,0,0,7);ctx.stroke();
+  }
   if(highlight){
     ctx.fillStyle='rgba(255,209,102,0.16)';
     ctx.strokeStyle='rgba(255,209,102,0.9)';

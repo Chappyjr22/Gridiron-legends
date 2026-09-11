@@ -1,3 +1,4 @@
+import {initRunnerControls} from './input/runnerControls.js';
 import {initMenuArt} from './ui/menuArt.js';
 import { game } from './state/gameState.js';
 import { initCareer } from './ui/career.js';
@@ -40,6 +41,7 @@ populateOpponentSelect();
 syncMatchupUI();
 updateHUD();
 
+initRunnerControls();
 initMenuArt();
 initCareer();
 

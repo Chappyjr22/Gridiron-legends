@@ -108,6 +108,30 @@ await test('handoffs preserve defensive line engagement and release',async h=>{
  h.step();h.step(50);assert.equal(dl.state,'engaged');
  dl.engageDur=0;h.step(50);assert.equal(dl.state,'released');
 });
+await test('stick input is radial and its thumb stays inside the ring',async h=>{
+ const {stickVector,STICK_TRAVEL,STICK_RADIUS}=await h.load('src/input/runnerControls.js');
+ for(const point of [{x:1000,y:1000},{x:-1000,y:0},{x:0,y:1000}]){
+  const v=stickVector({x:0,y:0},point);assert.ok(Math.hypot(v.x,v.y)<=1.00001);assert.ok(Math.hypot(v.x*STICK_TRAVEL,v.y*STICK_TRAVEL)+9<=STICK_RADIUS+0.001);
+ }
+});
+await test('jukes move smoothly, have a shared cooldown, and reject paused or airborne input',async h=>{
+ const c=await h.load('src/input/runnerControls.js');
+ h.engine.startPractice();h.engine.choosePlay('trips_slants');h.engine.onSnap();h.game.thrown=true;h.entities.ballCarrier=h.entities.players.wr1;
+ assert.equal(c.requestJuke(-1),true);assert.equal(c.requestJuke(1),false);
+ const runner=h.entities.ballCarrier,start=runner.juke.start;
+ assert.equal(c.jukeStep(runner,start),0);const half=c.jukeStep(runner,start+90),end=c.jukeStep(runner,start+180);
+ assert.equal(half,-18);assert.equal(end,-18);assert.equal(runner.juke,null);
+ runner.jukeReadyAt=0;h.game.paused=true;assert.equal(c.requestJuke(1),false);h.game.paused=false;h.entities.ball.inFlight=true;assert.equal(c.requestJuke(1),false);
+});
+await test('easy tackles telegraph longer without gaining extra lunge distance',async h=>{
+ const c=await h.load('src/simulation/contact.js'),{DIFFICULTIES}=await h.load('src/state/difficulty.js');
+ assert.ok(DIFFICULTIES.easy.diveWindup>DIFFICULTIES.hard.diveWindup);
+ for(const difficulty of ['easy','medium','hard']){
+  const timing=DIFFICULTIES[difficulty],d={x:0,yfield:0},runner={x:0,yfield:40};
+  c.startDive(d,runner,1000,timing);c.advanceDive(d,{x:100,yfield:40},timing.diveWindup/1000,1000+timing.diveWindup);
+  assert.equal(d.yfield,0);c.advanceDive(d,{x:100,yfield:40},timing.diveDuration/1000,d.dive.until);assert.ok(Math.abs(d.yfield-45)<0.001);
+ }
+});
 const f=createFranchise();const [a,b]=f.teams;a.record.wins=10;a.record.losses=1;b.record.wins=1;b.record.losses=10;b.record.pointsFor=200;
 assert.ok(standings(f).indexOf(a)<standings(f).indexOf(b));
 const bos=f.teams.find(t=>t.id==='bos'),dal=f.teams.find(t=>t.id==='dal');assert.notEqual(contrastingOpponent(bos,dal).colors.primary,dal.colors.primary);assert.equal(dal.colors.primary,'#234a72');

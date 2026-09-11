@@ -11,18 +11,20 @@ export function pursuitTarget(def,carrier,velocity){
  return {x:carrier.x+velocity.x*lead,yfield:carrier.yfield+velocity.yfield*lead};
 }
 // A lunge commits to a direction; it cannot home in after the runner cuts.
-export function startDive(def,carrier,now){
+export function startDive(def,carrier,now,timing={}){
  const distance=separation(def,carrier);
  if(distance<=CONTACT_RADIUS||distance>DIVE_REACH||now<(def.nextDiveAt||0))return false;
- def.dive={vx:(carrier.x-def.x)/distance*DIVE_SPEED,vy:(carrier.yfield-def.yfield)/distance*DIVE_SPEED,until:now+DIVE_DURATION};
+ const duration=timing.diveDuration??DIVE_DURATION,windup=timing.diveWindup??0,speed=45/(duration/1000);
+ def.dive={launchAt:now+windup,vx:(carrier.x-def.x)/distance*speed,vy:(carrier.yfield-def.yfield)/distance*speed,until:now+windup+duration};
  if(Math.abs(carrier.yfield-def.yfield)>0.5)def.facing=carrier.yfield>def.yfield?'left':'right';
- def.action='dive';def.actionStart=now;def.nextDiveAt=now+1400;
+ def.action=windup?'diveWindup':'dive';def.actionStart=now;def.nextDiveAt=now+1400;
  return true;
 }
 // Swept contact prevents a lunge stepping through the runner on a slower frame.
 export function advanceDive(def,carrier,dt,now){
  const dive=def.dive;if(!dive)return false;
- const step=Math.min(dt,Math.max(0,(dive.until-(now-dt*1000))/1000));
+ if(now>=dive.launchAt&&def.action==='diveWindup'){def.action='dive';def.actionStart=dive.launchAt;}
+ const step=Math.max(0,(Math.min(now,dive.until)-Math.max(now-dt*1000,dive.launchAt??0))/1000);
  const dx=dive.vx*step,dy=dive.vy*step;
  const length2=dx*dx+dy*dy;
  const t=length2?Math.max(0,Math.min(1,((carrier.x-def.x)*dx+(carrier.yfield-def.yfield)*dy)/length2)):0;

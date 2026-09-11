@@ -1,3 +1,4 @@
+import {stickVector,STICK_TRAVEL} from '../input/runnerControls.js';
 import {catchTolerance} from '../simulation/receiving.js';
 import { simulationNow } from '../state/clock.js';
 import { canvas, ctx } from './canvas.js';
@@ -151,14 +152,16 @@ export function draw(){
     }
   }
   if(interaction.steering&&interaction.steerAnchor&&interaction.steerCurrent){
+    const vector=stickVector(interaction.steerAnchor,interaction.steerCurrent);
+    const thumb={x:interaction.steerAnchor.x+vector.x*STICK_TRAVEL,y:interaction.steerAnchor.y+vector.y*STICK_TRAVEL};
     ctx.fillStyle='rgba(255,255,255,0.12)';
     ctx.beginPath();ctx.arc(interaction.steerAnchor.x,interaction.steerAnchor.y,38,0,7);ctx.fill();
     ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=1.5;
     ctx.beginPath();ctx.arc(interaction.steerAnchor.x,interaction.steerAnchor.y,38,0,7);ctx.stroke();
     ctx.strokeStyle='rgba(255,255,255,0.6)';ctx.lineWidth=2;
-    ctx.beginPath();ctx.moveTo(interaction.steerAnchor.x,interaction.steerAnchor.y);ctx.lineTo(interaction.steerCurrent.x,interaction.steerCurrent.y);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(interaction.steerAnchor.x,interaction.steerAnchor.y);ctx.lineTo(thumb.x,thumb.y);ctx.stroke();
     ctx.fillStyle='#fff';
-    ctx.beginPath();ctx.arc(interaction.steerCurrent.x,interaction.steerCurrent.y,9,0,7);ctx.fill();
+    ctx.beginPath();ctx.arc(thumb.x,thumb.y,9,0,7);ctx.fill();
   }
   if(entities.ball.inFlight&&simulationNow()>=entities.ball.startTime){
     const p=Math.min(1,(simulationNow()-entities.ball.startTime)/entities.ball.duration);

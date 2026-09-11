@@ -1,3 +1,4 @@
+import {stickVector,jukeStep,syncRunnerControls} from '../input/runnerControls.js';
 import {catchTolerance,catchOutcome} from './receiving.js';
 import {separation, touching, pursuitTarget, startDive, advanceDive} from './contact.js';
 import { emptyMatch, recordPlay } from '../career/stats.js';
@@ -715,8 +716,7 @@ function tick(){
         }
         let jx=0,jy=0;
         if(interaction.steering&&interaction.steerAnchor&&interaction.steerCurrent){
-          jx=clamp((interaction.steerCurrent.x-interaction.steerAnchor.x)/70,-1,1);
-          jy=clamp((interaction.steerCurrent.y-interaction.steerAnchor.y)/70,-1,1);
+          const stick=stickVector(interaction.steerAnchor,interaction.steerCurrent);jx=stick.x;jy=stick.y;
         }
         const fwdMult = jx>0 ? (1-jx*0.85) : (1-jx*0.15);
         const breakSlowMult=now<(entities.ballCarrier.breakSlowUntil||0)?BREAK_SPEED_MULT:1;
@@ -731,7 +731,8 @@ function tick(){
         const previousX=entities.ballCarrier.x,previousY=entities.ballCarrier.yfield;
         entities.ballCarrier.facing='left';
         entities.ballCarrier.yfield += BASE_RUN_YPS*fwdMult*XPX*SPEED_SCALE*diff.offenseSpeedMult*carrierSpeedMult*breakSlowMult*dt;
-        const nextX=previousX+jy*LATERAL_YPS*XPX*SPEED_SCALE*diff.offenseSpeedMult*carrierSpeedMult*breakSlowMult*dt;
+        const jukeDelta=jukeStep(entities.ballCarrier,now);
+        const nextX=previousX+(jukeDelta??(jy*LATERAL_YPS*XPX*SPEED_SCALE*diff.offenseSpeedMult*carrierSpeedMult*breakSlowMult*dt));
         const sidelineMin=LAT_MIN-SPRITE_GROUND_Y_OFFSET-SIDELINE_STEP_DEPTH;
         const sidelineMax=LAT_MAX-SPRITE_GROUND_Y_OFFSET+SIDELINE_STEP_DEPTH;
         entities.ballCarrier.x=clamp(nextX,sidelineMin,sidelineMax);
@@ -786,7 +787,7 @@ function tick(){
           const target=pursuitTarget(def,entities.ballCarrier,entities.ballCarrier.velocity||{x:0,yfield:0});
           const blockedMult=now<(def.blockedUntil||0)?0.25:1;
           moveToward(def,clamp(target.x,LAT_MIN,LAT_MAX),target.yfield,pursueSpeed*ratingMultiplier(def.rating,0.2)*blockedMult,dt);
-          if(!entities.ball.inFlight&&entities.ballCarrier!==qb&&blockedMult===1&&entities.breakCooldown<=0)startDive(def,entities.ballCarrier,now);
+          if(!entities.ball.inFlight&&entities.ballCarrier!==qb&&blockedMult===1&&entities.breakCooldown<=0)startDive(def,entities.ballCarrier,now,diff);
         }
         if(!entities.ball.inFlight&&entities.breakCooldown<=0){
           let nearest=Infinity,nearestDefender=null;
@@ -820,6 +821,7 @@ function tick(){
     }
   }
   if(game.phase==='tackle'&&!game.paused&&game.tackle&&now-game.tackle.startTime>=TACKLE_RESULT_DELAY)finishTackle();
+  syncRunnerControls();
   draw();
   requestAnimationFrame(tick);
 }

@@ -2,9 +2,9 @@ import { game } from './gameState.js';
 import { clamp } from './constants.js';
 
 export const DIFFICULTIES={
-  easy:{pursueMult:0.78,reactionDelay:0.22,engageMin:1800,engageMax:2800,catchRadiusMult:1.4,breakTackle:0.35,blockWinChance:0.6,offenseSpeedMult:1.14,runBreakBonus:0.22,blitzChance:0.2,approachDelay:0.35},
-  medium:{pursueMult:1.0,reactionDelay:0.16,engageMin:850,engageMax:1600,catchRadiusMult:1.0,breakTackle:0.18,blockWinChance:0.15,offenseSpeedMult:1.0,runBreakBonus:0.08,blitzChance:0.2,approachDelay:0.15},
-  hard:{pursueMult:1.15,reactionDelay:0.10,engageMin:600,engageMax:1150,catchRadiusMult:0.8,breakTackle:0.08,blockWinChance:0.05,offenseSpeedMult:0.95,runBreakBonus:0.03,blitzChance:0.2,approachDelay:0.08}
+  easy:{diveWindup:180,diveDuration:320,pursueMult:0.78,reactionDelay:0.22,engageMin:1800,engageMax:2800,catchRadiusMult:1.4,breakTackle:0.35,blockWinChance:0.6,offenseSpeedMult:1.14,runBreakBonus:0.22,blitzChance:0.2,approachDelay:0.35},
+  medium:{diveWindup:110,diveDuration:250,pursueMult:1.0,reactionDelay:0.16,engageMin:850,engageMax:1600,catchRadiusMult:1.0,breakTackle:0.18,blockWinChance:0.15,offenseSpeedMult:1.0,runBreakBonus:0.08,blitzChance:0.2,approachDelay:0.15},
+  hard:{diveWindup:55,diveDuration:190,pursueMult:1.15,reactionDelay:0.10,engageMin:600,engageMax:1150,catchRadiusMult:0.8,breakTackle:0.08,blockWinChance:0.05,offenseSpeedMult:0.95,runBreakBonus:0.03,blitzChance:0.2,approachDelay:0.08}
 };
 export function currentDiff(){
   if(game.difficulty!=='gridiron')return DIFFICULTIES[game.difficulty];
@@ -13,6 +13,8 @@ export function currentDiff(){
   const f=Math.min(1,Math.abs(game.momentum));
   const lerp=(a,b)=>a+(b-a)*f;
   return{
+    diveWindup:lerp(from.diveWindup,to.diveWindup),
+    diveDuration:lerp(from.diveDuration,to.diveDuration),
     pursueMult:lerp(from.pursueMult,to.pursueMult),
     reactionDelay:lerp(from.reactionDelay,to.reactionDelay),
     engageMin:lerp(from.engageMin,to.engageMin),
