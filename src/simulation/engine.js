@@ -633,7 +633,7 @@ function tick(){
 
     DL_KEYS.forEach(key=>{
       const dl=entities.players[key];
-      if(entities.ballCarrier!==qb)return;
+      if(entities.ballCarrier!==qb&&!game.runActive)return;
       if(dl.state==='approach'){
         if(t>diff.approachDelay){
           moveToward(dl,dl.blockerX,game.centerYfield,RUSH_SPEED*screenMult*ratingMultiplier(dl.rating,0.18),dt);

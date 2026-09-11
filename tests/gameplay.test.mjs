@@ -100,6 +100,14 @@ await test('nearby offensive player blocks briefly after a catch',async h=>{
  Object.assign(h.entities.players.wr2,{x:190,yfield:37*28});Object.assign(h.entities.players.cb2,{x:190,yfield:37*28});
  h.step();assert.ok(h.entities.players.cb2.blockedUntil>h.now);assert.ok(h.entities.players.cb2.blockedUntil<=h.now+550);assert.equal(h.entities.players.wr2.isBlocking,true);
 });
+await test('handoffs preserve defensive line engagement and release',async h=>{
+ h.engine.startPractice();h.engine.choosePlay('trips_inside');h.engine.onSnap();
+ h.game.snapTime=h.now-2000;h.game.carrierSince=h.now-2000;h.game.runActive=true;h.entities.runExchange=null;
+ h.entities.ballCarrier=h.entities.players.rb;Object.assign(h.entities.ballCarrier,{x:30,yfield:50*28});
+ const dl=h.entities.players.dl1;Object.assign(dl,{x:dl.blockerX,yfield:h.game.centerYfield+3,state:'approach'});
+ h.step();h.step(50);assert.equal(dl.state,'engaged');
+ dl.engageDur=0;h.step(50);assert.equal(dl.state,'released');
+});
 const f=createFranchise();const [a,b]=f.teams;a.record.wins=10;a.record.losses=1;b.record.wins=1;b.record.losses=10;b.record.pointsFor=200;
 assert.ok(standings(f).indexOf(a)<standings(f).indexOf(b));
 const bos=f.teams.find(t=>t.id==='bos'),dal=f.teams.find(t=>t.id==='dal');assert.notEqual(contrastingOpponent(bos,dal).colors.primary,dal.colors.primary);assert.equal(dal.colors.primary,'#234a72');
