@@ -24,6 +24,7 @@ export function updateTeamPreview(teamId){
   if(source)document.getElementById('team-select').value=source.id;
 }
 export function syncMatchupUI(){
+  syncSettingsUI();
   applyUniform(teamState.userTeam,OFF);
   applyUniform(contrastingOpponent(teamState.userTeam,teamState.cpuTeam),DEF);
   document.getElementById('hud-user-name').textContent=teamState.userTeam.name;
@@ -126,6 +127,14 @@ const difficultyHelp={
   hard:'Faster pursuit, tighter coverage, and fewer broken tackles.',
   gridiron:'Dynamic difficulty responds to momentum during the game.'
 };
+export function syncSettingsUI(){
+  syncActive('[data-diff]','diff',game.difficulty);
+  syncActive('[data-minutes]','minutes',game.quarterMinutes);
+  syncActive('[data-mode]','mode',game.passMode);
+  syncActive('[data-type]','type',game.throwType);
+  syncActive('[data-routes]','routes',game.showRoutes?'on':'off');
+  document.getElementById('difficulty-help').textContent=difficultyHelp[game.difficulty];
+}
 document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>{
   game.passMode=b.dataset.mode;syncActive('[data-mode]','mode',game.passMode);
   if(game.phase==='presnap'){
@@ -142,6 +151,7 @@ document.querySelectorAll('[data-diff]').forEach(b=>b.addEventListener('click',(
   syncActive('[data-diff]','diff',game.difficulty);
   document.getElementById('difficulty-help').textContent=difficultyHelp[game.difficulty];
   updateHUD();
+  if(game.career)uiHooks.careerSettingsChanged?.();
 }));
 document.querySelectorAll('[data-minutes]').forEach(b=>b.addEventListener('click',()=>{
   game.quarterMinutes=Number(b.dataset.minutes);syncActive('[data-minutes]','minutes',game.quarterMinutes);
@@ -173,6 +183,7 @@ function closeSettings(){
   document.getElementById('pause-overlay').classList.remove('show');
 }
 document.getElementById('btn-pause').addEventListener('click',()=>{
+  syncSettingsUI();
   game.paused=true;
   document.getElementById('pause-overlay').classList.add('show');
 });
@@ -188,6 +199,7 @@ document.getElementById('btn-main-menu').addEventListener('click',()=>{
 });
 
 export function openSetup(settingsOnly=false){
+  syncSettingsUI();
   document.getElementById('start-screen').classList.remove('show');
   document.getElementById('setup-screen').classList.add('show');
   document.getElementById('setup-title').textContent=settingsOnly?'Settings':'New Game';
