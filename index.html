@@ -385,18 +385,24 @@
 <div id="game-save-status" role="status"></div>
 
 <div id="game-view" class="game-view">
-  <div class="topbar">
-    <div class="team-score">
-      <span class="team-color" id="hud-user-color"></span><div><div class="team-name" id="hud-user-name">Legends</div><div class="team-points" id="hud-user-score">0</div></div>
+  <div class="topbar" aria-label="Scoreboard">
+    <div class="team-score" id="hud-user-team">
+      <span class="team-color" id="hud-user-color"></span>
+      <svg class="score-helmet" viewBox="0 0 100 82" aria-hidden="true"><use href="#helmet-icon"/></svg>
+      <span class="team-name" id="hud-user-name">LEG</span><span class="possession-dot" aria-hidden="true"></span>
+      <span class="team-points" id="hud-user-score">0</span>
+    </div>
+    <div class="team-score cpu" id="hud-cpu-team">
+      <span class="team-color" id="hud-cpu-color"></span>
+      <svg class="score-helmet" viewBox="0 0 100 82" aria-hidden="true"><use href="#helmet-icon"/></svg>
+      <span class="team-name" id="hud-cpu-name">RIV</span><span class="possession-dot" aria-hidden="true"></span>
+      <span class="team-points" id="hud-cpu-score">0</span>
     </div>
     <div class="game-clock">
       <div class="period-block"><b id="hud-quarter">1st Qtr</b><span id="hud-clock">3:00</span></div>
       <div class="situation"><strong id="hud-down">1st &amp; 10</strong><span id="hud-ball">OWN 20</span></div>
     </div>
-    <div class="team-score cpu">
-      <button class="icon-btn" id="btn-pause" aria-label="Pause">II</button>
-      <div><div class="team-name" id="hud-cpu-name">Rivals</div><div class="team-points" id="hud-cpu-score">0</div></div><span class="team-color" id="hud-cpu-color"></span>
-    </div>
+    <button class="icon-btn" id="btn-pause" aria-label="Pause"><span aria-hidden="true">Ⅱ</span></button>
   </div>
   <div class="momentum-label" id="momentum-label"></div>
   <div class="field-container">

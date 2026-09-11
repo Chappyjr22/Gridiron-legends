@@ -29,6 +29,7 @@ export function formatFieldPosition(los){
   return spot<50?'OWN '+spot:'OPP '+(100-spot);
 }
 export function updateHUD(){
+  for(const side of ['user','cpu'])document.getElementById('hud-'+side+'-team')?.classList.toggle('has-ball',game.possession===(side==='user'?'player':'cpu'));
   const dn=['','1st','2nd','3rd','4th'][game.down];
   const distanceLabel=game.firstDownYard>=100?'Goal':Math.max(1,Math.round(game.distance));
   document.getElementById('hud-down').innerHTML='<strong>'+(game.possession==='cpu'?'Opponent ball':!dn?'Turnover':dn+' &amp; '+distanceLabel)+'</strong>';

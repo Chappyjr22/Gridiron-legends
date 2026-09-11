@@ -27,7 +27,11 @@ for(const viewport of [{width:844,height:304},{width:844,height:390},{width:932,
   await page.getByRole('tab',{name:'Home',exact:true}).tap();
   await page.getByRole('button',{name:'Save & backup',exact:true}).tap();await expect(page.locator('#career-backups')).toBeVisible();
   await page.locator('#career-close-backups').tap();
-  await page.getByRole('button',{name:'Play next game'}).tap();await page.getByRole('button',{name:'Pause',exact:true}).tap();
+  await page.getByRole('button',{name:'Play next game'}).tap();
+  await assertInViewport(page,'#btn-pause');
+  expect(await page.locator('.topbar').evaluate(e=>e.scrollWidth<=e.clientWidth+1)).toBe(true);
+  await page.screenshot({path:`test-results/scorebug-${viewport.width}-${viewport.height}.png`});
+  await page.getByRole('button',{name:'Pause',exact:true}).tap();
   await expect(page.locator('#pause-overlay [data-diff="easy"]')).toHaveClass(/active/);
   expect(errors).toEqual([]);await context.close();
  });

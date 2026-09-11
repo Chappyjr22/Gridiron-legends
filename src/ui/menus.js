@@ -27,12 +27,17 @@ export function syncMatchupUI(){
   syncSettingsUI();
   applyUniform(teamState.userTeam,OFF);
   applyUniform(contrastingOpponent(teamState.userTeam,teamState.cpuTeam),DEF);
-  document.getElementById('hud-user-name').textContent=teamState.userTeam.name;
+  document.getElementById('hud-user-name').textContent=teamState.userTeam.abbr;
   document.getElementById('hud-user-name').title=League.fullName(teamState.userTeam);
-  document.getElementById('hud-cpu-name').textContent=teamState.cpuTeam.name;
+  document.getElementById('hud-cpu-name').textContent=teamState.cpuTeam.abbr;
   document.getElementById('hud-cpu-name').title=League.fullName(teamState.cpuTeam);
   document.getElementById('hud-user-color').style.background=teamState.userTeam.colors.primary;
   document.getElementById('hud-cpu-color').style.background=teamState.cpuTeam.colors.primary;
+  for(const [side,team] of [['user',teamState.userTeam],['cpu',teamState.cpuTeam]]){
+    const el=document.getElementById('hud-'+side+'-team');
+    el.style.setProperty('--team-primary',team.colors.primary);
+    el.setAttribute('aria-label',League.fullName(team));
+  }
   END_ZONE_STYLE.near.label=teamState.userTeam.abbr;
   END_ZONE_STYLE.near.base=teamState.userTeam.colors.primary;
   END_ZONE_STYLE.near.accent=teamState.userTeam.colors.accent;
