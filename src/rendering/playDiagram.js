@@ -3,7 +3,7 @@ import { FORMATIONS } from '../data/formations.js';
 // Small preview diagrams drawn on each playbook/formation button's own canvas
 // (not the main field canvas), so this takes its own 2d context per call.
 export function diagramPoint(lateral,depth,width,height){
-  return {x:width-24-depth*5.4,y:6+(lateral/380)*(height-12)};
+  return {x:width-(24+depth*5.4)*(width/190),y:6+(lateral/380)*(height-12)};
 }
 export function drawDiagramArrow(context,a,b,color){
   const angle=Math.atan2(b.y-a.y,b.x-a.x);

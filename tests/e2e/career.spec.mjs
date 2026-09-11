@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 async function create(page,difficulty='medium'){
- await page.goto('/');await page.getByRole('button',{name:'Career Mode',exact:true}).click();
+ await page.goto('/');await page.getByRole('button',{name:'Career Mode',exact:true}).click();await page.getByRole('button',{name:'Start new career',exact:true}).click();
  await page.getByLabel('Player name',{exact:true}).fill('Rookie Legend');
  await page.getByLabel('Team',{exact:true}).selectOption('bos');
  await page.getByLabel('Difficulty',{exact:true}).selectOption(difficulty);
@@ -17,7 +17,7 @@ test('career difficulty matches pause UI and persists independently of exhibitio
  await pause.getByRole('button',{name:'Hard',exact:true}).click();
  // Change difficulty without advancing a play, then restore the previous checkpoint.
  await page.reload();
- await page.getByRole('button',{name:'Career Mode',exact:true}).click();
+ await page.getByRole('button',{name:'Career Mode',exact:true}).click();await page.getByRole('button',{name:'Continue last career',exact:true}).click();
  await page.getByRole('button',{name:'Resume game'}).click();
  await page.getByRole('button',{name:'Pause',exact:true}).click();
  await expect(pause.locator('[data-diff="hard"]')).toHaveClass(/active/);
@@ -44,7 +44,7 @@ test('career creation, three weekly results, reload and upgrade',async({page})=>
   });
   await expect(page.locator('#career-season')).toContainText(`Week ${week+1}`);
   await expect(page.locator('#career-result-title')).toContainText('WIN');
-  await page.reload();await page.getByRole('button',{name:'Career Mode',exact:true}).click();
+  await page.reload();await page.getByRole('button',{name:'Career Mode',exact:true}).click();await page.getByRole('button',{name:'Continue last career',exact:true}).click();
   await expect(page.locator('#career-season')).toContainText(`Week ${week+1}`);
  }
  await page.getByRole('tab',{name:'Player',exact:true}).click();
@@ -60,6 +60,6 @@ test('mobile career layout and between-play resume',async({browser})=>{
  const panel=page.locator('.career-panel');expect(await panel.evaluate(e=>e.scrollWidth<=e.clientWidth+1)).toBe(true);
  await page.getByRole('button',{name:'Play next game'}).click();
  await page.evaluate(async()=>{const e=await import('/src/simulation/engine.js');e.startPlayerDrive(35);e.choosePlay('trips_inside');e.endPlay(3,'Run',false,38);});
- await page.reload();await page.getByRole('button',{name:'Career Mode',exact:true}).click();await page.getByRole('button',{name:'Resume game'}).click();
+ await page.reload();await page.getByRole('button',{name:'Career Mode',exact:true}).click();await page.getByRole('button',{name:'Continue last career',exact:true}).click();await page.getByRole('button',{name:'Resume game'}).click();
  await expect(page.locator('#overlay-msg')).toContainText('Run for 3 yards');await expect(page.locator('#hud-ball')).toHaveText('OWN 38');await context.close();
 });

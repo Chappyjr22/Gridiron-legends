@@ -4,7 +4,7 @@ async function assertInViewport(page,selector){
  const viewport=page.viewportSize();
  for(const box of boxes){expect(box.x,box.id).toBeGreaterThanOrEqual(0);expect(box.y,box.id).toBeGreaterThanOrEqual(0);expect(box.right,box.id).toBeLessThanOrEqual(viewport.width+1);expect(box.bottom,box.id).toBeLessThanOrEqual(viewport.height+1);expect(box.h,box.id).toBeGreaterThanOrEqual(36);}
 }
-for(const viewport of [{width:844,height:390},{width:932,height:430},{width:1366,height:768}]){
+for(const viewport of [{width:844,height:304},{width:844,height:390},{width:932,height:430},{width:1366,height:768}]){
  test(`stadium and career fit ${viewport.width}x${viewport.height}`,async({browser})=>{
   const context=await browser.newContext({viewport,hasTouch:true});const page=await context.newPage();
   const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');await page.evaluate(()=>document.fonts.ready);
@@ -12,7 +12,7 @@ for(const viewport of [{width:844,height:390},{width:932,height:430},{width:1366
   expect(await page.locator('.game-wordmark').evaluate(e=>e.complete&&e.naturalWidth>0)).toBe(true);
   await assertInViewport(page,'#start-screen button');
   await page.screenshot({path:`test-results/ui-title-${viewport.width}.png`});
-  await page.getByRole('button',{name:'Career Mode',exact:true}).tap();
+  await page.getByRole('button',{name:'Career Mode',exact:true}).tap();await page.getByRole('button',{name:'Start new career',exact:true}).tap();
   await page.getByLabel('Player name',{exact:true}).fill('Jacob Chapman');
   await page.getByLabel('Difficulty',{exact:true}).selectOption('easy');
   await page.getByRole('button',{name:'Begin rookie season'}).tap();
@@ -20,7 +20,8 @@ for(const viewport of [{width:844,height:390},{width:932,height:430},{width:1366
   await expect(page.locator('#career-jersey-number')).toHaveText('7');
   await expect(page.locator('#career-home-panel')).toBeVisible();
   await assertInViewport(page,'#career-back,#career-play,#career-open-player,.career-nav button');
-  await page.screenshot({path:`test-results/ui-career-${viewport.width}.png`});
+  const playBox=await page.locator('#career-play').boundingBox(),navBox=await page.locator('.career-nav').boundingBox();expect(playBox.y+playBox.height).toBeLessThanOrEqual(navBox.y);
+  await page.screenshot({path:`test-results/ui-career-${viewport.width}-${viewport.height}.png`});
   await page.getByRole('tab',{name:'Player',exact:true}).tap();await expect(page.locator('#career-upgrades')).toBeVisible();
   await page.getByRole('tab',{name:'League',exact:true}).tap();await expect(page.locator('#career-standings')).toBeVisible();
   await page.getByRole('tab',{name:'Home',exact:true}).tap();

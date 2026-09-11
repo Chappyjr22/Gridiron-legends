@@ -187,13 +187,25 @@
         <canvas id="title-player" class="menu-player" width="64" height="64" aria-label="Your quarterback"></canvas>
       </div>
       <nav class="stadium-menu" aria-label="Main menu">
-        <button id="btn-career" class="sports-button gold" aria-label="Career Mode"><span id="career-menu-label">Start Career</span><small id="career-menu-detail">Your player. Your season.</small><span class="menu-arrow" aria-hidden="true">▶</span></button>
+        <button id="btn-career" class="sports-button gold" aria-label="Career Mode"><span id="career-menu-label">Career</span><small id="career-menu-detail">Your player. Your season.</small><span class="menu-arrow" aria-hidden="true">▶</span></button>
         <button id="btn-new-game" class="sports-button">Quick Play <span aria-hidden="true">▶</span></button>
         <button id="btn-practice" class="sports-button">Practice <span aria-hidden="true">▶</span></button>
         <div class="stadium-utilities"><button id="btn-menu-settings" class="sports-button blue">Settings</button><button id="btn-extras" class="sports-button blue">Extras</button></div>
       </nav>
     </div>
   </div>
+  <section id="career-gateway" class="screen career-gateway" aria-label="Career menu">
+   <div class="career-gateway-card"><h2>Career</h2>
+    <button id="career-continue-last" class="sports-button gold">Continue last career</button>
+    <button id="career-my-careers" class="sports-button">My careers</button>
+    <button id="career-new" class="sports-button">Start new career</button>
+    <button id="career-gateway-back" class="sports-button blue">Back</button>
+    <p id="career-gateway-error" role="alert"></p>
+   </div>
+  </section>
+  <section id="career-list-screen" class="screen career-gateway" aria-label="My careers">
+   <div class="career-gateway-card career-list-card"><h2>My careers</h2><div id="career-list"></div><p id="career-list-error" role="alert"></p><button id="career-list-back" class="sports-button blue">Back</button></div>
+  </section>
   <dialog id="extras-dialog" class="sports-dialog" aria-labelledby="extras-heading">
     <h2 id="extras-heading">Extras</h2>
     <button id="btn-league-hub" class="sports-button">League Hub</button>
@@ -350,10 +362,10 @@
     </div>
     <section id="career-player-panel" class="career-page paper-board career-scroll" role="tabpanel" aria-labelledby="career-player-tab" hidden>
       <h3>Develop your quarterback</h3><div id="career-upgrades" class="career-upgrades"></div><p class="career-muted">Each point adds 2 to an attribute. Upgrades unlock between games.</p>
-      <h3>Career record</h3><p id="career-completions"></p><p id="career-lifetime"></p><p id="career-awards"></p>
+      <h3>Player statistics</h3><label for="career-stat-scope">View</label><select id="career-stat-scope"><option value="season">This season</option><option value="last">Last game</option><option value="career">Career</option></select><div id="career-qb-stats"></div><h3>Career record</h3><p id="career-completions"></p><p id="career-lifetime"></p><p id="career-awards"></p>
     </section>
     <section id="career-league-panel" class="career-page paper-board career-scroll" role="tabpanel" aria-labelledby="career-league-tab" hidden>
-      <h3>Conference standings</h3><p>Top four teams reach the playoffs.</p><div id="career-standings"></div>
+      <h3>League statistics</h3><div class="stats-filters"><label for="league-stat-team">Team</label><select id="league-stat-team"></select><label for="league-stat-category">Category</label><select id="league-stat-category"><option value="passing">Passing</option><option value="receiving">Receiving</option><option value="rushing">Rushing</option></select></div><p id="league-stat-coverage"></p><div id="league-player-stats"></div><h3>Conference standings</h3><p>Top four teams reach the playoffs.</p><div id="career-standings"></div>
       <h3>Your teammates</h3><div id="career-teammates"></div><h3>Recent games</h3><div id="career-history"></div>
     </section>
    </div>
@@ -404,7 +416,7 @@
       <div class="card wide">
         <div class="card-header"><div><p class="card-title">Offensive Playbook</p><p class="card-subtitle" id="playbook-situation">Choose the call</p></div></div>
         <div class="card-body">
-          <div class="callsheet-toolbar"><button id="btn-formation-back" style="visibility:hidden">Back to formations</button><span class="formation-label" id="playbook-formation">Choose a formation</span></div>
+          <div class="callsheet-toolbar"><div id="formation-tabs" role="group" aria-label="Formation"></div><span class="formation-label" id="playbook-formation"></span></div><div class="playbook-pages"><button id="play-page-prev" aria-label="Previous plays">◀</button><span id="play-page-label"></span><button id="play-page-next" aria-label="Next plays">▶</button></div>
           <div class="callsheet-grid" id="callsheet-grid"></div>
         </div>
       </div>

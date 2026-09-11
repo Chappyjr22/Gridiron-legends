@@ -1,3 +1,4 @@
+import {renderCareerStats} from './careerStats.js';
 import {paintMenuPlayer} from './menuArt.js';
 import * as Career from '../career/career.js';
 import * as League from '../state/league.js';
@@ -5,7 +6,7 @@ import {game,teamState} from '../state/gameState.js';
 import {uiHooks,startNewGame,restoreCheckpoint,ensureLoopStarted} from '../simulation/engine.js';
 import {syncMatchupUI,syncSettingsUI} from './menus.js';
 import {hideAllOverlays} from './hud.js';
-let career=Career.loadCareer(),exhibition=null;
+let career=Career.loadCareer(),exhibition=null,creating=false;
 const el=id=>document.getElementById(id);
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function persist(){
@@ -21,6 +22,7 @@ function restoreExhibition(){
  game.career=false;
 }
 function showCareer(){
+ el('career-gateway').classList.remove('show');el('career-list-screen').classList.remove('show');
  setCareerTab('home');
  game.paused=false;game.phase='menu';hideAllOverlays();
  el('game-view').style.display='none';el('start-screen').classList.remove('show');el('career-screen').classList.add('show');render();
@@ -30,8 +32,8 @@ function rosterName(p){return [p.firstName,p.lastName].filter(Boolean).join(' ')
 function updateTitle(){
  const player=career?Career.careerPlayer(career):null;
  const team=career?League.findTeamState(career.league,career.teamId):teamState.userTeam;
- el('career-menu-label').textContent=career?'Continue Career':'Start Career';
- el('career-menu-detail').textContent=career?`QB #${player.number} · ${career.postseason?'Playoffs':`Week ${career.league.week}`}`:'Your player. Your season.';
+ el('career-menu-label').textContent='Career';
+ el('career-menu-detail').textContent='Your player. Your season.';
  paintMenuPlayer(el('title-player'),team,player?.skin??2);
 }
 function setCareerTab(tab){
@@ -44,8 +46,8 @@ function setCareerTab(tab){
 }
 function render(){
  updateTitle();
- el('career-create').hidden=!!career;el('career-hub').hidden=!career;
- if(!career)return;
+ el('career-create').hidden=!!career&&!creating;el('career-hub').hidden=!career||creating;
+ if(!career||creating){el('career-season').textContent='New career';return;}
  const player=Career.careerPlayer(career),team=League.findTeamState(career.league,career.teamId),match=Career.nextMatch(career);
  el('career-player-name').textContent=rosterName(player);el('career-player-detail').textContent=`#${player.number} QB · ${Career.ARCHETYPES[player.archetype].name} · ${team.city} ${team.name}`;
  el('career-screen').style.setProperty('--career-color',team.colors.primary);
@@ -84,6 +86,7 @@ function render(){
  el('career-teammates').innerHTML=teammates.map(p=>`<div class="career-list-row"><span>${escape(p.slot)} · #${p.number} ${escape(rosterName(p))}</span><b>${p.rating}</b></div>`).join('');
  el('career-standings').innerHTML=League.standings(career.league,team.conference).map((t,i)=>`<div class="career-list-row ${t.id===team.id?'career-selected':''}"><span>${i+1}. ${escape(t.abbr)} ${escape(t.name)}</span><b>${recordLabel(t)}</b></div>`).join('');
  el('career-history').innerHTML=career.history.slice(-8).reverse().map(r=>`<div class="career-list-row"><span>S${r.season} · ${r.week>17?'Playoffs':`Week ${r.week}`}</span><b>${r.userScore}–${r.cpuScore}</b></div>`).join('')||'<p>Your first game is waiting.</p>';
+ renderCareerStats(career);
  el('career-awards').textContent=career.awards.map(a=>`Season ${a.season}: ${a.title}`).join(' · ')||'First milestone: finish your rookie game.';
 }
 function launch(){
@@ -115,14 +118,35 @@ export function initCareer(){
  el('career-close-backups').addEventListener('click',()=>el('career-backups').close());
  updateTitle();
  el('career-team').innerHTML=League.TEAMS.map(t=>`<option value="${t.id}">${escape(League.fullName(t))}</option>`).join('');
- el('btn-career').addEventListener('click',showCareer);
+ const openGateway=()=>{
+  creating=false;el('start-screen').classList.remove('show');el('career-screen').classList.remove('show');el('career-list-screen').classList.remove('show');el('career-gateway').classList.add('show');
+  try{Career.listCareers();career=Career.loadCareer();el('career-continue-last').disabled=!career;el('career-gateway-error').textContent='';}
+  catch(error){el('career-gateway-error').textContent=error.message;el('career-continue-last').disabled=true;}
+ };
+ el('btn-career').addEventListener('click',openGateway);
+ el('career-gateway-back').addEventListener('click',()=>{el('career-gateway').classList.remove('show');el('start-screen').classList.add('show');});
+ el('career-list-back').addEventListener('click',openGateway);
+ el('career-continue-last').addEventListener('click',()=>{career=Career.loadCareer();creating=false;if(career)showCareer();});
+ el('career-new').addEventListener('click',()=>{try{Career.listCareers();creating=true;el('career-create').reset();el('career-create-error').textContent='';showCareer();}catch(error){el('career-gateway-error').textContent=error.message;}});
+ el('career-my-careers').addEventListener('click',()=>{
+  try{
+   const saves=Career.listCareers();el('career-list').replaceChildren();
+   if(!saves.length)el('career-list').textContent='No careers yet. Start your first career from the Career menu.';
+   for(const saved of saves){const p=Career.careerPlayer(saved),team=League.findTeamState(saved.league,saved.teamId),b=document.createElement('button');b.className='sports-button';b.textContent=`${rosterName(p)} · ${team.abbr} · S${saved.league.season} Week ${saved.league.week}`;
+    b.addEventListener('click',()=>{if(!Career.saveCareer(saved)){el('career-list-error').textContent='Could not select this career. Storage may be full.';return;}career=saved;creating=false;showCareer();});el('career-list').appendChild(b);
+   }
+   el('career-gateway').classList.remove('show');el('career-list-screen').classList.add('show');
+  }catch(error){el('career-gateway-error').textContent=error.message;}
+ });
+ el('league-stat-team').innerHTML='<option value="">All teams</option>'+League.TEAMS.map(t=>`<option value="${t.id}">${escape(League.fullName(t))}</option>`).join('');
+ for(const id of ['career-stat-scope','league-stat-team','league-stat-category'])el(id).addEventListener('change',()=>{if(career)renderCareerStats(career);});
  el('career-back').addEventListener('click',()=>{restoreExhibition();el('career-screen').classList.remove('show');el('start-screen').classList.add('show');});
  el('career-create').addEventListener('submit',event=>{
-  event.preventDefault();if(career)return;
+  event.preventDefault();if(career&&!creating)return;
   try{
-   if(localStorage.getItem(Career.CAREER_KEY))throw Error('An unreadable career save exists. Export a backup before replacing it.');
-   career=Career.createCareer({name:el('career-name').value,number:el('career-number').value,teamId:el('career-team').value,archetype:el('career-archetype').value,skin:el('career-skin').value,difficulty:el('career-difficulty').value,quarterMinutes:el('career-minutes').value});
-   persist();render();
+   const candidate=Career.createCareer({name:el('career-name').value,number:el('career-number').value,teamId:el('career-team').value,archetype:el('career-archetype').value,skin:el('career-skin').value,difficulty:el('career-difficulty').value,quarterMinutes:el('career-minutes').value});
+   if(!Career.saveCareer(candidate))throw Error('Could not save the new career. Existing careers are unchanged. Free some device storage and try again.');
+   career=candidate;creating=false;persist();render();
   }catch(error){el('career-create-error').textContent=error.message;}
  });
  el('career-play').addEventListener('click',launch);
@@ -132,9 +156,9 @@ export function initCareer(){
   try{
    if(file.size>5000000)throw Error('That backup is too large.');
    const restored=Career.parseCareer(await file.text());if(!restored)throw Error('This file is not a supported career backup.');
-   if(career&&!window.confirm('Restore this backup in place of your current career? A copy of the current save will be kept on this device.'))return;
-   const previous=localStorage.getItem(Career.CAREER_KEY);if(previous)localStorage.setItem(Career.CAREER_KEY+'.previous',previous);
-   career=restored;persist();render();
+   restored.careerId=`career-${Date.now()}-${Math.random().toString(36).slice(2,10)}`;
+   if(!Career.saveCareer(restored))throw Error('Could not save the imported career. Existing careers are unchanged.');
+   career=restored;creating=false;persist();render();
   }catch(error){el('career-save-status').textContent=error.message;}finally{event.target.value='';}
  });
  el('career-next-season').addEventListener('click',()=>{if(Career.startNextSeason(career)){persist();render();}});

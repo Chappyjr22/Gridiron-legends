@@ -133,3 +133,43 @@ canvas.menu-player{width:auto;max-width:100%;height:42%;background:none;image-re
  #career-hub{flex:none}.locker-layout{display:block;margin:15px auto;width:90%}#career-player-card{min-height:235px;width:100%;padding-right:42%}#career-player-name{font-size:30px}#career-player-detail{font-size:19px}#career-level{font-size:18px}#career-player-sprite{left:auto;right:0;height:90%}.locker-jersey{display:none}.home-boards{display:grid;grid-template-columns:1fr;gap:20px}.paper-board{padding:16px}.match-board{min-height:300px}.board-kicker{font-size:30px}.helmet{height:74px}.helmet-matchup strong{font-size:30px}.helmet-matchup small{font-size:23px}#career-next-opponent{font-size:23px}#career-matchup{font-size:18px}.match-board>.sports-button{font-size:30px}.season-numbers strong{font-size:38px}.season-numbers span{font-size:23px}#career-open-player{font-size:25px}.stat-board{gap:12px}.rookie-motto{font-size:28px}#career-result-title{font-size:25px}#career-result-stats,#career-result-xp{font-size:13px}.career-nav{width:95%;position:sticky;bottom:0;background:#082951;padding:8px;z-index:3;margin-bottom:0}.career-nav .sports-button{font-size:24px;padding:5px}.career-save-bar{padding:6px 12px;flex-wrap:wrap}.career-enrollment{overflow:visible;flex:none}.career-scroll{max-height:none}.callsheet-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.situation{display:block}.game-clock{gap:6px}
 }
 @media(prefers-reduced-motion:reduce){.sports-button{transition:none}}
+/* Keep career content, navigation and safe-area footer in separate layout rows. */
+#career-screen{height:100dvh;max-height:100%;width:100%;overscroll-behavior:none}
+#career-screen .career-panel{min-width:0;max-width:100%;overscroll-behavior:none}
+#career-hub{display:grid;grid-template-rows:minmax(0,1fr) auto;min-width:0;overflow:hidden}
+.locker-layout{height:auto;min-width:0;min-height:0;overflow:hidden;margin-top:10px;margin-bottom:6px}
+.home-boards{grid-template-rows:minmax(0,1fr);overflow:hidden}
+.paper-board{min-height:0;max-height:100%;overflow:auto}
+.career-nav{position:relative;bottom:auto;margin:0 auto 5px;z-index:1}
+#career-player-card{overflow:hidden;display:grid;grid-template-rows:auto auto auto 12px minmax(0,1fr);align-content:start;align-items:start;padding:0}
+#career-player-card>h3,#career-player-card>p{position:relative;z-index:1;max-width:100%;margin-bottom:3px}
+#career-player-sprite{position:relative;grid-row:5;left:auto;bottom:auto;right:auto;height:100%;width:100%;object-fit:contain;min-height:0;max-height:100%}
+.locker-jersey{display:none} /* The real team-colored sprite is the player identity. */
+.match-board>.sports-button{position:sticky;bottom:0;z-index:1}
+.stat-board{overflow:auto}.career-save-bar{margin-top:0;min-width:0;flex-wrap:nowrap}
+#career-quiet-save{min-width:0}#career-open-backups{flex-shrink:0}
+.career-gateway{background:#246ca1 url('/assets/ui/stadium.webp') center/cover no-repeat;z-index:21}
+.career-gateway-card{width:min(460px,90vw);max-height:90dvh;overflow:auto;padding:16px 22px;background:#fff3d4;border:4px solid #0b284a;box-shadow:6px 6px 0 #071a3380;color:#112b4a}
+.career-gateway h2{font:400 42px/1 var(--sports-face);margin:0 0 12px;text-transform:uppercase}
+.career-gateway .sports-button{font-size:28px;min-height:44px;width:100%;margin:10px 0;justify-content:center}
+.career-list-card{width:min(760px,94vw)}#career-list .sports-button{text-align:left;justify-content:flex-start;overflow-wrap:anywhere}
+.player-stats-table{border-collapse:collapse;font:14px/1.4 Arial,sans-serif;width:100%;margin:10px 0;color:#142b45;font-variant-numeric:tabular-nums}
+.player-stats-table th{text-align:left;background:#153959;color:#fff5d4;white-space:nowrap}.player-stats-table td,.player-stats-table th{padding:8px;border-bottom:1px solid #c6b995}.player-stats-table td{white-space:nowrap}.player-stats-table tr:nth-child(even){background:#eadcb8}
+#career-qb-stats,#league-player-stats{overflow:auto;max-width:100%;touch-action:pan-x pan-y}
+.stats-filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.career-page select{font:16px Arial,sans-serif;padding:7px;background:#fffbec;color:#132c48;max-width:100%;border:2px solid #637b8f}
+#league-stat-coverage{font-size:12px;color:#43566c}
+#formation-tabs{display:flex;gap:8px;flex:1}#formation-tabs button{font:400 24px/1 var(--sports-face);min-height:40px;flex:1;padding:6px;background:#133d67;color:#fff5d8;border:2px solid #153354}
+#formation-tabs button[aria-pressed=true]{background:#ffcf39;color:#102b48;border-color:#62480f}
+.playbook-pages{display:flex;justify-content:center;align-items:center;gap:15px;margin:6px 0;font:400 23px/1 var(--sports-face)}.playbook-pages button{min-width:44px;min-height:36px;padding:3px}
+#callsheet-overlay .callsheet-toolbar{flex-wrap:wrap;margin:0 0 5px}#callsheet-overlay .formation-label{font-size:18px}
+#callsheet-overlay .play-diagram{max-width:none;width:100%;height:clamp(65px,16vh,115px)}#callsheet-overlay .play-name{font-size:23px}
+@media(orientation:landscape) and (max-height:550px){
+ .career-header{min-height:40px}.career-header h2{font-size:28px}#career-season{font-size:15px}.career-header .sports-button{min-height:36px;font-size:18px}
+ #career-player-name{font-size:22px}#career-player-detail{font-size:13px}#career-level{font-size:13px}.board-kicker{font-size:22px}
+ .locker-layout{margin-top:6px;margin-bottom:5px}.paper-board{padding:6px}.helmet{height:30px}.helmet-matchup{flex:0 1 auto}.helmet-matchup strong{font-size:21px}.helmet-matchup small{font-size:15px}#career-next-opponent{font-size:15px}#career-matchup{font-size:12px}
+ .match-board>.sports-button{font-size:23px;min-height:38px}.season-numbers strong{font-size:27px}.season-numbers span{font-size:15px}#career-open-player{font-size:17px;min-height:36px}
+ .career-nav .sports-button{min-height:38px;font-size:22px}.career-save-bar{font-size:10px;padding-block:0}#career-open-backups{font-size:11px;min-height:24px}
+ #callsheet-overlay{padding:5px}#callsheet-overlay .card{max-height:100%;padding:8px;max-width:1000px}#callsheet-overlay .card-header{display:none}#callsheet-overlay .card-body{overflow:auto}#callsheet-overlay .play-btn{min-height:0;padding:15px 5px 5px}#callsheet-overlay .play-diagram{height:clamp(60px,23vh,105px)}#callsheet-overlay .play-name{font-size:20px}
+ .career-gateway-card{padding:10px 20px}.career-gateway h2{font-size:32px;margin-bottom:6px}.career-gateway .sports-button{font-size:25px;margin:8px 0;min-height:40px}
+}
+@media(orientation:portrait){#career-hub{display:flex;overflow:visible}.locker-layout{overflow:visible}.home-boards{overflow:visible}#career-player-card{height:230px;min-height:230px;padding-right:0;grid-template-columns:55% 45%}#career-player-name,#career-player-detail,#career-level,#career-xp{grid-column:1}#career-player-sprite{grid-column:2;grid-row:1/6}.paper-board{max-height:none}.career-nav{position:sticky;bottom:0}.career-save-bar{flex-wrap:wrap}}

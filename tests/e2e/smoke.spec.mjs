@@ -26,7 +26,7 @@ async function clickContinueUntilVisible(page, selector, attempts = 4) {
 }
 
 async function pickFormation(page, index = 0) {
-  await page.locator('.formation-btn').nth(index).click();
+  await page.locator('.formation-tab').nth(index).click();
 }
 
 // Picks the first play of the given type ('PASS', 'RUN', 'SCREEN', ...) in
@@ -90,7 +90,7 @@ test.describe('starting a game', () => {
     await page.selectOption('#team-select', 'sf');
     await expect(page.locator('#team-preview-name')).toHaveText(/Fog/);
     await page.click('#btn-start-play');
-    await clickContinueUntilVisible(page, '.formation-btn');
+    await clickContinueUntilVisible(page, '.formation-tab');
     await expect(page.locator('#game-view')).toBeVisible();
     await expect(page.locator('#hud-user-name')).not.toHaveText('');
     expect(errors).toEqual(NO_ERRORS);
@@ -112,7 +112,7 @@ test.describe('playbook', () => {
     const errors = trackPageErrors(page);
     await page.goto('/');
     await page.click('#btn-practice');
-    await expect(page.locator('.formation-btn')).toHaveCount(3);
+    await expect(page.locator('.formation-tab')).toHaveCount(3);
     await pickFormation(page, 0);
     await expect(page.locator('.play-btn[data-play]').first()).toBeVisible();
     await pickPlayByType(page, 'PASS');
@@ -121,14 +121,14 @@ test.describe('playbook', () => {
     expect(errors).toEqual(NO_ERRORS);
   });
 
-  test('Back to formations returns from the play list', async ({ page }) => {
+  test('formation strip switches formations without an extra menu', async ({ page }) => {
     const errors = trackPageErrors(page);
     await page.goto('/');
     await page.click('#btn-practice');
     await pickFormation(page, 1);
-    await expect(page.locator('#btn-formation-back')).toBeVisible();
-    await page.click('#btn-formation-back');
-    await expect(page.locator('.formation-btn')).toHaveCount(3);
+    await expect(page.locator('.formation-tab[aria-pressed=true]')).toHaveText('Ace');
+    await page.locator('.formation-tab').first().click();
+    await expect(page.locator('.formation-tab')).toHaveCount(3);
     expect(errors).toEqual(NO_ERRORS);
   });
 });

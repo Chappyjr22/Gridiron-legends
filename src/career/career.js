@@ -1,3 +1,4 @@
+import {readSlots,writeSlot} from './slots.js';
 import * as League from '../state/league.js';
 import {emptyStats,addStats} from './stats.js';
 export const CAREER_KEY='gridironLegendsCareerV1';
@@ -18,9 +19,10 @@ export function createCareer({name,number=7,teamId='bos',archetype='precision',s
  const names=cleanName.split(' ');Object.assign(player,{firstName:names.shift(),lastName:names.join(' '),number,age:21,skin:Math.max(0,Math.min(3,Number(skin)||0)),archetype,attributes:{...ARCHETYPES[archetype].attributes}});
  player.rating=Math.round(Object.values(player.attributes).reduce((a,b)=>a+b)/3);
  League.refreshRatings(league);
- return {schemaVersion:1,teamId,playerId:player.id,league,settings:{difficulty:['easy','medium','hard','gridiron'].includes(difficulty)?difficulty:'medium',quarterMinutes:[2,3,4,5].includes(Number(quarterMinutes))?Number(quarterMinutes):2},xp:0,level:1,points:0,totals:emptyStats(),seasonStats:emptyStats(),history:[],awards:[],postseason:null,lastResult:null,activeMatch:null,checkpoint:null};
+ return {careerId:`career-${Date.now()}-${Math.random().toString(36).slice(2,10)}`,schemaVersion:1,teamId,playerId:player.id,league,settings:{difficulty:['easy','medium','hard','gridiron'].includes(difficulty)?difficulty:'medium',quarterMinutes:[2,3,4,5].includes(Number(quarterMinutes))?Number(quarterMinutes):2},xp:0,level:1,points:0,totals:emptyStats(),seasonStats:emptyStats(),history:[],awards:[],postseason:null,lastResult:null,activeMatch:null,checkpoint:null};
 }
-export function saveCareer(c){try{localStorage.setItem(CAREER_KEY,JSON.stringify(c));return true;}catch{return false;}}
+export function saveCareer(c){try{return writeSlot(localStorage,parseCareer,CAREER_KEY,c);}catch{return false;}}
+export function listCareers(){return Object.values(readSlots(localStorage,parseCareer,CAREER_KEY).careers);}
 export function parseCareer(raw){
  try{
   const c=JSON.parse(raw);
@@ -33,7 +35,7 @@ export function parseCareer(raw){
   return c;
  }catch{return null;}
 }
-export function loadCareer(){try{return parseCareer(localStorage.getItem(CAREER_KEY));}catch{return null;}}
+export function loadCareer(){try{const bank=readSlots(localStorage,parseCareer,CAREER_KEY);return bank.careers[bank.lastId]||null;}catch{return null;}}
 export function nextMatch(c){
  if(c.activeMatch)return [...c.league.schedule,...(c.postseason?.games||[])].find(g=>g.id===c.activeMatch)||null;
  if(c.postseason)return c.postseason.games.find(g=>g.status==='scheduled'&&(g.homeTeamId===c.teamId||g.awayTeamId===c.teamId))||null;
@@ -53,7 +55,7 @@ function seedPlayoffs(c){
 function simulatePostseasonGame(c,g){
  const score=League.simulateScore(c.league,g);g.homeScore=score.homeScore;g.awayScore=score.awayScore;
  if(g.homeScore===g.awayScore)g.homeScore+=3;
- g.status='completed';g.source='simulation';
+ g.status='completed';g.source='simulation';g.boxScore=score.boxScore;
 }
 export function progressPostseason(c){
  const p=c.postseason;if(!p||p.champion)return;
@@ -74,6 +76,7 @@ export function completeCareerGame(c,gameId,userScore,cpuScore,matchStats){
  const home=match.homeTeamId===c.teamId,homeScore=home?userScore:cpuScore,awayScore=home?cpuScore:userScore;
  if(match.round)Object.assign(match,{homeScore,awayScore,status:'completed',source:'player'});
  else if(!League.recordGameResult(c.league,gameId,homeScore,awayScore,'player'))return false;
+ match.boxScore={source:'player',players:Object.fromEntries(Object.entries(matchStats.players).map(([id,s])=>[id,{...emptyStats(),...s,games:1}]))};
  const stats={...emptyStats(),...(matchStats.players[c.playerId]||{}),games:1};
  addStats(c.totals,stats);addStats(c.seasonStats,stats);
  const xp=40+(userScore>cpuScore?30:0)+Math.min(60,Math.floor(Math.max(0,stats.passingYards)/10))+Math.min(60,stats.passingTD*15);

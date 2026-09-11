@@ -42,3 +42,18 @@ const score=cpu.game.cpuScore;h.engine.restoreCheckpoint(cpu);h.hud.resultFlow.c
 function throwWith(arm,release){h.engine.startPlayerDrive(20);h.engine.choosePlay('trips_verticals');h.entities.players.qb.attributes={accuracy:94,arm,release};h.engine.onSnap();h.engine.releaseThrow({x:100,y:39});return {...h.entities.ball};}
 const slow=throwWith(60,60),fast=throwWith(90,90);assert.ok(fast.duration<slow.duration);assert.ok(fast.startTime<slow.startTime);
 console.log('Career checks passed: stats, duplicate prevention, 3-week reload, upgrades, full winning/losing seasons, checkpoints, and attribute effects.');
+// Multiple slots migrate the legacy career, keep checkpoints separate, and survive failed writes.
+const {readSlots,writeSlot,SLOTS_KEY}=await import('../src/career/slots.js');
+const legacy=C.createCareer({name:'Legacy QB'});delete legacy.careerId;
+const bankStore=new Map([[C.CAREER_KEY,JSON.stringify(legacy)]]),mem={getItem:k=>bankStore.get(k)??null,setItem:(k,v)=>bankStore.set(k,v)};
+const migrated=readSlots(mem,C.parseCareer,C.CAREER_KEY);assert.equal(Object.keys(migrated.careers).length,1);assert.equal(bankStore.get(C.CAREER_KEY+'.legacyBackup'),JSON.stringify(legacy));
+const second=C.createCareer({name:'Separate QB',teamId:'dal',difficulty:'easy'});writeSlot(mem,C.parseCareer,C.CAREER_KEY,second);
+let bank=readSlots(mem,C.parseCareer,C.CAREER_KEY);assert.equal(Object.keys(bank.careers).length,2);assert.equal(bank.lastId,second.careerId);assert.equal(bank.careers['legacy-career'].teamId,'bos');
+const beforeBank=bankStore.get(SLOTS_KEY);assert.throws(()=>writeSlot({...mem,setItem:()=>{throw Error('Quota');}},C.parseCareer,C.CAREER_KEY,C.createCareer({name:'No space'})));assert.equal(bankStore.get(SLOTS_KEY),beforeBank);
+const {simulatedBoxScore,seasonPlayerRows}=await import('../src/career/leagueStats.js');
+const team=second.league.teams.find(t=>t.id===second.teamId),box=simulatedBoxScore(team,[7,0,3,6],'fixed');
+assert.deepEqual(box,simulatedBoxScore(team,[7,0,3,6],'fixed'));
+const qb=box[team.roster.find(p=>p.slot==='QB').id];const values=Object.values(box);
+assert.equal(qb.passingYards,values.reduce((sum,s)=>sum+s.receivingYards,0));assert.equal(qb.completions,values.reduce((sum,s)=>sum+s.receptions,0));assert.equal(values.reduce((sum,s)=>sum+s.receivingTD+s.rushingTD,0),2);
+assert.equal(seasonPlayerRows(second).covered,0);assert.equal(seasonPlayerRows(second).rows.find(r=>r.player.id===second.playerId).stats,null);
+console.log('Slot migration, isolation, failed-write protection and simulated box-score consistency passed.');
