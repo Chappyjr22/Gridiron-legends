@@ -5,10 +5,31 @@ const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 export function collegeSchedule(teams){
  const games=[],groups=[...new Set(teams.map(t=>t.conference))].map(c=>teams.filter(t=>t.conference===c).map(t=>t.id));
  const add=(a,b,week,swap)=>games.push({id:`college-w${week}-${a}-${b}`,week,homeTeamId:swap?b:a,awayTeamId:swap?a:b,status:'scheduled',homeScore:null,awayScore:null});
- for(const ids of groups){const ring=[...ids];for(let round=0;round<7;round++){for(let i=0;i<4;i++)add(ring[i],ring[7-i],round+1,(round+i)%2);ring.splice(1,0,ring.pop());}}
+ for(const ids of groups){const ring=[...ids];for(let round=0;round<7;round++){for(let i=0;i<4;i++){const a=ids.indexOf(ring[i]),b=ids.indexOf(ring[7-i]),distance=(b-a+8)%8;add(ring[i],ring[7-i],round+1,!(distance<4||distance===4&&a<b));}ring.splice(1,0,ring.pop());}}
  const pairs=[[[0,1],[2,3]],[[0,2],[1,3]],[[0,3],[1,2]]];
  for(let r=0;r<5;r++)for(const [a,b] of pairs[r%3])for(let i=0;i<8;i++)add(groups[a][i],groups[b][(i+Math.floor(r/3))%8],r+8,(r+i)%2);
+ balanceCrossConferenceVenues(games,teams);
  return games;
+}
+function balanceCrossConferenceVenues(games,teams){
+ const cross=games.filter(g=>g.week>7),source=0,gameStart=1,teamStart=1+cross.length,sink=teamStart+teams.length;
+ const graph=Array.from({length:sink+1},()=>[]);
+ const edge=(a,b,capacity)=>{const forward={to:b,capacity,reverse:graph[b].length},back={to:a,capacity:0,reverse:graph[a].length};graph[a].push(forward);graph[b].push(back);return forward;};
+ const choices=cross.map((g,i)=>{
+  edge(source,gameStart+i,1);
+  return [g.homeTeamId,g.awayTeamId].map(id=>({id,edge:edge(gameStart+i,teamStart+teams.findIndex(t=>t.id===id),1)}));
+ });
+ teams.forEach((t,i)=>edge(teamStart+i,sink,6-games.filter(g=>g.week<=7&&g.homeTeamId===t.id).length));
+ let flow=0;
+ while(flow<cross.length){
+  const previous=Array(graph.length).fill(null),queue=[source];previous[source]={};
+  for(let n=0;n<queue.length&&!previous[sink];n++)for(let i=0;i<graph[queue[n]].length;i++){
+   const e=graph[queue[n]][i];if(e.capacity>0&&!previous[e.to]){previous[e.to]={from:queue[n],index:i};queue.push(e.to);}
+  }
+  if(!previous[sink])throw Error('College home/away schedule could not be balanced.');
+  for(let node=sink;node!==source;){const p=previous[node],e=graph[p.from][p.index];e.capacity--;graph[node][e.reverse].capacity++;node=p.from;}flow++;
+ }
+ cross.forEach((g,i)=>{g.homeTeamId=choices[i].find(c=>c.edge.capacity===0).id;g.awayTeamId=choices[i].find(c=>c.id!==g.homeTeamId).id;});
 }
 export function createCollegeLeague(schoolId){
  if(!COLLEGE_TEAMS.some(t=>t.id===schoolId))throw Error('Choose a college.');

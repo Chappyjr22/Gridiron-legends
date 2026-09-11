@@ -3,7 +3,7 @@
 New careers default to college. Pro quick start remains available, and existing pro saves keep their progression.
 
 - 32 original programs across Southern, Heartland, Atlantic and Western conferences.
-- Each school plays all seven conference opponents and five distinct nonconference opponents.
+- Each school plays all seven conference opponents and five distinct nonconference opponents, with six home games and six away games.
 - Top two conference records qualify for each conference final. Overall wins, point differential and team ID break ties.
 - Four conference champions advance to national semifinals and a final.
 - User controls the senior starting QB with the existing plays and controls.

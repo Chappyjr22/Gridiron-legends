@@ -49,7 +49,7 @@ test('college graduation reveals a persistent draft and starts the pro career',a
  await page.screenshot({path:'test-results/college-draft.png'});
  await page.reload();await page.getByRole('button',{name:'Career Mode',exact:true}).click();await page.getByRole('button',{name:'Continue last career',exact:true}).click();
  await page.getByRole('button',{name:'View draft selection',exact:true}).click();
- await expect(page.locator('#draft-selection')).toHaveText(selection);
+ await expect(page.locator('#draft-selection')).toHaveText(selection,{useInnerText:true});
  await page.getByRole('button',{name:'Begin pro career',exact:true}).click();
  await expect(page.locator('#career-season')).toContainText('Season 1');
  await page.getByRole('tab',{name:'Player',exact:true}).click();await expect(page.locator('#college-progress')).toContainText('Your college story');

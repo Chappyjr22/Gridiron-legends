@@ -15,6 +15,8 @@ for(const school of COLLEGE_TEAMS){
  for(const team of c.league.teams){
   const games=c.league.schedule.filter(g=>g.homeTeamId===team.id||g.awayTeamId===team.id);
   assert.equal(games.length,12);
+  assert.equal(games.filter(g=>g.homeTeamId===team.id).length,6);
+  assert.ok([3,4].includes(games.filter(g=>g.week<=7&&g.homeTeamId===team.id).length));
   assert.equal(new Set(games.map(g=>g.week)).size,12);
   const rivals=games.map(g=>g.homeTeamId===team.id?g.awayTeamId:g.homeTeamId);
   assert.equal(new Set(rivals).size,12);
