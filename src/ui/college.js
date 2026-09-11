@@ -11,7 +11,7 @@ function preview(school){
 }
 function renderPicker(){
  el('school-conferences').innerHTML=Object.values(COLLEGE_CONFERENCES).map(c=>`<button type="button" class="sports-button ${conference===c.id?'gold':'blue'}" data-conference="${c.id}" aria-pressed="${conference===c.id}">${c.name.replace(' Conference','')}</button>`).join('');
- el('school-grid').innerHTML=COLLEGE_TEAMS.filter(t=>t.conference===conference).map(t=>`<button type="button" class="school-card" data-school="${t.id}" aria-pressed="${selected===t.id}">${helmet(t)}<span><b>${t.city}</b><small>${t.name} · ${SCHOOL_TIERS[t.tier].name}</small></span></button>`).join('');
+ el('school-grid').innerHTML=COLLEGE_TEAMS.filter(t=>t.conference===conference).map(t=>`<button type="button" class="school-card" data-school="${t.id}" aria-pressed="${selected===t.id}">${helmet(t)}<span class="school-copy"><b>${t.city}</b><small>${t.name}</small><small class="school-tier">${SCHOOL_TIERS[t.tier].name}</small></span></button>`).join('');
  el('school-preview').innerHTML=preview(COLLEGE_TEAMS.find(t=>t.id===selected));
  for(const b of el('school-conferences').querySelectorAll('button'))b.onclick=()=>{conference=b.dataset.conference;selected=COLLEGE_TEAMS.find(t=>t.conference===conference).id;renderPicker();};
  for(const b of el('school-grid').querySelectorAll('button'))b.onclick=()=>{selected=b.dataset.school;renderPicker();};

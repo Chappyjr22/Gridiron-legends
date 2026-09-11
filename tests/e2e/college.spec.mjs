@@ -11,6 +11,25 @@ test('college school picker fits short landscape and previews tier attributes',a
   await enroll(page);await page.getByRole('button',{name:'Choose your school',exact:true}).tap();
   await expect(page.locator('#school-grid button')).toHaveCount(8);
   await expect(page.locator('#school-preview')).toContainText('Accuracy 86');
+  await page.evaluate(()=>document.fonts.ready);
+  for(const conference of ['southern','heartland','atlantic','western']){
+   await page.locator('[data-conference="'+conference+'"]').tap();
+   await expect(page.locator('#school-grid button')).toHaveCount(8);
+   const labels=await page.locator('#school-grid .school-card').evaluateAll(cards=>cards.map(card=>{
+    const bounds=card.getBoundingClientRect(),nodes=[...card.querySelectorAll('.school-copy b,.school-copy small')];
+    return {name:card.innerText,inside:nodes.every(node=>{
+     const range=document.createRange();range.selectNodeContents(node);const r=range.getBoundingClientRect();
+     return r.left>=bounds.left+2&&r.right<=bounds.right-2&&r.top>=bounds.top+2&&r.bottom<=bounds.bottom-2;
+    }),noOverflow:card.scrollHeight<=card.clientHeight+1&&card.scrollWidth<=card.clientWidth+1,
+    separated:nodes.every((n,i)=>i===0||n.getBoundingClientRect().top>=nodes[i-1].getBoundingClientRect().bottom)};
+   }));
+   for(const label of labels){expect(label.inside,label.name).toBe(true);expect(label.noOverflow,label.name).toBe(true);expect(label.separated,label.name).toBe(true);}
+   await page.screenshot({path:`test-results/college-labels-${conference}-${height}.png`});
+   await page.locator('#school-grid button').last().tap();
+   await expect(page.locator('#school-grid button').last()).toHaveAttribute('aria-pressed','true');
+  }
+  await page.locator('[data-conference="southern"]').tap();
+
   await page.locator('[data-school="college-bluegrass"]').tap();
   await expect(page.locator('#school-preview')).toContainText('Accuracy 78');
   const confirm=page.getByRole('button',{name:'Choose this school',exact:true});
