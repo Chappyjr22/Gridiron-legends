@@ -1,3 +1,4 @@
+import {separation, touching, pursuitTarget, startDive, advanceDive} from './contact.js';
 import { emptyMatch, recordPlay } from '../career/stats.js';
 import { simulationNow } from '../state/clock.js';
 import * as League from '../state/league.js';
@@ -6,7 +7,7 @@ import {
   XPX, SPEED_SCALE, BASE_X, LAT_MIN, LAT_MAX, DL_KEYS, DL_CONFIG, OFF, DEF,
   CATCH_TOL_BASE, CONTEST_NEAR_BASE, CONTEST_MID_BASE, BALL_SPEED_LOB, BALL_SPEED_BULLET,
   RUSH_SPEED, RUSH_SPEED_BLITZ, BASE_RUN_YPS, LATERAL_YPS, PURSUE_YPS_BASE, ROUTE_YPS, COVER_YPS,
-  TACKLE_R, TACKLE_RESULT_DELAY, BREAK_SLOW_MS, BREAK_SPEED_MULT, MISSED_TACKLE_RECOVERY_MS,
+  TACKLE_RESULT_DELAY, BREAK_SLOW_MS, BREAK_SPEED_MULT, MISSED_TACKLE_RECOVERY_MS,
   SPRITE_GROUND_Y_OFFSET, SIDELINE_STEP_DEPTH, BETWEEN_PLAY_RUNOFF, PAT_CHANCE, SKIN_PALETTES,
   clamp, ratingMultiplier, fieldGoalChance
 } from '../state/constants.js';
@@ -130,6 +131,7 @@ export function initPlay(){
   entities.decor.forEach((e,i)=>{e.skin=(i+(e.team===DEF?2:0))%SKIN_PALETTES.length;});
   entities.ballCarrier=entities.players.qb;
   entities.ball={inFlight:false};
+  game.passFeedback='';
   entities.runExchange=null;
   entities.pendingTapThrow=null;
   game.phase='callsheet';
@@ -158,7 +160,7 @@ function moveToward(e,tx,ty,speed,dt){
   const dx=tx-e.x,dy=ty-e.yfield,d=Math.hypot(dx,dy);
   if(d>2){
     if(Math.abs(dy)>0.5)e.facing=dy>0?'left':'right';
-    e.x+=dx/d*speed*dt;e.yfield+=dy/d*speed*dt;
+    const step=Math.min(d,speed*dt);e.x+=dx/d*step;e.yfield+=dy/d*step;
   }
 }
 function advanceRoute(e,waypoints,speed,dt){
@@ -576,6 +578,7 @@ function resolveTackle(tackler){
   game.tackle={startTime:now,carrier:entities.ballCarrier,tackler,yardGained,label,exactSpot:entities.ballCarrier.yfield/XPX};
   entities.ballCarrier.action='tackled';entities.ballCarrier.actionStart=now;
   if(Math.abs(entities.ballCarrier.yfield-tackler.yfield)>0.5)tackler.facing=entities.ballCarrier.yfield>tackler.yfield?'left':'right';
+  tackler.dive=null;
   tackler.action='tackle';tackler.actionStart=now;
   interaction.steering=false;interaction.steerAnchor=null;interaction.steerCurrent=null;
 }
@@ -607,7 +610,7 @@ function tick(){
   const dt=Math.min((now-lastT)/1000,0.05);
   lastT=now;
   if(editState.editMode){draw();requestAnimationFrame(tick);return;}
-  if(!game.paused&&!game.overtime&&(game.phase==='live'||game.phase==='tackle')){
+  if(!game.paused&&!game.overtime&&game.phase==='live'){
     game.clock=Math.max(0,game.clock-dt);
     updateHUD();
   }
@@ -635,6 +638,7 @@ function tick(){
 
     DL_KEYS.forEach(key=>{
       const dl=entities.players[key];
+      if(entities.ballCarrier!==qb)return;
       if(dl.state==='approach'){
         if(t>diff.approachDelay){
           moveToward(dl,dl.blockerX,game.centerYfield,RUSH_SPEED*screenMult*ratingMultiplier(dl.rating,0.18),dt);
@@ -697,7 +701,8 @@ function tick(){
             if(now-lb1.engageStart>=lb1.engageDur){lb1.state='released';}
           }
           if(reacted){
-            pursuers=[cb1,cb2,s1];
+            const extras=entities.decor.filter(d=>d.team===DEF);extras.forEach(d=>{d.isPursuing=true;});
+            pursuers=[cb1,cb2,s1,...extras];
             if(lb1.state!=='engaged')pursuers.push(lb1);
           }
           pursuers=pursuers.concat(releasedDL);
@@ -705,6 +710,7 @@ function tick(){
           const extraDefenders=entities.decor.filter(d=>d.team===DEF);
           extraDefenders.forEach(d=>{d.isPursuing=true;});
           pursuers=[cb1,cb2,s1,lb1,...DL_KEYS.map(k=>entities.players[k]),...extraDefenders];
+          pursuers.forEach(d=>{d.state='released';});
         }
         let jx=0,jy=0;
         if(interaction.steering&&interaction.steerAnchor&&interaction.steerCurrent){
@@ -721,13 +727,14 @@ function tick(){
           const laneAssist=interaction.steering?0.75:2.2;
           entities.ballCarrier.x+=clamp(lane.x-entities.ballCarrier.x,-laneAssist,laneAssist)*dt*8;
         }
-        const previousX=entities.ballCarrier.x;
+        const previousX=entities.ballCarrier.x,previousY=entities.ballCarrier.yfield;
         entities.ballCarrier.facing='left';
         entities.ballCarrier.yfield += BASE_RUN_YPS*fwdMult*XPX*SPEED_SCALE*diff.offenseSpeedMult*carrierSpeedMult*breakSlowMult*dt;
         const nextX=previousX+jy*LATERAL_YPS*XPX*SPEED_SCALE*diff.offenseSpeedMult*carrierSpeedMult*breakSlowMult*dt;
         const sidelineMin=LAT_MIN-SPRITE_GROUND_Y_OFFSET-SIDELINE_STEP_DEPTH;
         const sidelineMax=LAT_MAX-SPRITE_GROUND_Y_OFFSET+SIDELINE_STEP_DEPTH;
         entities.ballCarrier.x=clamp(nextX,sidelineMin,sidelineMax);
+        entities.ballCarrier.velocity={x:(entities.ballCarrier.x-previousX)/Math.max(dt,0.001),yfield:(entities.ballCarrier.yfield-previousY)/Math.max(dt,0.001)};
         if(nextX<=sidelineMin||nextX>=sidelineMax){
           if(entities.ballCarrier.yfield/XPX<100)resolveOutOfBounds();
         }
@@ -747,15 +754,47 @@ function tick(){
 
       if(game.phase==='live'){
         const pursueSpeed=PURSUE_YPS_BASE*diff.pursueMult*XPX*SPEED_SCALE;
-        pursuers.forEach(def=>moveToward(def,entities.ballCarrier.x,entities.ballCarrier.yfield,pursueSpeed*ratingMultiplier(def.rating,0.2),dt));
+        // Receivers and nearby linemen can escort the runner, one blocker per defender.
+        const blocked=new Set();
+        if(entities.ballCarrier!==qb){
+          const blockers=[...Object.keys(playDef.routes||{}).map(k=>entities.players[k]),...entities.decor.filter(d=>d.team===OFF)];
+          for(const blocker of blockers){
+            if(blocker===entities.ballCarrier||blocker===qb)continue;
+            let target=null,distance=110;
+            for(const def of pursuers){
+              const d=separation(blocker,def);
+              if(!blocked.has(def)&&!def.dive&&def.yfield>=entities.ballCarrier.yfield-28&&d<distance){target=def;distance=d;}
+            }
+            if(!target)continue;
+            blocked.add(target);
+            moveToward(blocker,target.x,target.yfield,ROUTE_YPS*XPX*SPEED_SCALE*0.9,dt);
+            blocker.isBlocking=true;
+            if(touching(blocker,target)&&now>=(target.nextBlockAt||0)){
+              target.blockedUntil=now+clamp(350+((blocker.rating||75)-(target.rating||75))*6,180,550);
+              target.nextBlockAt=now+1800;
+            }
+          }
+        }
+        for(const def of pursuers){
+          if(def.dive){
+            advanceDive(def,entities.ballCarrier,dt,now);
+            if(touching(def,entities.ballCarrier))continue;
+            if(now>=def.dive.until){def.dive=null;def.action='missedTackle';def.actionStart=now;def.missedUntil=now+MISSED_TACKLE_RECOVERY_MS;}
+            continue;
+          }
+          const target=pursuitTarget(def,entities.ballCarrier,entities.ballCarrier.velocity||{x:0,yfield:0});
+          const blockedMult=now<(def.blockedUntil||0)?0.25:1;
+          moveToward(def,clamp(target.x,LAT_MIN,LAT_MAX),target.yfield,pursueSpeed*ratingMultiplier(def.rating,0.2)*blockedMult,dt);
+          if(!entities.ball.inFlight&&entities.ballCarrier!==qb&&blockedMult===1&&entities.breakCooldown<=0)startDive(def,entities.ballCarrier,now);
+        }
         if(!entities.ball.inFlight&&entities.breakCooldown<=0){
           let nearest=Infinity,nearestDefender=null;
           pursuers.forEach(def=>{
+            if(def.missedUntil>now)return;
             const distance=Math.hypot(def.x-entities.ballCarrier.x,def.yfield-entities.ballCarrier.yfield);
             if(distance<nearest){nearest=distance;nearestDefender=def;}
           });
-          const tackleReach=TACKLE_R*ratingMultiplier(nearestDefender?.rating||75,0.1);
-          if(nearest<tackleReach){
+          if(nearestDefender&&!(nearestDefender.missedUntil>now)&&touching(nearestDefender,entities.ballCarrier)){
             const matchup=((entities.ballCarrier.rating||75)-(nearestDefender?.rating||75))*0.004;
             const breakChance=clamp(diff.breakTackle+(game.runActive&&entities.ballCarrier===entities.players.rb?diff.runBreakBonus:0)+matchup,0.02,0.72);
             if(Math.random()<breakChance){
@@ -764,6 +803,7 @@ function tick(){
               if(Math.abs(entities.ballCarrier.yfield-nearestDefender.yfield)>0.5){
                 nearestDefender.facing=entities.ballCarrier.yfield>nearestDefender.yfield?'left':'right';
               }
+              nearestDefender.dive=null;
               nearestDefender.action='missedTackle';
               nearestDefender.actionStart=now;
               nearestDefender.missedUntil=now+MISSED_TACKLE_RECOVERY_MS;

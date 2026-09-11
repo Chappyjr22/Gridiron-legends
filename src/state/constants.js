@@ -2,7 +2,7 @@
 export const XPX=28;
 export const Z=XPX/6;
 export const SPEED_SCALE=0.55;
-export const TACKLE_R=15*Z;
+export const TACKLE_R=18;
 export const CATCH_TOL_BASE=34*Z, CONTEST_NEAR_BASE=14*Z, CONTEST_MID_BASE=30*Z;
 export const BALL_SPEED_LOB=22*XPX, BALL_SPEED_BULLET=36*XPX;
 export const BASE_X=520;
@@ -21,7 +21,7 @@ export const MISSED_TACKLE_GET_UP_MS=150;
 export const MISSED_TACKLE_RECOVERY_MS=MISSED_TACKLE_DOWN_MS+MISSED_TACKLE_GET_UP_MS;
 export const SPRITE_GROUND_Y_OFFSET=12;
 export const SIDELINE_STEP_DEPTH=4;
-export const BETWEEN_PLAY_RUNOFF=18;
+export const BETWEEN_PLAY_RUNOFF=8;
 export const PAT_CHANCE=0.97;
 export const SPRITE_CELL=64;
 export const SPRITE_DRAW=56;

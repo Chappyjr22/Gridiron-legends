@@ -43,6 +43,33 @@ await test('turnover HUD has a possession label and one yard is singular',async 
  h.engine.startNewGame();h.engine.startPlayerDrive(20);h.engine.endPlay(1,'Run');assert.match(h.game.message,/1 yard\./);
  h.engine.initPlay();h.game.down=4;h.engine.endPlay(0,'INCOMPLETE');assert.match(h.element('hud-down').innerHTML,/Turnover/);
 });
+await test('a defender two yards away cannot end the play',async h=>{
+ h.engine.startPractice();h.engine.choosePlay('trips_slants');h.engine.onSnap();h.game.carrierSince=h.now-2000;
+ const runner=h.entities.players.wr1;h.entities.ballCarrier=runner;Object.assign(runner,{x:150,yfield:30*28});
+ const {DEF}=await h.load('src/state/constants.js');
+ const defenders=[...['cb1','cb2','s1','lb1','dl1','dl2','dl3','dl4'].map(k=>h.entities.players[k]),...h.entities.decor.filter(d=>d.team===DEF)];
+ defenders.forEach(d=>Object.assign(d,{x:300,yfield:10*28,state:'released'}));
+ Object.assign(defenders[0],{x:150,yfield:runner.yfield+56});h.step();h.step();assert.equal(h.game.phase,'live');assert.notEqual(runner.action,'tackled');
+});
+await test('dives move physically, miss a cut, and detect swept contact',async h=>{
+ const c=await h.load('src/simulation/contact.js');
+ const d={x:0,yfield:0},runner={x:0,yfield:40};assert.equal(c.startDive(d,runner,1000),true);
+ assert.equal(c.touching(d,runner),false);assert.equal(c.advanceDive(d,runner,0.05,1050),false);assert.equal(d.yfield,12.5);
+ runner.x=50;assert.equal(c.advanceDive(d,runner,0.13,1180),false);assert.equal(d.x,0);
+ const other={x:0,yfield:0};c.startDive(other,{x:0,yfield:40},1000);assert.equal(c.advanceDive(other,{x:0,yfield:40},0.18,1180),true);
+ assert.equal(c.touching(other,{x:0,yfield:40}),true);
+});
+await test('catch pursuit releases linemen and activates every extra defender',async h=>{
+ h.engine.startPractice();h.engine.choosePlay('trips_slants');h.engine.onSnap();h.game.carrierSince=h.now-2000;
+ h.entities.ballCarrier=h.entities.players.wr1;h.entities.ballCarrier.yfield=40*28;
+ h.entities.players.dl1.state='engaged';h.step();h.step();assert.equal(h.entities.players.dl1.state,'released');
+ const {DEF}=await h.load('src/state/constants.js');assert.ok(h.entities.decor.filter(d=>d.team===DEF).every(d=>d.isPursuing));
+});
+await test('in-bounds runoff is eight seconds; incompletions and sidelines stop it',async h=>{
+ for(const [label,oob,expected] of [['Catch',false,92],['INCOMPLETE',false,100],['Run',true,100]]){
+  h.engine.startNewGame();h.engine.startPlayerDrive(20);h.game.clock=100;h.engine.endPlay(label==='INCOMPLETE'?0:3,label,oob);assert.equal(h.game.clock,expected);
+ }
+});
 const f=createFranchise();const [a,b]=f.teams;a.record.wins=10;a.record.losses=1;b.record.wins=1;b.record.losses=10;b.record.pointsFor=200;
 assert.ok(standings(f).indexOf(a)<standings(f).indexOf(b));
 const bos=f.teams.find(t=>t.id==='bos'),dal=f.teams.find(t=>t.id==='dal');assert.notEqual(contrastingOpponent(bos,dal).colors.primary,dal.colors.primary);assert.equal(dal.colors.primary,'#234a72');

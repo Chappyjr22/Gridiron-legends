@@ -75,11 +75,11 @@ export function draw(){
   }
   const jitterOn=(game.phase==='live');
   entities.decor.forEach((d,i)=>{
-    if(jitterOn&&!d.isPursuing){
+    if(jitterOn&&!d.isPursuing&&!d.isBlocking){
       const j=Math.sin(simulationNow()/160+i*1.7)*1.4;
       drawPlayer({x:d.x+j,yfield:d.yfield,num:d.num,skin:d.skin},d.team,false,true);
     } else {
-      drawPlayer(d,d.team,false,!d.isPursuing);
+      drawPlayer(d,d.team,false,!d.isPursuing&&!d.isBlocking);
     }
   });
   DL_KEYS.forEach(k=>drawPlayer(entities.players[k],DEF));

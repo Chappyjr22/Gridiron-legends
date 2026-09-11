@@ -28,6 +28,7 @@ export function drawHelmet(cx,cy,team){
 }
 export function playerFrame(e,isDecor){
   const now=simulationNow();
+  if(e.action==='dive')return {row:4,col:5};
   if(e.action==='tackled'){
     const elapsed=now-e.actionStart;
     return elapsed<140?{row:4,col:3}:{row:4,col:4};
@@ -64,7 +65,7 @@ export function playerFrame(e,isDecor){
       return {row:2,col:Math.floor(now/frameMs)%5};
     }
     if(e===entities.players.qb)return {row:0,col:Math.floor(now/260)%2};
-    if(!isDecor&&e.state!=='engaged')return {row:1,col:Math.floor(now/90)%5};
+    if((!isDecor||e.isBlocking)&&e.state!=='engaged')return {row:1,col:Math.floor(now/90)%5};
   }
   return {row:0,col:Math.floor(now/260)%2};
 }
@@ -88,7 +89,7 @@ export function drawPlayer(e,team,highlight,isDecor){
     cy+=uy*reach*driveEase;
   }
   const actionElapsed=simulationNow()-(e.actionStart||0);
-  const isDiving=(e.action==='tackle'&&actionElapsed>=65)||(e.action==='missedTackle'&&actionElapsed<MISSED_TACKLE_DOWN_MS);
+  const isDiving=e.action==='dive'||(e.action==='tackle'&&actionElapsed>=65)||(e.action==='missedTackle'&&actionElapsed<MISSED_TACKLE_DOWN_MS);
   if(highlight){
     ctx.fillStyle='rgba(255,209,102,0.16)';
     ctx.strokeStyle='rgba(255,209,102,0.9)';
