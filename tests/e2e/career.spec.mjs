@@ -42,6 +42,13 @@ test('career creation, three weekly results, reload and upgrade',async({page})=>
    game.playFacts.receiverId=entities.players.wr1.playerId;game.playFacts.targetId=entities.players.wr1.playerId;
    engine.endPlay(25,'Catch',false,50);game.playerScore=21;game.cpuScore=7;engine.finishGame();
   });
+  await expect(page.locator('#postgame-dialog')).toBeVisible();
+  await expect(page.locator('#postgame-content')).toContainText('25 YDS');
+  if(week===1){
+   await page.reload();await page.getByRole('button',{name:'Career Mode',exact:true}).click();await page.getByRole('button',{name:'Continue last career',exact:true}).click();
+   await expect(page.locator('#postgame-dialog')).toBeVisible();
+  }
+  await page.getByRole('button',{name:'Continue to career',exact:true}).click();
   await expect(page.locator('#career-season')).toContainText(`Week ${week+1}`);
   await expect(page.locator('#career-result-title')).toContainText('WIN');
   await page.reload();await page.getByRole('button',{name:'Career Mode',exact:true}).click();await page.getByRole('button',{name:'Continue last career',exact:true}).click();
@@ -62,4 +69,30 @@ test('mobile career layout and between-play resume',async({browser})=>{
  await page.evaluate(async()=>{const e=await import('/src/simulation/engine.js');e.startPlayerDrive(35);e.choosePlay('trips_inside');e.endPlay(3,'Run',false,38);});
  await page.reload();await page.getByRole('button',{name:'Career Mode',exact:true}).click();await page.getByRole('button',{name:'Continue last career',exact:true}).click();await page.getByRole('button',{name:'Resume game'}).click();
  await expect(page.locator('#overlay-msg')).toContainText('Run for 3 yards');await expect(page.locator('#hud-ball')).toHaveText('OWN 38');await context.close();
+});
+
+test('landscape team cards and recap keep navigation visible',async({browser})=>{
+ for(const height of [304,390]){
+  const context=await browser.newContext({viewport:{width:844,height},hasTouch:true,isMobile:true});
+  const page=await context.newPage();await create(page);
+  await page.getByRole('tab',{name:'My Team',exact:true}).click();
+  await page.locator('.roster-card').first().tap();
+  await expect(page.locator('#team-player-dialog')).toBeVisible();
+  await expect(page.locator('#team-player-heading')).toHaveText('Rookie Legend');
+  const close=page.getByRole('button',{name:'Back to My Team'});
+  const bounds=await close.boundingBox();expect(bounds.y).toBeGreaterThanOrEqual(0);expect(bounds.y+bounds.height).toBeLessThanOrEqual(height);
+  await page.screenshot({path:`test-results/team-card-landscape-${height}.png`});
+  await close.tap();await page.getByRole('tab',{name:'Home',exact:true}).tap();await page.getByRole('button',{name:'Play next game'}).tap();
+  await page.evaluate(async()=>{
+   const {game}=await import('/src/state/gameState.js');const engine=await import('/src/simulation/engine.js');
+   game.playerScore=21;game.cpuScore=7;engine.finishGame();
+  });
+  await expect(page.locator('#postgame-dialog')).toBeVisible();
+  const button=page.getByRole('button',{name:'Continue to career',exact:true});
+  const rect=await button.boundingBox();expect(rect.y).toBeGreaterThanOrEqual(0);expect(rect.y+rect.height).toBeLessThanOrEqual(height);
+  await page.screenshot({path:`test-results/postgame-landscape-${height}.png`});
+  await button.tap();await expect(page.locator('#postgame-dialog')).not.toBeVisible();
+  await page.getByRole('button',{name:'View recap',exact:true}).tap();await expect(page.locator('#postgame-dialog')).toBeVisible();
+  await context.close();
+ }
 });

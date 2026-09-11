@@ -200,3 +200,51 @@ canvas.menu-player{width:auto;max-width:100%;height:42%;background:none;image-re
 #runner-controls button:active{background:#ffcf39;color:#091e3c}
 #runner-controls button:disabled{opacity:.45}
 @media(max-height:350px){#runner-controls{bottom:7px;gap:5px}#runner-controls button{min-width:78px;font-size:20px;padding:4px 8px}}
+
+/* Career cards and postgame use bounded scrolling on short landscape screens. */
+.career-nav{width:min(780px,88%);}
+.career-nav .sports-button{min-width:0;white-space:nowrap;}
+#my-team-roster{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+.roster-card{padding:12px;text-align:left;background:var(--sports-paper,#fff3d4);color:#091e3c;border:3px solid #537585;cursor:pointer;display:flex;flex-direction:column;gap:6px;min-width:0;}
+.roster-card strong{font:25px/1.1 var(--sports-face);overflow-wrap:anywhere;}
+.roster-card span{font:14px/1.2 system-ui,sans-serif;}
+.roster-card:hover,.roster-card:focus-visible{background:#ffda49;border-color:#091e3c;}
+.recap-link{font:20px/1 var(--sports-face);background:none;border:0;border-bottom:2px solid #12487a;color:#12487a;cursor:pointer;padding:3px;}
+.sports-dialog.experience-dialog{width:min(850px,94vw);max-width:94vw;max-height:94dvh;padding:0;overflow:hidden;color:#091e3c;}
+.experience-dialog[open]{display:flex;flex-direction:column;}
+.experience-dialog header{flex:none;padding:12px 18px;background:#12487a;color:#fff3d4;border-bottom:4px solid #ffcf39;}
+.experience-dialog header h2{margin:0;font:32px/1 var(--sports-face);}
+.experience-body{min-height:0;overflow:auto;overscroll-behavior:contain;padding:16px 20px;font:16px/1.4 system-ui,sans-serif;}
+.experience-body h3{font:25px/1.1 var(--sports-face);margin:16px 0 8px;}
+.experience-body p{margin:8px 0;}
+.experience-dialog footer{flex:none;padding:10px 18px;background:#fff3d4;border-top:3px solid #537585;}
+.experience-dialog footer .sports-button{width:100%;font:26px/1 var(--sports-face);min-height:44px;padding:7px;}
+.player-passport{display:flex;align-items:center;gap:20px;}
+.player-passport canvas{width:112px;height:112px;image-rendering:pixelated;flex:none;background:#12487a;border:3px solid #537585;}
+.player-overall{font:38px/1.1 var(--sports-face);}
+.player-game-log article{border-top:1px solid #537585;padding:8px 0;}
+.experience-note{font-size:13px;color:#475569;}
+.recap-score{display:flex;justify-content:space-between;align-items:center;gap:12px;font:30px/1 var(--sports-face);border-bottom:3px solid #537585;padding-bottom:12px;}
+.recap-score b{font-size:44px;}
+.recap-score .sports-kicker{font-size:16px;text-align:center;line-height:1.4;}
+.recap-columns{display:grid;grid-template-columns:1.3fr 1fr;gap:24px;}
+.recap-rewards{background:#ffdf78;padding:0 14px 14px;align-self:start;}
+.recap-statline{font-weight:700;}
+@media (orientation:landscape) and (max-height:500px){
+ .career-nav{width:82%;gap:6px;}
+ .career-nav .sports-button{font-size:21px;padding:5px 8px;}
+ .experience-dialog header{padding:7px 14px;}
+ .experience-dialog header h2{font-size:27px;}
+ .experience-body{padding:10px 14px;font-size:14px;}
+ .experience-dialog footer{padding:6px 12px;}
+ .experience-dialog footer .sports-button{min-height:38px;font-size:24px;padding:5px;}
+ .roster-card{padding:8px;}
+ .roster-card strong{font-size:22px;}
+}
+@media(max-width:550px){
+ #my-team-roster,.recap-columns{grid-template-columns:1fr;}
+ .career-nav{width:98%;gap:4px;}
+ .career-nav .sports-button{font-size:20px;padding:5px;}
+ .recap-score{font-size:23px;}
+ .recap-score b{font-size:32px;}
+}

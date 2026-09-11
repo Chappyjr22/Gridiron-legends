@@ -1,3 +1,4 @@
+import {renderMyTeam,showPostgame,initCareerExperience} from './careerExperience.js';
 import {renderCareerStats} from './careerStats.js';
 import {paintMenuPlayer} from './menuArt.js';
 import * as Career from '../career/career.js';
@@ -26,6 +27,7 @@ function showCareer(){
  setCareerTab('home');
  game.paused=false;game.phase='menu';hideAllOverlays();
  el('game-view').style.display='none';el('start-screen').classList.remove('show');el('career-screen').classList.add('show');render();
+ if(!creating&&career?.pendingRecapGameId===career?.lastResult?.gameId&&career?.lastResult)showPostgame(career);
 }
 function recordLabel(t){return `${t.record.wins}–${t.record.losses}${t.record.ties?'–'+t.record.ties:''}`;}
 function rosterName(p){return [p.firstName,p.lastName].filter(Boolean).join(' ');}
@@ -86,7 +88,7 @@ function render(){
  el('career-teammates').innerHTML=teammates.map(p=>`<div class="career-list-row"><span>${escape(p.slot)} · #${p.number} ${escape(rosterName(p))}</span><b>${p.rating}</b></div>`).join('');
  el('career-standings').innerHTML=League.standings(career.league,team.conference).map((t,i)=>`<div class="career-list-row ${t.id===team.id?'career-selected':''}"><span>${i+1}. ${escape(t.abbr)} ${escape(t.name)}</span><b>${recordLabel(t)}</b></div>`).join('');
  el('career-history').innerHTML=career.history.slice(-8).reverse().map(r=>`<div class="career-list-row"><span>S${r.season} · ${r.week>17?'Playoffs':`Week ${r.week}`}</span><b>${r.userScore}–${r.cpuScore}</b></div>`).join('')||'<p>Your first game is waiting.</p>';
- renderCareerStats(career);
+ renderCareerStats(career);renderMyTeam(career);
  el('career-awards').textContent=career.awards.map(a=>`Season ${a.season}: ${a.title}`).join(' · ')||'First milestone: finish your rookie game.';
 }
 function launch(){
@@ -103,6 +105,7 @@ function launch(){
  persist();ensureLoopStarted();
 }
 export function initCareer(){
+ initCareerExperience(()=>career,persist);
  for(const button of document.querySelectorAll('[data-career-tab]')){
   button.addEventListener('click',()=>setCareerTab(button.dataset.careerTab));
   button.addEventListener('keydown',event=>{
@@ -178,7 +181,7 @@ export function initCareer(){
  };
  uiHooks.finishCareer=stats=>{
   if(!career?.activeMatch)return;
-  Career.completeCareerGame(career,career.activeMatch,game.playerScore,game.cpuScore,stats);
+  if(!Career.completeCareerGame(career,career.activeMatch,game.playerScore,game.cpuScore,stats))return;
   persist();restoreExhibition();showCareer();
  };
  uiHooks.leaveCareer=restoreExhibition;

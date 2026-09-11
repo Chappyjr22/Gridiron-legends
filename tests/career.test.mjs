@@ -57,3 +57,24 @@ const qb=box[team.roster.find(p=>p.slot==='QB').id];const values=Object.values(b
 assert.equal(qb.passingYards,values.reduce((sum,s)=>sum+s.receivingYards,0));assert.equal(qb.completions,values.reduce((sum,s)=>sum+s.receptions,0));assert.equal(values.reduce((sum,s)=>sum+s.receivingTD+s.rushingTD,0),2);
 assert.equal(seasonPlayerRows(second).covered,0);assert.equal(seasonPlayerRows(second).rows.find(r=>r.player.id===second.playerId).stats,null);
 console.log('Slot migration, isolation, failed-write protection and simulated box-score consistency passed.');
+
+{
+ const {xpBreakdown,captureMoments,playerGameLog}=await import('../src/career/recap.js');
+ assert.equal(xpBreakdown({passingYards:250,passingTD:3},true).reduce((s,x)=>s+x.xp,0),140);
+ assert.deepEqual(captureMoments([{yards:3},{yards:25,receiverId:'wr'},{intercepted:true}]).map(m=>m.play),[2,3]);
+ const c=C.createCareer({name:'Recap Rookie',teamId:'bos'});
+ const match=C.nextMatch(c),wr=c.league.teams.find(t=>t.id===c.teamId).roster.find(p=>p.slot==='WR1');
+ c.activeMatch=match.id;
+ const raw={players:{[c.playerId]:{passingYards:25,passingTD:1},[wr.id]:{receivingYards:25,receptions:1,targets:1}},plays:[{yards:25,touchdown:true,receiverId:wr.id}]};
+ const r=C.completeCareerGame(c,match.id,7,0,raw);
+ assert.equal(c.pendingRecapGameId,match.id);
+ assert.equal(r.xpBreakdown.reduce((s,x)=>s+x.xp,0),r.xp);
+ raw.players[wr.id].receivingYards=999;
+ assert.equal(r.playerStats[wr.id].receivingYards,25);
+ assert.equal(playerGameLog(c,wr.id)[0].stats.receivingYards,25);
+ const before=JSON.stringify(c);assert.equal(C.completeCareerGame(c,match.id,7,0,raw),false);assert.equal(JSON.stringify(c),before);
+ const restored=C.parseCareer(JSON.stringify(c));assert.equal(restored.pendingRecapGameId,match.id);
+ delete restored.history[0].playerStats;
+ assert.equal(playerGameLog(restored,wr.id)[0].stats.receivingYards,25);
+ c.league.schedule=[];c.league.season++;assert.equal(playerGameLog(c,wr.id)[0].stats.receivingYards,25);
+}

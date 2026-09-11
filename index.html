@@ -356,7 +356,7 @@
        <h3 id="career-stat-line" class="sr-only"></h3>
        <div class="season-numbers"><div><strong id="career-yards">0</strong><span>YDS</span></div><div><strong id="career-td">0</strong><span>TD</span></div><div><strong id="career-int">0</strong><span>INT</span></div></div>
        <button id="career-open-player" class="sports-button gold">Develop your QB</button>
-       <div id="career-last-result" hidden><span class="board-kicker">Last game</span><h3 id="career-result-title"></h3><p id="career-result-stats"></p><p id="career-result-xp"></p></div>
+       <div id="career-last-result" hidden><span class="board-kicker">Last game</span><h3 id="career-result-title"></h3><p id="career-result-stats"></p><p id="career-result-xp"></p><button id="career-review-game" class="recap-link">View recap</button></div>
        <p class="rookie-motto" id="career-home-motto">Every legend<br>starts somewhere.</p>
      </section>
     </div>
@@ -364,6 +364,7 @@
       <h3>Develop your quarterback</h3><div id="career-upgrades" class="career-upgrades"></div><p class="career-muted">Each point adds 2 to an attribute. Upgrades unlock between games.</p>
       <h3>Player statistics</h3><label for="career-stat-scope">View</label><select id="career-stat-scope"><option value="season">This season</option><option value="last">Last game</option><option value="career">Career</option></select><div id="career-qb-stats"></div><h3>Career record</h3><p id="career-completions"></p><p id="career-lifetime"></p><p id="career-awards"></p>
     </section>
+    <section id="career-team-panel" class="career-page paper-board career-scroll" role="tabpanel" aria-labelledby="career-team-tab" hidden><h3 id="my-team-name">My team</h3><p>Meet your teammates. Tap a player for their card and game log.</p><div id="my-team-roster"></div></section>
     <section id="career-league-panel" class="career-page paper-board career-scroll" role="tabpanel" aria-labelledby="career-league-tab" hidden>
       <h3>League statistics</h3><div class="stats-filters"><label for="league-stat-team">Team</label><select id="league-stat-team"></select><label for="league-stat-category">Category</label><select id="league-stat-category"><option value="passing">Passing</option><option value="receiving">Receiving</option><option value="rushing">Rushing</option></select></div><p id="league-stat-coverage"></p><div id="league-player-stats"></div><h3>Conference standings</h3><p>Top four teams reach the playoffs.</p><div id="career-standings"></div>
       <h3>Your teammates</h3><div id="career-teammates"></div><h3>Recent games</h3><div id="career-history"></div>
@@ -372,10 +373,13 @@
    <nav class="career-nav" role="tablist" aria-label="Career views">
     <button id="career-home-tab" class="sports-button gold" role="tab" aria-selected="true" aria-controls="career-home-panel" data-career-tab="home">Home</button>
     <button id="career-player-tab" class="sports-button blue" role="tab" aria-selected="false" aria-controls="career-player-panel" data-career-tab="player" tabindex="-1">Player</button>
+    <button id="career-team-tab" class="sports-button blue" role="tab" aria-selected="false" aria-controls="career-team-panel" data-career-tab="team" tabindex="-1">My Team</button>
     <button id="career-league-tab" class="sports-button blue" role="tab" aria-selected="false" aria-controls="career-league-panel" data-career-tab="league" tabindex="-1">League</button>
    </nav>
   </div>
   <div class="career-save-bar"><span id="career-quiet-save" role="status">Saved on this device</span><button id="career-open-backups">Save &amp; backup</button></div>
+  <dialog id="team-player-dialog" class="sports-dialog experience-dialog" aria-labelledby="team-player-heading"><header><h2 id="team-player-heading">Player card</h2></header><div id="team-player-content" class="experience-body"></div><footer><button id="team-player-close" class="sports-button blue">Back to My Team</button></footer></dialog>
+  <dialog id="postgame-dialog" class="sports-dialog experience-dialog" aria-labelledby="postgame-heading"><header><h2 id="postgame-heading">Final whistle</h2></header><div id="postgame-content" class="experience-body"></div><footer><button id="postgame-continue" class="sports-button gold">Continue to career</button></footer></dialog>
   <dialog id="career-backups" class="sports-dialog" aria-labelledby="backup-heading"><h2 id="backup-heading">Career save</h2>
   <footer class="career-footer"><p id="career-save-status" role="status">Career saves on this device. Quick games keep their existing save.</p><div class="career-backup-actions"><button id="career-export">Export backup</button><button id="career-import">Restore backup</button><input id="career-backup-file" type="file" accept=".json,application/json" hidden></div></footer>
 <button id="career-close-backups" class="sports-button blue">Back</button></dialog>

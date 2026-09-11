@@ -1,3 +1,4 @@
+import {xpBreakdown,captureMoments} from './recap.js';
 import {readSlots,writeSlot} from './slots.js';
 import * as League from '../state/league.js';
 import {emptyStats,addStats} from './stats.js';
@@ -79,10 +80,11 @@ export function completeCareerGame(c,gameId,userScore,cpuScore,matchStats){
  match.boxScore={source:'player',players:Object.fromEntries(Object.entries(matchStats.players).map(([id,s])=>[id,{...emptyStats(),...s,games:1}]))};
  const stats={...emptyStats(),...(matchStats.players[c.playerId]||{}),games:1};
  addStats(c.totals,stats);addStats(c.seasonStats,stats);
- const xp=40+(userScore>cpuScore?30:0)+Math.min(60,Math.floor(Math.max(0,stats.passingYards)/10))+Math.min(60,stats.passingTD*15);
+ const breakdown=xpBreakdown(stats,userScore>cpuScore),xp=breakdown.reduce((sum,item)=>sum+item.xp,0);
  c.xp+=xp;let gained=0;while(c.xp>=100){c.xp-=100;c.level++;c.points++;gained++;}
  c.lastResult={gameId,season:c.league.season,week:match.week,userScore,cpuScore,xp,levels:gained,stats,opponentId:home?match.awayTeamId:match.homeTeamId};
- c.history.push(c.lastResult);
+ Object.assign(c.lastResult,{xpBreakdown:breakdown,playerStats:structuredClone(match.boxScore.players),keyMoments:captureMoments(matchStats.plays)});
+ c.pendingRecapGameId=gameId;c.history.push(c.lastResult);
  if(c.history.length===1)c.awards.push({season:c.league.season,title:'Rookie debut'});
  c.activeMatch=null;c.checkpoint=null;
  if(!match.round){League.simulateWeek(c.league,c.league.week,c.teamId);if(c.league.week<17)League.advanceWeek(c.league);else seedPlayoffs(c);}
@@ -93,5 +95,5 @@ export function startNextSeason(c){
  const old=c.league,next=League.createFranchise(c.teamId,old.season+1);
  // Keep the people and development. Only schedule and standings restart.
  next.teams.forEach(t=>{const prior=League.findTeamState(old,t.id);t.roster=prior.roster;t.coaches=prior.coaches;t.roster.forEach(p=>p.age++);});
- c.league=next;c.seasonStats=emptyStats();c.postseason=null;c.lastResult=null;League.refreshRatings(c.league);return true;
+ c.league=next;c.seasonStats=emptyStats();c.postseason=null;c.lastResult=null;c.pendingRecapGameId=null;League.refreshRatings(c.league);return true;
 }
