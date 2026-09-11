@@ -1,3 +1,4 @@
+import {advanceRoute,passingRead,throwProfile} from './passing.js';
 import {stickVector,jukeStep,syncRunnerControls} from '../input/runnerControls.js';
 import {catchTolerance,catchOutcome} from './receiving.js';
 import {separation, touching, pursuitTarget, startDive, advanceDive} from './contact.js';
@@ -163,18 +164,6 @@ function moveToward(e,tx,ty,speed,dt){
   if(d>2){
     if(Math.abs(dy)>0.5)e.facing=dy>0?'left':'right';
     const step=Math.min(d,speed*dt);e.x+=dx/d*step;e.yfield+=dy/d*step;
-  }
-}
-function advanceRoute(e,waypoints,speed,dt){
-  const wp=waypoints[Math.min(e.routeIdx,waypoints.length-1)];
-  const ty=(game.los+wp.y)*XPX;
-  const dx=wp.x-e.x, dy=ty-e.yfield, d=Math.hypot(dx,dy);
-  if(d>4){
-    if(Math.abs(dy)>0.5)e.facing=dy>0?'left':'right';
-    e.x+=dx/d*speed*dt;
-    e.yfield+=dy/d*speed*dt;
-  } else if(e.routeIdx<waypoints.length-1){
-    e.routeIdx++;
   }
 }
 
@@ -522,14 +511,11 @@ export function releaseThrow(t){
   const fLat=clamp(t.y+lateralError,LAT_MIN,LAT_MAX);
   const fDown=camPx+(BASE_X-t.x)+depthError;
   const dist=Math.hypot(fLat-qb.x,fDown-qb.yfield);
-  const armMult=ratingMultiplier(qb.attributes?.arm??qb.rating,0.16);
-  const speed=(game.throwType==='bullet'?BALL_SPEED_BULLET:BALL_SPEED_LOB)*armMult;
-  const arcHeight = Math.min(60,dist*0.12) * (game.throwType==='bullet' ? 0.3 : 1);
-  const releaseDelay=clamp(125-((qb.attributes?.release??qb.rating)-60)*2,55,125);
-  entities.ball={inFlight:true,fromX:qb.x,fromY:qb.yfield,toX:fLat,toY:fDown,startTime:throwStart+releaseDelay,duration:Math.max(180,dist/speed*1000),arcHeight};
-  const routes=Object.keys(PLAYS[game.playCall].routes||{});
-  const targetKey=routes.sort((a,b)=>separation(entities.players[a],{x:fLat,yfield:fDown})-separation(entities.players[b],{x:fLat,yfield:fDown}))[0];
-  if(targetKey&&separation(entities.players[targetKey],{x:fLat,yfield:fDown})<120){entities.ball.targetKey=targetKey;game.playFacts.targetId=entities.players[targetKey].playerId;}
+  const landing={x:fLat,yfield:fDown},profile=throwProfile(qb,landing,game.throwType);
+  entities.ball={inFlight:true,fromX:qb.x,fromY:qb.yfield,toX:fLat,toY:fDown,startTime:throwStart+profile.releaseDelay,duration:profile.duration,arcHeight:profile.arcHeight};
+  const read=passingRead({players:entities.players,play:PLAYS[game.playCall],los:game.los,elapsed:throwStart-game.snapTime,landing,kind:game.throwType,difficulty:currentDiff()});
+  if(read.target?.reachable){entities.ball.targetKey=read.target.key;game.playFacts.targetId=entities.players[read.target.key].playerId;}
+
 }
 function resolveCatchAtTarget(){
   const diff=currentDiff();
@@ -661,7 +647,7 @@ function tick(){
         const landing={x:ball.toX,yfield:ball.toY};
         const canAdjust=ball.inFlight&&ball.targetKey===key&&now>=ball.startTime&&remaining<=450&&remaining>=0&&separation(receiver,landing)<=catchTolerance(receiver,diff)+speed*remaining/1000;
         if(canAdjust)moveToward(receiver,clamp(ball.toX,LAT_MIN,LAT_MAX-SPRITE_GROUND_Y_OFFSET),clamp(ball.toY,-9.9*XPX,109.9*XPX),speed,dt);
-        else advanceRoute(receiver,playDef.routes[key],speed,dt);
+        else advanceRoute(receiver,playDef.routes[key],speed,dt,game.los);
       });
       const coverAssign={};
       Object.entries(playDef.defenders||{}).forEach(([recvKey,defKeys])=>{

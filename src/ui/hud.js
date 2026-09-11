@@ -65,6 +65,8 @@ export function showResult(message,nextAction,buttonLabel='Continue'){
   else if(upper.includes('KICKOFF')){kicker.textContent='Kickoff';}
   else{kicker.textContent='Play Result';}
   hideAllOverlays();
+  const compact=/^(Catch|Run|Pitch|Scramble|Sacked|Incomplete pass)\b/i.test(message)&&!/[\n]/.test(message)&&!upper.includes('TURNOVER');
+  document.getElementById('result-overlay').classList.toggle('compact-result',compact);
   document.getElementById('result-overlay').classList.add('show');
   updateHUD();
 }

@@ -306,3 +306,13 @@ canvas.menu-player{width:auto;max-width:100%;height:42%;background:none;image-re
 @media(max-width:550px){
  #school-grid .school-card{grid-template-columns:1fr;justify-items:start;min-height:110px;}
 }
+
+/* Routine downs keep the outcome and the field visible together. */
+#result-overlay.compact-result{background:transparent;backdrop-filter:none;align-items:flex-end;padding:10px 14px;}
+#result-overlay.compact-result #result-card{max-width:720px;max-height:45%;display:block;padding:10px 14px;text-align:left;}
+#result-overlay.compact-result .result-kicker{display:none;}
+#result-overlay.compact-result .msg{font-size:17px;margin:0;line-height:1.3;}
+#result-overlay.compact-result #btn-continue{margin:0;min-height:44px;padding:6px;font-size:24px;}
+@media(max-height:400px){#result-overlay.compact-result #result-card{padding:7px 10px;}#result-overlay.compact-result .msg{font-size:14px;}}
+
+#result-overlay.compact-result .card-body{display:grid;grid-template-columns:minmax(0,1fr) 140px;align-items:center;gap:12px;}

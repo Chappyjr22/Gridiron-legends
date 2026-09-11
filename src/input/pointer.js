@@ -28,7 +28,7 @@ function beginTapPass(point){
   });
   entities.pendingTapThrow={playerKey:best<=36?playerKey:null,target:{x:point.x,y:point.y},releaseAt:simulationNow()+240};
 }
-let activePointer=null;
+let activePointer=null,pendingRunTap=null;
 canvas.addEventListener('pointerdown',ev=>{
   if(activePointer!==null)return;
   if(editState.editMode){
@@ -42,10 +42,14 @@ canvas.addEventListener('pointerdown',ev=>{
   canvas.setPointerCapture(ev.pointerId);
   const p=pointerPos(ev);
   if(game.phase==='presnap'){
-    if(PLAYS[game.playCall]?.type==='run'||pointNearPlayer(p,entities.players.rb)){
+    if(PLAYS[game.playCall]?.type==='run'){
       startRunOption();
       interaction.steering=true;interaction.steerAnchor={x:p.x,y:p.y};interaction.steerCurrent={x:p.x,y:p.y};
       return;
+    }
+    const rb=toCanvas(entities.players.rb),qb=toCanvas(entities.players.qb);
+    if(pointNearPlayer(p,entities.players.rb)&&Math.hypot(p.x-rb.cx,p.y-rb.cy)<Math.hypot(p.x-qb.cx,p.y-qb.cy)){
+      pendingRunTap={point:p,screen:{x:ev.clientX,y:ev.clientY}};return;
     }
     onSnap();
     if(game.passMode==='tap')beginTapPass(p);
@@ -82,6 +86,11 @@ canvas.addEventListener('pointermove',ev=>{
     }
     return;
   }
+  if(pendingRunTap){
+    if(game.paused||game.phase!=='presnap'){pendingRunTap=null;return;}
+    if(Math.hypot(ev.clientX-pendingRunTap.screen.x,ev.clientY-pendingRunTap.screen.y)<8)return;
+    pendingRunTap=null;onSnap();interaction.aiming=true;interaction.aimStartedAt=simulationNow();interaction.aimTarget=p;
+  }
   if(interaction.aiming){interaction.aimTarget=p;}
   else if(interaction.steering){interaction.steerCurrent=p;}
 });
@@ -89,6 +98,7 @@ canvas.addEventListener('pointerup',ev=>{
   if(ev.pointerId!==activePointer)return;
   activePointer=null;
   if(editState.editMode){editState.dragEntity=null;return;}
+  if(pendingRunTap){pendingRunTap=null;if(!game.paused&&game.phase==='presnap')startRunOption();return;}
   if(interaction.aiming){
     interaction.aiming=false;
     if(interaction.aimTarget){
@@ -109,7 +119,7 @@ canvas.addEventListener('pointerup',ev=>{
 });
 function cancelPointer(ev){
   if(ev&&activePointer!==null&&ev.pointerId!==activePointer)return;
-  activePointer=null;
+  activePointer=null;pendingRunTap=null;
   editState.dragEntity=null;
   interaction.aiming=false;interaction.steering=false;
   interaction.aimTarget=null;interaction.steerAnchor=null;interaction.steerCurrent=null;

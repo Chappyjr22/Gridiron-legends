@@ -1,3 +1,4 @@
+import {passingRead} from '../simulation/passing.js';
 import {stickVector,STICK_TRAVEL} from '../input/runnerControls.js';
 import {catchTolerance} from '../simulation/receiving.js';
 import { simulationNow } from '../state/clock.js';
@@ -135,18 +136,12 @@ export function draw(){
       const fDown=camPx+(BASE_X-tx);
       const playDef=PLAYS[game.playCall];
       if(playDef){
-        let bestR=null,bestRD=Infinity,bestTol=0,bestScore=Infinity;
-        Object.keys(playDef.routes).forEach(k=>{
-          const r=entities.players[k];
-          const d=Math.hypot(r.x-fLat,r.yfield-fDown);
-          const tolerance=catchTolerance(r,currentDiff());
-          const score=d/tolerance;
-          if(score<bestScore){bestScore=score;bestRD=d;bestR=r;bestTol=tolerance;}
-        });
-        if(bestR&&bestRD<bestTol){
-          const rc=toCanvas(bestR);
-          ctx.strokeStyle='rgba(120,220,255,0.9)';ctx.lineWidth=2.5;
-          ctx.beginPath();ctx.arc(rc.cx,rc.cy-3,18,0,7);ctx.stroke();
+        const read=passingRead({players:entities.players,play:playDef,los:game.los,elapsed:simulationNow()-game.snapTime,landing:{x:fLat,yfield:fDown},kind:game.throwType,difficulty:currentDiff()});
+        if(read.target){
+          const rc=toCanvas(read.target.predicted),current=toCanvas(entities.players[read.target.key]);
+          ctx.strokeStyle=read.target.error<=read.target.tolerance?'#8cf0cf':read.target.reachable?'#ffd166':'rgba(255,255,255,.45)';
+          ctx.lineWidth=1.5;ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(current.cx,current.cy);ctx.lineTo(rc.cx,rc.cy);ctx.stroke();ctx.setLineDash([]);
+          ctx.beginPath();ctx.arc(rc.cx,rc.cy,9,0,Math.PI*2);ctx.stroke();
         }
       }
     }

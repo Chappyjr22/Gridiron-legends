@@ -158,4 +158,34 @@ await test('a paused throw cannot be released by a delayed pointer-up',async h=>
  h.engine.releaseThrow({x:100,y:39});assert.equal(h.game.thrown,false);
 });
 
+await test('drag from the RB on a pass play stays a pass, but a tap hands off',async h=>{
+ await h.load('src/input/pointer.js');h.engine.startPractice();h.engine.choosePlay('trips_slants');
+ const {toCanvas}=await h.load('src/rendering/players.js');let p=toCanvas(h.entities.players.rb);
+ h.event('pointerdown',{clientX:p.cx,clientY:p.cy});assert.equal(h.game.phase,'presnap');
+ h.event('pointermove',{clientX:p.cx+90,clientY:p.cy});assert.equal(h.interaction.aiming,true);assert.equal(h.game.runActive,false);
+ h.event('pointerup',{clientX:p.cx+90,clientY:p.cy});assert.equal(h.game.playFacts.threw,true);assert.equal(h.game.runActive,false);
+ h.engine.initPlay();h.engine.choosePlay('trips_slants');p=toCanvas(h.entities.players.rb);
+ h.event('pointerdown',{clientX:p.cx,clientY:p.cy});h.event('pointerup',{clientX:p.cx,clientY:p.cy});assert.equal(h.game.runActive,true);
+});
+await test('cancelled or paused RB taps cannot snap a run',async h=>{
+ await h.load('src/input/pointer.js');h.engine.startPractice();h.engine.choosePlay('trips_slants');
+ const {toCanvas}=await h.load('src/rendering/players.js'),p=toCanvas(h.entities.players.rb);
+ h.event('pointerdown',{clientX:p.cx,clientY:p.cy});h.event('pointercancel');h.event('pointerup');assert.equal(h.game.phase,'presnap');
+ h.event('pointerdown',{clientX:p.cx,clientY:p.cy});h.game.paused=true;h.event('pointerup');assert.equal(h.game.runActive,false);
+});
+await test('route turns spend distance without overshoot and prediction leaves players unchanged',async h=>{
+ const {advanceRoute,passingRead}=await h.load('src/simulation/passing.js');
+ const p={x:0,yfield:0,routeIdx:0},route=[{x:10,y:0},{x:10,y:1}];advanceRoute(p,route,20,1,0);assert.equal(p.x,10);assert.equal(p.yfield,10);
+ const q={x:0,yfield:0,routeIdx:0};for(let i=0;i<20;i++)advanceRoute(q,route,20,.05,0);assert.equal(q.x,p.x);assert.equal(q.yfield,p.yfield);
+ h.engine.startPractice();h.engine.choosePlay('trips_verticals');
+ const {PLAYS}=await h.load('src/data/plays.js'),{currentDiff}=await h.load('src/state/difficulty.js');
+ const before=JSON.stringify(h.entities.players),r=h.entities.players.wr1;
+ const read=passingRead({players:h.entities.players,play:PLAYS.trips_verticals,los:h.game.los,elapsed:0,landing:{x:r.x,yfield:r.yfield+160},kind:'lob',difficulty:currentDiff()});
+ assert.equal(JSON.stringify(h.entities.players),before);assert.ok(read.target.predicted.yfield>r.yfield);assert.ok(read.duration>0);
+});
+await test('routine results keep the field clear while scoring remains a full result',async h=>{
+ h.hud.showResult('Catch for 7 yards.',()=>{});assert.ok(h.element('result-overlay').classList.contains('compact-result'));
+ h.hud.showResult('TOUCHDOWN!\nExtra point is good.',()=>{});assert.equal(h.element('result-overlay').classList.contains('compact-result'),false);
+});
+
 console.log(`${checks+2} gameplay/league checks passed.`);
