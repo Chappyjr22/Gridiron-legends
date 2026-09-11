@@ -241,7 +241,7 @@ export function simulateScore(franchise,game){
     const hp=scoringDrive(home,away,random,1.5);homeScore+=hp;homeDrives.push(hp);
     const ap=scoringDrive(away,home,random,0);awayScore+=ap;awayDrives.push(ap);
   }
-  if(homeScore===awayScore&&random()<0.78){
+  if(homeScore===awayScore&&(franchise.kind==='college'||random()<0.78)){
     if(random()<0.54){const p=random()<0.7?3:7;homeScore+=p;homeDrives.push(p);}
     else{const p=random()<0.7?3:7;awayScore+=p;awayDrives.push(p);}
   }

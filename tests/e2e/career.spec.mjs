@@ -1,7 +1,7 @@
 import {test,expect} from '@playwright/test';
 async function create(page,difficulty='medium'){
  await page.goto('/');await page.getByRole('button',{name:'Career Mode',exact:true}).click();await page.getByRole('button',{name:'Start new career',exact:true}).click();
- await page.getByLabel('Player name',{exact:true}).fill('Rookie Legend');
+ await page.getByLabel('Career starting point',{exact:true}).selectOption('pro');await page.getByLabel('Player name',{exact:true}).fill('Rookie Legend');
  await page.locator('#career-create').getByLabel('Team',{exact:true}).selectOption('bos');
  await page.getByLabel('Difficulty',{exact:true}).selectOption(difficulty);
  await page.getByRole('button',{name:'Begin rookie season'}).click();

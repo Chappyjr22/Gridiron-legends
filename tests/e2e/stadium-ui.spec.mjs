@@ -13,7 +13,7 @@ for(const viewport of [{width:844,height:304},{width:844,height:390},{width:932,
   await assertInViewport(page,'#start-screen button');
   await page.screenshot({path:`test-results/ui-title-${viewport.width}.png`});
   await page.getByRole('button',{name:'Career Mode',exact:true}).tap();await page.getByRole('button',{name:'Start new career',exact:true}).tap();
-  await page.getByLabel('Player name',{exact:true}).fill('Jacob Chapman');
+  await page.getByLabel('Career starting point',{exact:true}).selectOption('pro');await page.getByLabel('Player name',{exact:true}).fill('Jacob Chapman');
   await page.getByLabel('Difficulty',{exact:true}).selectOption('easy');
   await page.getByRole('button',{name:'Begin rookie season'}).tap();
   await expect(page.locator('#career-player-name')).toHaveText('Jacob Chapman');

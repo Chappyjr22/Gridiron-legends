@@ -1,3 +1,5 @@
+import {collegeStandings} from '../career/college.js';
+import {initCollegeUI,syncCollegeEnrollment,renderCollegeCareer} from './college.js';
 import {renderMyTeam,showPostgame,initCareerExperience} from './careerExperience.js';
 import {renderCareerStats} from './careerStats.js';
 import {paintMenuPlayer} from './menuArt.js';
@@ -71,7 +73,7 @@ function render(){
   const opponent=League.findTeamState(career.league,match.homeTeamId===career.teamId?match.awayTeamId:match.homeTeamId);
   el('career-opponent-abbr').textContent=opponent.abbr;el('career-opponent-record').textContent=recordLabel(opponent);el('career-screen').style.setProperty('--opponent-color',opponent.colors.primary);
   el('career-next-opponent').textContent=`${match.homeTeamId===career.teamId?'vs':'at'} ${opponent.city} ${opponent.name}`;
-  el('career-matchup').textContent=`${recordLabel(opponent)} · Defense ${opponent.ratings.defense} · ${match.round===3?'Championship':match.round===2?'Conference final':match.round===1?'Conference semifinal':`Week ${match.week}`}`;
+  el('career-matchup').textContent=`${recordLabel(opponent)} · Defense ${opponent.ratings.defense} · ${match.round===3?'Championship':match.round===2?(career.stage==='college'?'National semifinal':'Conference final'):match.round===1?(career.stage==='college'?'Conference championship':'Conference semifinal'):`Week ${match.week}`}`;
   el('career-play').textContent=career.checkpoint?'Resume game':'Play next game';
  }else if(career.postseason?.champion){
   const champion=League.findTeamState(career.league,career.postseason.champion);el('career-opponent-abbr').textContent=champion.abbr;el('career-opponent-record').textContent='CHAMPION';el('career-screen').style.setProperty('--opponent-color',champion.colors.primary);el('career-next-opponent').textContent=career.postseason.champion===career.teamId?'You are league champions!':`${champion.city} ${champion.name} win the title`;
@@ -86,15 +88,16 @@ function render(){
  }
  const teammates=team.roster.filter(p=>['RB','WR1','WR2','TE'].includes(p.slot));
  el('career-teammates').innerHTML=teammates.map(p=>`<div class="career-list-row"><span>${escape(p.slot)} · #${p.number} ${escape(rosterName(p))}</span><b>${p.rating}</b></div>`).join('');
- el('career-standings').innerHTML=League.standings(career.league,team.conference).map((t,i)=>`<div class="career-list-row ${t.id===team.id?'career-selected':''}"><span>${i+1}. ${escape(t.abbr)} ${escape(t.name)}</span><b>${recordLabel(t)}</b></div>`).join('');
- el('career-history').innerHTML=career.history.slice(-8).reverse().map(r=>`<div class="career-list-row"><span>S${r.season} · ${r.week>17?'Playoffs':`Week ${r.week}`}</span><b>${r.userScore}–${r.cpuScore}</b></div>`).join('')||'<p>Your first game is waiting.</p>';
- renderCareerStats(career);renderMyTeam(career);
- el('career-awards').textContent=career.awards.map(a=>`Season ${a.season}: ${a.title}`).join(' · ')||'First milestone: finish your rookie game.';
+ el('career-standings').innerHTML=(career.stage==='college'?collegeStandings(career,team.conference):League.standings(career.league,team.conference)).map((t,i)=>`<div class="career-list-row ${t.id===team.id?'career-selected':''}"><span>${i+1}. ${escape(t.abbr)} ${escape(t.name)}</span><b>${recordLabel(t)}</b></div>`).join('');
+ el('career-history').innerHTML=career.history.slice(-8).reverse().map(r=>`<div class="career-list-row"><span>S${r.season} · ${r.week>(career.stage==='college'?12:17)?'Playoffs':`Week ${r.week}`}</span><b>${r.userScore}–${r.cpuScore}</b></div>`).join('')||'<p>Your first game is waiting.</p>';
+ renderCollegeCareer(career);renderCareerStats(career);renderMyTeam(career);
+ el('career-awards').textContent=career.awards.map(a=>`${career.stage==='college'?'College':'Season '+a.season}: ${a.title}`).join(' · ')||'First milestone: finish your rookie game.';
 }
 function launch(){
  const match=Career.nextMatch(career);if(!match)return;
  if(!exhibition)exhibition={teams:{...teamState},game:{userTeamId:game.userTeamId,cpuTeamId:game.cpuTeamId,difficulty:game.difficulty,quarterMinutes:game.quarterMinutes}};
  career.activeMatch=match.id;
+ career.matchContext??={difficulty:career.settings.difficulty,quarterMinutes:career.settings.quarterMinutes};
  teamState.franchise=career.league;game.userTeamId=career.teamId;game.cpuTeamId=match.homeTeamId===career.teamId?match.awayTeamId:match.homeTeamId;
  teamState.userTeam=League.findTeamState(career.league,career.teamId);teamState.cpuTeam=League.findTeamState(career.league,game.cpuTeamId);
  Object.assign(game,career.settings);game.career=true;
@@ -106,6 +109,7 @@ function launch(){
 }
 export function initCareer(){
  initCareerExperience(()=>career,persist);
+ initCollegeUI(()=>career,persist,render);
  for(const button of document.querySelectorAll('[data-career-tab]')){
   button.addEventListener('click',()=>setCareerTab(button.dataset.careerTab));
   button.addEventListener('keydown',event=>{
@@ -130,12 +134,12 @@ export function initCareer(){
  el('career-gateway-back').addEventListener('click',()=>{el('career-gateway').classList.remove('show');el('start-screen').classList.add('show');});
  el('career-list-back').addEventListener('click',openGateway);
  el('career-continue-last').addEventListener('click',()=>{career=Career.loadCareer();creating=false;if(career)showCareer();});
- el('career-new').addEventListener('click',()=>{try{Career.listCareers();creating=true;el('career-create').reset();el('career-create-error').textContent='';showCareer();}catch(error){el('career-gateway-error').textContent=error.message;}});
+ el('career-new').addEventListener('click',()=>{try{Career.listCareers();creating=true;el('career-create').reset();syncCollegeEnrollment();el('career-create-error').textContent='';showCareer();}catch(error){el('career-gateway-error').textContent=error.message;}});
  el('career-my-careers').addEventListener('click',()=>{
   try{
    const saves=Career.listCareers();el('career-list').replaceChildren();
    if(!saves.length)el('career-list').textContent='No careers yet. Start your first career from the Career menu.';
-   for(const saved of saves){const p=Career.careerPlayer(saved),team=League.findTeamState(saved.league,saved.teamId),b=document.createElement('button');b.className='sports-button';b.textContent=`${rosterName(p)} · ${team.abbr} · S${saved.league.season} Week ${saved.league.week}`;
+   for(const saved of saves){const p=Career.careerPlayer(saved),team=League.findTeamState(saved.league,saved.teamId),b=document.createElement('button');b.className='sports-button';b.textContent=`${rosterName(p)} · ${team.abbr} · ${saved.stage==='college'?'College senior':'S'+saved.league.season} Week ${saved.league.week}`;
     b.addEventListener('click',()=>{if(!Career.saveCareer(saved)){el('career-list-error').textContent='Could not select this career. Storage may be full.';return;}career=saved;creating=false;showCareer();});el('career-list').appendChild(b);
    }
    el('career-gateway').classList.remove('show');el('career-list-screen').classList.add('show');
@@ -147,7 +151,7 @@ export function initCareer(){
  el('career-create').addEventListener('submit',event=>{
   event.preventDefault();if(career&&!creating)return;
   try{
-   const candidate=Career.createCareer({name:el('career-name').value,number:el('career-number').value,teamId:el('career-team').value,archetype:el('career-archetype').value,skin:el('career-skin').value,difficulty:el('career-difficulty').value,quarterMinutes:el('career-minutes').value});
+   const candidate=Career.createCareer({name:el('career-name').value,number:el('career-number').value,teamId:el('career-team').value,archetype:el('career-archetype').value,skin:el('career-skin').value,difficulty:el('career-difficulty').value,quarterMinutes:el('career-minutes').value,schoolId:el('career-path').value==='college'?el('career-school').value:null});
    if(!Career.saveCareer(candidate))throw Error('Could not save the new career. Existing careers are unchanged. Free some device storage and try again.');
    career=candidate;creating=false;persist();render();
   }catch(error){el('career-create-error').textContent=error.message;}
@@ -172,6 +176,8 @@ export function initCareer(){
  uiHooks.checkpoint=saved=>{if(career?.activeMatch){career.checkpoint=saved;persist();}};
  uiHooks.careerSettingsChanged=()=>{
   if(!career?.activeMatch||!game.career)return;
+  const rank=['easy','medium','hard','gridiron'];
+  if(career.matchContext&&rank.indexOf(game.difficulty)<rank.indexOf(career.matchContext.difficulty))career.matchContext.difficulty=game.difficulty;
   career.settings.difficulty=game.difficulty;
   if(career.checkpoint){
    career.checkpoint.game.difficulty=game.difficulty;

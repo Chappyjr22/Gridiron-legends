@@ -78,3 +78,5 @@ console.log('Slot migration, isolation, failed-write protection and simulated bo
  assert.equal(playerGameLog(restored,wr.id)[0].stats.receivingYards,25);
  c.league.schedule=[];c.league.season++;assert.equal(playerGameLog(c,wr.id)[0].stats.receivingYards,25);
 }
+
+await import('./college.test.mjs');

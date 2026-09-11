@@ -324,17 +324,17 @@
   <header class="career-header"><h2>My Career</h2><span id="career-season"></span><button id="career-back" class="sports-button blue">Main menu</button></header>
   <form id="career-create" class="career-enrollment">
 <h3>Make your debut</h3><p>Create your quarterback and lead the offense.</p>
-   <div class="career-form-grid">
+   <div class="career-form-grid"><div><label for="career-path">Career starting point</label><select id="career-path"><option value="college" selected>College senior season</option><option value="pro">Pro quick start</option></select></div>
     <div><label for="career-name">Player name</label><input id="career-name" maxlength="28" required autocomplete="off" placeholder="Your name"></div>
     <div><label for="career-number">Jersey number</label><input id="career-number" type="number" min="0" max="19" value="7" required></div>
-    <div><label for="career-team">Team</label><select id="career-team"></select></div>
+    <div id="career-pro-choice" hidden><label for="career-team">Team</label><select id="career-team"></select></div>
     <div><label for="career-archetype">Playing style</label><select id="career-archetype"><option value="precision">Precision passer</option><option value="power">Strong arm</option><option value="quick">Quick release</option></select></div>
     <div><label for="career-skin">Appearance</label><select id="career-skin"><option value="0">Skin tone 1</option><option value="1">Skin tone 2</option><option value="2" selected>Skin tone 3</option><option value="3">Skin tone 4</option></select></div>
     <div><label for="career-difficulty">Difficulty</label><select id="career-difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option><option value="gridiron">Gridiron</option></select></div>
     <div><label for="career-minutes">Quarter length</label><select id="career-minutes"><option value="2">2 minutes</option><option value="3">3 minutes</option><option value="4">4 minutes</option><option value="5">5 minutes</option></select></div>
    </div>
-   <p class="career-muted">Precision improves placement. Arm strength improves velocity. Quick release shortens your windup.</p>
-   <p id="career-create-error" role="alert"></p><button class="btn-primary" type="submit">Begin rookie season</button>
+   <div id="career-college-choice"><input type="hidden" id="career-school" value="college-cypress"><strong id="chosen-school"></strong><p id="chosen-school-attributes"></p><button type="button" id="choose-school" class="sports-button blue">Choose your school</button></div><p class="career-muted">Precision improves placement. Arm strength improves velocity. Quick release shortens your windup.</p>
+   <p id="career-create-error" role="alert"></p><button id="career-begin" class="btn-primary" type="submit">Begin senior season</button>
   </form>
 
   <div id="career-hub" hidden>
@@ -350,7 +350,7 @@
        <span class="board-kicker">Next game</span>
        <div class="helmet-matchup"><div><svg class="helmet" viewBox="0 0 32 28" aria-hidden="true"><use href="#helmet-icon"/></svg><strong id="career-user-abbr"></strong><small id="career-user-record"></small></div><b>VS</b><div><svg class="helmet opponent-helmet" viewBox="0 0 32 28" aria-hidden="true"><use href="#helmet-icon"/></svg><strong id="career-opponent-abbr"></strong><small id="career-opponent-record"></small></div></div>
        <h3 id="career-next-opponent"></h3><p id="career-matchup"></p>
-       <button id="career-play" class="sports-button field-green">Play next game</button><button id="career-next-season" class="sports-button gold" hidden>Start next season</button>
+       <button id="career-play" class="sports-button field-green">Play next game</button><button id="career-draft" class="sports-button gold" hidden>Enter the draft</button><button id="career-next-season" class="sports-button gold" hidden>Start next season</button>
      </section>
      <section class="stat-board paper-board"><span class="board-kicker">Season stats</span>
        <h3 id="career-stat-line" class="sr-only"></h3>
@@ -361,13 +361,13 @@
      </section>
     </div>
     <section id="career-player-panel" class="career-page paper-board career-scroll" role="tabpanel" aria-labelledby="career-player-tab" hidden>
-      <h3>Develop your quarterback</h3><div id="career-upgrades" class="career-upgrades"></div><p class="career-muted">Each point adds 2 to an attribute. Upgrades unlock between games.</p>
+      <div id="college-progress" hidden></div><h3>Develop your quarterback</h3><div id="career-upgrades" class="career-upgrades"></div><p class="career-muted">Each point adds 2 to an attribute. Upgrades unlock between games.</p>
       <h3>Player statistics</h3><label for="career-stat-scope">View</label><select id="career-stat-scope"><option value="season">This season</option><option value="last">Last game</option><option value="career">Career</option></select><div id="career-qb-stats"></div><h3>Career record</h3><p id="career-completions"></p><p id="career-lifetime"></p><p id="career-awards"></p>
     </section>
     <section id="career-team-panel" class="career-page paper-board career-scroll" role="tabpanel" aria-labelledby="career-team-tab" hidden><h3 id="my-team-name">My team</h3><p>Meet your teammates. Tap a player for their card and game log.</p><div id="my-team-roster"></div></section>
     <section id="career-league-panel" class="career-page paper-board career-scroll" role="tabpanel" aria-labelledby="career-league-tab" hidden>
-      <h3>League statistics</h3><div class="stats-filters"><label for="league-stat-team">Team</label><select id="league-stat-team"></select><label for="league-stat-category">Category</label><select id="league-stat-category"><option value="passing">Passing</option><option value="receiving">Receiving</option><option value="rushing">Rushing</option></select></div><p id="league-stat-coverage"></p><div id="league-player-stats"></div><h3>Conference standings</h3><p>Top four teams reach the playoffs.</p><div id="career-standings"></div>
-      <h3>Your teammates</h3><div id="career-teammates"></div><h3>Recent games</h3><div id="career-history"></div>
+      <h3>League statistics</h3><div class="stats-filters"><label for="league-stat-team">Team</label><select id="league-stat-team"></select><label for="league-stat-category">Category</label><select id="league-stat-category"><option value="passing">Passing</option><option value="receiving">Receiving</option><option value="rushing">Rushing</option></select></div><p id="league-stat-coverage"></p><div id="league-player-stats"></div><h3>Conference standings</h3><p id="career-standings-note">Top four teams reach the playoffs.</p><div id="career-standings"></div>
+      <div id="college-schedule" hidden></div><h3>Your teammates</h3><div id="career-teammates"></div><h3>Recent games</h3><div id="career-history"></div>
     </section>
    </div>
    <nav class="career-nav" role="tablist" aria-label="Career views">
@@ -378,7 +378,9 @@
    </nav>
   </div>
   <div class="career-save-bar"><span id="career-quiet-save" role="status">Saved on this device</span><button id="career-open-backups">Save &amp; backup</button></div>
-  <dialog id="team-player-dialog" class="sports-dialog experience-dialog" aria-labelledby="team-player-heading"><header><h2 id="team-player-heading">Player card</h2></header><div id="team-player-content" class="experience-body"></div><footer><button id="team-player-close" class="sports-button blue">Back to My Team</button></footer></dialog>
+  <dialog id="school-dialog" class="sports-dialog experience-dialog school-dialog" aria-labelledby="school-heading"><header><h2 id="school-heading">Choose your school</h2></header><nav id="school-conferences" aria-label="College conferences"></nav><div class="school-picker-body"><div id="school-grid"></div><section id="school-preview" aria-live="polite"></section></div><footer><button id="school-back" class="sports-button blue">Back</button><button id="school-confirm" class="sports-button gold">Choose this school</button></footer></dialog>
+ <dialog id="draft-dialog" class="sports-dialog experience-dialog" aria-labelledby="draft-heading"><header><h2 id="draft-heading">Draft night</h2></header><div id="draft-selection" class="experience-body"></div><footer><button id="draft-back" class="sports-button blue">Back</button><button id="draft-continue" class="sports-button gold">Begin pro career</button></footer></dialog>
+ <dialog id="team-player-dialog" class="sports-dialog experience-dialog" aria-labelledby="team-player-heading"><header><h2 id="team-player-heading">Player card</h2></header><div id="team-player-content" class="experience-body"></div><footer><button id="team-player-close" class="sports-button blue">Back to My Team</button></footer></dialog>
   <dialog id="postgame-dialog" class="sports-dialog experience-dialog" aria-labelledby="postgame-heading"><header><h2 id="postgame-heading">Final whistle</h2></header><div id="postgame-content" class="experience-body"></div><footer><button id="postgame-continue" class="sports-button gold">Continue to career</button></footer></dialog>
   <dialog id="career-backups" class="sports-dialog" aria-labelledby="backup-heading"><h2 id="backup-heading">Career save</h2>
   <footer class="career-footer"><p id="career-save-status" role="status">Career saves on this device. Quick games keep their existing save.</p><div class="career-backup-actions"><button id="career-export">Export backup</button><button id="career-import">Restore backup</button><input id="career-backup-file" type="file" accept=".json,application/json" hidden></div></footer>

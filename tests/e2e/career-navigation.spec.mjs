@@ -3,7 +3,7 @@ test('career submenu creates and switches independent saves',async({page})=>{
  await page.goto('/');await page.getByRole('button',{name:'Career Mode',exact:true}).click();
  await expect(page.getByRole('button',{name:'Continue last career',exact:true})).toBeDisabled();
  for(const name of ['First QB','Second QB']){
-  await page.getByRole('button',{name:'Start new career',exact:true}).click();await page.getByLabel('Player name',{exact:true}).fill(name);await page.getByRole('button',{name:'Begin rookie season'}).click();await expect(page.locator('#career-player-name')).toHaveText(name);
+  await page.getByRole('button',{name:'Start new career',exact:true}).click();await page.getByLabel('Career starting point',{exact:true}).selectOption('pro');await page.getByLabel('Player name',{exact:true}).fill(name);await page.getByRole('button',{name:'Begin rookie season'}).click();await expect(page.locator('#career-player-name')).toHaveText(name);
   await page.getByRole('button',{name:'Main menu',exact:true}).click();await page.getByRole('button',{name:'Career Mode',exact:true}).click();
  }
  await page.getByRole('button',{name:'My careers',exact:true}).click();await expect(page.locator('#career-list button')).toHaveCount(2);
