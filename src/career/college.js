@@ -5,7 +5,7 @@ const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 export function collegeSchedule(teams){
  const games=[],groups=[...new Set(teams.map(t=>t.conference))].map(c=>teams.filter(t=>t.conference===c).map(t=>t.id));
  const add=(a,b,week,swap)=>games.push({id:`college-w${week}-${a}-${b}`,week,homeTeamId:swap?b:a,awayTeamId:swap?a:b,status:'scheduled',homeScore:null,awayScore:null});
- for(const ids of groups){const ring=[...ids];for(let round=0;round<7;round++){for(let i=0;i<4;i++){const a=ids.indexOf(ring[i]),b=ids.indexOf(ring[7-i]),distance=(b-a+8)%8;add(ring[i],ring[7-i],round+1,!(distance<4||distance===4&&a<b));}ring.splice(1,0,ring.pop());}}
+ for(const ids of groups){const ring=[...ids];for(let round=0;round<7;round++){for(let i=0;i<4;i++){const a=ids.indexOf(ring[i]),b=ids.indexOf(ring[7-i]),distance=(b-a+8)%8;add(ring[i],ring[7-i],round+1,groups.indexOf(ids)%2===0?!(distance<4||distance===4&&a<b):(distance<4||distance===4&&a<b));}ring.splice(1,0,ring.pop());}}
  const pairs=[[[0,1],[2,3]],[[0,2],[1,3]],[[0,3],[1,2]]];
  for(let r=0;r<5;r++)for(const [a,b] of pairs[r%3])for(let i=0;i<8;i++)add(groups[a][i],groups[b][(i+Math.floor(r/3))%8],r+8,(r+i)%2);
  balanceCrossConferenceVenues(games,teams);
