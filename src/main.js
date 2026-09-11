@@ -1,3 +1,4 @@
+import {initFieldViewport} from './rendering/viewport.js';
 import {initRunnerControls} from './input/runnerControls.js';
 import {initMenuArt} from './ui/menuArt.js';
 import { game } from './state/gameState.js';
@@ -52,3 +53,5 @@ document.addEventListener('visibilitychange',()=>{
     document.getElementById('pause-overlay').classList.add('show');
   }
 });
+
+initFieldViewport();

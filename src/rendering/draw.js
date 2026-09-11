@@ -76,6 +76,18 @@ export function draw(){
     ctx.fillStyle='#edca3a';
     for(let py=LAT_MIN;py<LAT_MAX;py+=10)ctx.fillRect(fdX-1,py,3,6);
   }
+  // Show actual close contact, not the entire blocking assignment or pursuit path.
+  if(game.phase==='live'){
+    const offense=[...entities.decor.filter(p=>p.team===OFF),...['rb','wr1','wr2','wr3','te'].map(k=>entities.players[k])].filter(Boolean);
+    const defense=[...DL_KEYS.map(k=>entities.players[k]),...entities.decor.filter(p=>p.team===DEF)];
+    for(const defender of defense){
+      if(!defender||!(defender.state==='engaged'||simulationNow()<(defender.blockedUntil||0)))continue;
+      const blocker=offense.find(p=>p!==entities.ballCarrier&&Math.hypot(p.x-defender.x,p.yfield-defender.yfield)<24);
+      if(!blocker)continue;
+      const a=toCanvas(blocker),b=toCanvas(defender),x=(a.cx+b.cx)/2,y=(a.cy+b.cy)/2+13;
+      ctx.fillStyle='rgba(255,243,208,.7)';ctx.fillRect(x-5,y,3,2);ctx.fillRect(x+2,y,3,2);
+    }
+  }
   const jitterOn=(game.phase==='live');
   entities.decor.forEach((d,i)=>{
     if(jitterOn&&!d.isPursuing&&!d.isBlocking){

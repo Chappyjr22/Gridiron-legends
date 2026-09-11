@@ -5,7 +5,8 @@ export const SPEED_SCALE=0.55;
 export const TACKLE_R=18;
 export const CATCH_TOL_BASE=30, CONTEST_NEAR_BASE=20, CONTEST_MID_BASE=40;
 export const BALL_SPEED_LOB=22*XPX, BALL_SPEED_BULLET=36*XPX;
-export const BASE_X=520;
+export let BASE_X=520;
+export function setFieldWidth(width){BASE_X=width-280;}
 export const LAT_MIN=25, LAT_MAX=355, LAT_MID=190;
 export const RUSH_SPEED=3.0*XPX*SPEED_SCALE;
 export const RUSH_SPEED_BLITZ=3.6*XPX*SPEED_SCALE;
