@@ -23,7 +23,7 @@ export function jukeStep(runner,now){
  const j=runner.juke,p=Math.max(0,Math.min(1,(now-j.start)/JUKE_DURATION));
  const eased=p*p*(3-2*p),old=j.progress*j.progress*(3-2*j.progress);
  j.progress=p;if(p>=1)runner.juke=null;
- return j.direction*JUKE_DISTANCE*(eased-old);
+ return eased===old?0:j.direction*JUKE_DISTANCE*(eased-old);
 }
 export function syncRunnerControls(){
  const panel=document.getElementById('runner-controls');if(!panel)return;
