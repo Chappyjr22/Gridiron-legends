@@ -79,7 +79,7 @@ export function enterDraft(c){
  // A fresh pro league's strength supplies draft order; QB need breaks nearby choices.
  const order=[...league.teams].sort((a,b)=>a.ratings.overall-b.ratings.overall||a.id.localeCompare(b.id));
  const candidates=[];
- for(let pick=Math.max(1,projection.pick-5);pick<=Math.min(224,projection.pick+5);pick++){
+ for(let pick=Math.max(1,projection.pick-5);pick<=(projection.pick===1?1:Math.min(224,projection.pick+5));pick++){
   const team=order[(pick-1)%32],qb=team.roster.find(p=>p.slot==='QB');
   candidates.push({pick,team,need:100-qb.rating-Math.abs(pick-projection.pick)});
  }

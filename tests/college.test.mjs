@@ -12,6 +12,8 @@ for(const school of COLLEGE_TEAMS){
  assert.equal(p.attributes.accuracy,82+SCHOOL_TIERS[school.tier].attributeBonus);
  assert.equal(c.league.schedule.length,192);
  assert.ok(C.parseCareer(JSON.stringify(c)));
+ c.history=Array.from({length:12},()=>({collegeAssessment:{score:100}}));c.postseason={champion:school.id};
+ assert.equal(C.enterDraft(c).pick,1,'Every school can produce the first overall pick');
  for(const team of c.league.teams){
   const games=c.league.schedule.filter(g=>g.homeTeamId===team.id||g.awayTeamId===team.id);
   assert.equal(games.length,12);
