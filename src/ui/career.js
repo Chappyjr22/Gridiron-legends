@@ -2,7 +2,7 @@ import * as Career from '../career/career.js';
 import * as League from '../state/league.js';
 import {game,teamState} from '../state/gameState.js';
 import {uiHooks,startNewGame,restoreCheckpoint,ensureLoopStarted} from '../simulation/engine.js';
-import {syncMatchupUI} from './menus.js';
+import {syncMatchupUI,syncSettingsUI} from './menus.js';
 import {hideAllOverlays} from './hud.js';
 let career=Career.loadCareer(),exhibition=null;
 const el=id=>document.getElementById(id);
@@ -72,6 +72,7 @@ function launch(){
  el('career-screen').classList.remove('show');el('game-view').style.display='flex';
  syncMatchupUI();
  if(career.checkpoint)restoreCheckpoint(career.checkpoint);else startNewGame({career:true});
+ syncSettingsUI();
  persist();ensureLoopStarted();
 }
 export function initCareer(){
@@ -104,6 +105,15 @@ export function initCareer(){
   const url=URL.createObjectURL(new Blob([raw],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='gridiron-career-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
  });
  uiHooks.checkpoint=saved=>{if(career?.activeMatch){career.checkpoint=saved;persist();}};
+ uiHooks.careerSettingsChanged=()=>{
+  if(!career?.activeMatch||!game.career)return;
+  career.settings.difficulty=game.difficulty;
+  if(career.checkpoint){
+   career.checkpoint.game.difficulty=game.difficulty;
+   career.checkpoint.game.momentum=game.momentum;
+  }
+  persist();
+ };
  uiHooks.finishCareer=stats=>{
   if(!career?.activeMatch)return;
   Career.completeCareerGame(career,career.activeMatch,game.playerScore,game.cpuScore,stats);
