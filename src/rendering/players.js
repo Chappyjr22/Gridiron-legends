@@ -28,6 +28,8 @@ export function drawHelmet(cx,cy,team){
 }
 export function playerFrame(e,isDecor){
   const now=simulationNow();
+  if(e.action==='drop')return {row:4,col:2};
+  if(e.action==='deflect')return {row:4,col:1};
   if(e.action==='dive')return {row:4,col:5};
   if(e.action==='tackled'){
     const elapsed=now-e.actionStart;

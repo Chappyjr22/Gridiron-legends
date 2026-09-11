@@ -1,3 +1,4 @@
+import {catchTolerance,catchOutcome} from './receiving.js';
 import {separation, touching, pursuitTarget, startDive, advanceDive} from './contact.js';
 import { emptyMatch, recordPlay } from '../career/stats.js';
 import { simulationNow } from '../state/clock.js';
@@ -5,7 +6,7 @@ import * as League from '../state/league.js';
 import { game, entities, teamState } from '../state/gameState.js';
 import {
   XPX, SPEED_SCALE, BASE_X, LAT_MIN, LAT_MAX, DL_KEYS, DL_CONFIG, OFF, DEF,
-  CATCH_TOL_BASE, CONTEST_NEAR_BASE, CONTEST_MID_BASE, BALL_SPEED_LOB, BALL_SPEED_BULLET,
+  BALL_SPEED_LOB, BALL_SPEED_BULLET,
   RUSH_SPEED, RUSH_SPEED_BLITZ, BASE_RUN_YPS, LATERAL_YPS, PURSUE_YPS_BASE, ROUTE_YPS, COVER_YPS,
   TACKLE_RESULT_DELAY, BREAK_SLOW_MS, BREAK_SPEED_MULT, MISSED_TACKLE_RECOVERY_MS,
   SPRITE_GROUND_Y_OFFSET, SIDELINE_STEP_DEPTH, BETWEEN_PLAY_RUNOFF, PAT_CHANCE, SKIN_PALETTES,
@@ -329,7 +330,7 @@ export function endPlay(yardGained,label,outOfBounds=false,exactSpot=game.los+ya
       return;
     }
     if(label==='INCOMPLETE'){
-      showResult('Incomplete pass.',initPlay,'Next Rep');
+      showResult('Incomplete pass.'+(game.passFeedback?' '+game.passFeedback:''),initPlay,'Next Rep');
       return;
     }
     game.los=clamp(newLOS,1,99.999);
@@ -352,7 +353,7 @@ export function endPlay(yardGained,label,outOfBounds=false,exactSpot=game.los+ya
   }
   if(label==='INCOMPLETE'){
     game.down+=1;
-    game.message='Incomplete pass.';
+    game.message='Incomplete pass.'+(game.passFeedback?' '+game.passFeedback:'');
     adjustMomentum(-0.04);
   } else {
     game.los=newLOS;
@@ -513,7 +514,8 @@ export function releaseThrow(t){
   const throwStart=simulationNow();
   qb.action='throw';qb.actionStart=throwStart;
   const camPx=game.cameraYard*XPX;
-  const accuracyError=Math.max(0,(94-(qb.attributes?.accuracy??qb.rating??75))*0.32);
+  const aimDistance=Math.hypot(t.y-qb.x,camPx+(BASE_X-t.x)-qb.yfield);
+  const accuracyError=clamp((94-(qb.attributes?.accuracy??qb.rating??75))*0.14,0,6)*clamp(aimDistance/(25*XPX),0.5,1.5);
   const lateralError=(Math.random()+Math.random()-1)*accuracyError;
   const depthError=(Math.random()+Math.random()-1)*accuracyError*1.25;
   const fLat=clamp(t.y+lateralError,LAT_MIN,LAT_MAX);
@@ -524,43 +526,36 @@ export function releaseThrow(t){
   const arcHeight = Math.min(60,dist*0.12) * (game.throwType==='bullet' ? 0.3 : 1);
   const releaseDelay=clamp(125-((qb.attributes?.release??qb.rating)-60)*2,55,125);
   entities.ball={inFlight:true,fromX:qb.x,fromY:qb.yfield,toX:fLat,toY:fDown,startTime:throwStart+releaseDelay,duration:Math.max(180,dist/speed*1000),arcHeight};
+  const routes=Object.keys(PLAYS[game.playCall].routes||{});
+  const targetKey=routes.sort((a,b)=>separation(entities.players[a],{x:fLat,yfield:fDown})-separation(entities.players[b],{x:fLat,yfield:fDown}))[0];
+  if(targetKey&&separation(entities.players[targetKey],{x:fLat,yfield:fDown})<120){entities.ball.targetKey=targetKey;game.playFacts.targetId=entities.players[targetKey].playerId;}
 }
 function resolveCatchAtTarget(){
   const diff=currentDiff();
-  const CONTEST_NEAR=CONTEST_NEAR_BASE*diff.catchRadiusMult;
-  const CONTEST_MID=CONTEST_MID_BASE*diff.catchRadiusMult;
   const routeKeys=Object.keys(PLAYS[game.playCall].routes);
-  let best=null,bestKey=null,bestD=Infinity,bestTol=CATCH_TOL_BASE*diff.catchRadiusMult,bestScore=Infinity;
+  let best=null,bestKey=null,bestD=Infinity,bestTol=30,bestScore=Infinity;
   routeKeys.forEach(k=>{
     const r=entities.players[k];
     const feet=r.x+SPRITE_GROUND_Y_OFFSET;
     if(feet<=LAT_MIN-SIDELINE_STEP_DEPTH||feet>=LAT_MAX+SIDELINE_STEP_DEPTH||r.yfield/XPX<=-10||r.yfield/XPX>=110)return;
     const d=Math.hypot(r.x-entities.ball.toX,r.yfield-entities.ball.toY);
-    const tolerance=CATCH_TOL_BASE*diff.catchRadiusMult*ratingMultiplier(r.rating,0.18);
+    const tolerance=catchTolerance(r,diff);
     const score=d/tolerance;
     if(score<bestScore){bestScore=score;bestD=d;best=r;bestKey=k;bestTol=tolerance;}
   });
   if(best&&bestD<=bestTol)game.playFacts.targetId=best.playerId;
-  if(!best||bestD>bestTol){endPlay(0,'INCOMPLETE');return;}
-  const defKeys=PLAYS[game.playCall].defenders[bestKey]||[];
-  const defs=defKeys.map(k=>entities.players[k]);
+  if(!best||bestD>bestTol){game.passFeedback='Out of reach.';endPlay(0,'INCOMPLETE');return;}
+  const defenders=[...['cb1','cb2','s1','lb1',...DL_KEYS].map(k=>entities.players[k]),...entities.decor.filter(d=>d.team===DEF)].filter(d=>!(d.missedUntil>simulationNow())&&!d.dive);
   let nearestDefender=null,dist=Infinity;
-  defs.forEach(defender=>{
-    const distance=Math.hypot(best.x-defender.x,best.yfield-defender.yfield);
-    if(distance<dist){dist=distance;nearestDefender=defender;}
-  });
-  const accuracy=1-clamp(bestD/bestTol,0,1);
-  const handsBonus=((best.rating||75)-75)*0.004;
-  const coverageStrength=ratingMultiplier(nearestDefender?.rating||75,0.22);
-  let pComplete=0.6+accuracy*0.37+handsBonus;
-  if(dist<CONTEST_NEAR)pComplete-=0.42*coverageStrength;
-  else if(dist<CONTEST_MID)pComplete-=0.13*coverageStrength;
-  pComplete=clamp(pComplete,0.04,0.97);
-  let pInt=0;
-  if(dist<CONTEST_NEAR)pInt=0.18*(1-accuracy)*ratingMultiplier(nearestDefender?.rating||75,0.3);
-  const roll=Math.random();
-  if(roll<pInt){endPlay(0,'INTERCEPTED');return;}
-  if(roll<pInt+(1-pComplete)){endPlay(0,'INCOMPLETE');return;}
+  for(const defender of defenders){const distance=separation(best,defender);if(distance<dist){dist=distance;nearestDefender=defender;}}
+  const outcome=catchOutcome({error:bestD,tolerance:bestTol,defenderDistance:dist,ballDefenderDistance:nearestDefender?separation(nearestDefender,{x:entities.ball.toX,yfield:entities.ball.toY}):Infinity,receiverRating:best.rating,defenderRating:nearestDefender?.rating},Math.random());
+  if(outcome==='interception'){endPlay(0,'INTERCEPTED');return;}
+  if(outcome!=='catch'){
+    game.passFeedback=outcome==='breakup'?'Pass broken up.':'Dropped pass.';
+    best.action='drop';best.actionStart=simulationNow();
+    if(outcome==='breakup'&&nearestDefender){nearestDefender.action='deflect';nearestDefender.actionStart=simulationNow();}
+    endPlay(0,'INCOMPLETE');return;
+  }
   entities.ballCarrier=best;
   game.playFacts.receiverId=best.playerId;
   best.action='catch';best.actionStart=simulationNow();
@@ -659,7 +654,13 @@ function tick(){
 
     if(playDef&&playDef.type!=='run'&&entities.ballCarrier===qb){
       Object.keys(playDef.routes).forEach(key=>{
-        if(t*1000>=(playDef.routeDelays?.[key]||0))advanceRoute(entities.players[key],playDef.routes[key],ROUTE_YPS*XPX*SPEED_SCALE*diff.offenseSpeedMult*ratingMultiplier(entities.players[key].rating,0.18),dt);
+        if(t*1000<(playDef.routeDelays?.[key]||0))return;
+        const receiver=entities.players[key],speed=ROUTE_YPS*XPX*SPEED_SCALE*diff.offenseSpeedMult*ratingMultiplier(receiver.rating,0.18);
+        const ball=entities.ball,remaining=ball.startTime+ball.duration-now;
+        const landing={x:ball.toX,yfield:ball.toY};
+        const canAdjust=ball.inFlight&&ball.targetKey===key&&now>=ball.startTime&&remaining<=450&&remaining>=0&&separation(receiver,landing)<=catchTolerance(receiver,diff)+speed*remaining/1000;
+        if(canAdjust)moveToward(receiver,clamp(ball.toX,LAT_MIN,LAT_MAX-SPRITE_GROUND_Y_OFFSET),clamp(ball.toY,-9.9*XPX,109.9*XPX),speed,dt);
+        else advanceRoute(receiver,playDef.routes[key],speed,dt);
       });
       const coverAssign={};
       Object.entries(playDef.defenders||{}).forEach(([recvKey,defKeys])=>{

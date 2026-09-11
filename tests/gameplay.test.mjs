@@ -70,6 +70,36 @@ await test('in-bounds runoff is eight seconds; incompletions and sidelines stop 
   h.engine.startNewGame();h.engine.startPlayerDrive(20);h.game.clock=100;h.engine.endPlay(label==='INCOMPLETE'?0:3,label,oob);assert.equal(h.game.clock,expected);
  }
 });
+await test('accurate open catches are repeatable, while misses and pressure stay distinct',async h=>{
+ const {catchOutcome}=await h.load('src/simulation/receiving.js');
+ for(const roll of [0,0.1,0.5,0.97,0.999])assert.equal(catchOutcome({error:5,tolerance:30},roll),'catch');
+ assert.equal(catchOutcome({error:40,tolerance:30},0),'miss');
+ assert.equal(catchOutcome({error:29,tolerance:30},0.999),'drop');
+ assert.equal(catchOutcome({error:5,tolerance:30,defenderDistance:10,ballDefenderDistance:10},0.9),'breakup');
+ assert.equal(catchOutcome({error:5,tolerance:30,defenderDistance:10,ballDefenderDistance:10},0.01),'interception');
+});
+for(const fallen of [false,true])await test('nearby unassigned defender '+(fallen?'cannot contest while down':'can break up a pass'),async h=>{
+ h.engine.startPractice();h.engine.choosePlay('trips_slants');h.engine.onSnap();
+ const receiver=h.entities.players.wr1;Object.assign(receiver,{x:150,yfield:35*28});
+ const {DEF}=await h.load('src/state/constants.js');
+ const all=[...['cb1','cb2','s1','lb1','dl1','dl2','dl3','dl4'].map(k=>h.entities.players[k]),...h.entities.decor.filter(d=>d.team===DEF)];
+ all.forEach(d=>Object.assign(d,{x:300,yfield:10*28}));
+ const extra=all.at(-1);Object.assign(extra,{x:150,yfield:35*28,missedUntil:fallen?h.now+2000:0});
+ h.entities.ball={inFlight:true,toX:150,toY:35*28,startTime:h.now-1000,duration:100};h.game.thrown=true;h.setRandom(0.9);h.step();
+ if(fallen)assert.equal(h.entities.ballCarrier,receiver);else assert.match(h.game.message,/broken up/);
+});
+await test('receiver adjustment moves toward a reachable pass at normal route speed',async h=>{
+ h.engine.startPractice();h.engine.choosePlay('trips_slants');h.engine.onSnap();h.step();
+ const receiver=h.entities.players.wr1;Object.assign(receiver,{x:150,yfield:35*28});
+ h.entities.ball={inFlight:true,toX:180,toY:35*28,startTime:h.now-100,duration:450,targetKey:'wr1'};h.game.thrown=true;
+ h.step(50);assert.ok(receiver.x>150&&receiver.x<158);assert.equal(receiver.yfield,35*28);
+});
+await test('nearby offensive player blocks briefly after a catch',async h=>{
+ h.engine.startPractice();h.engine.choosePlay('trips_slants');h.engine.onSnap();h.game.carrierSince=h.now-2000;
+ h.entities.ballCarrier=h.entities.players.wr1;Object.assign(h.entities.ballCarrier,{x:150,yfield:35*28});
+ Object.assign(h.entities.players.wr2,{x:190,yfield:37*28});Object.assign(h.entities.players.cb2,{x:190,yfield:37*28});
+ h.step();assert.ok(h.entities.players.cb2.blockedUntil>h.now);assert.ok(h.entities.players.cb2.blockedUntil<=h.now+550);assert.equal(h.entities.players.wr2.isBlocking,true);
+});
 const f=createFranchise();const [a,b]=f.teams;a.record.wins=10;a.record.losses=1;b.record.wins=1;b.record.losses=10;b.record.pointsFor=200;
 assert.ok(standings(f).indexOf(a)<standings(f).indexOf(b));
 const bos=f.teams.find(t=>t.id==='bos'),dal=f.teams.find(t=>t.id==='dal');assert.notEqual(contrastingOpponent(bos,dal).colors.primary,dal.colors.primary);assert.equal(dal.colors.primary,'#234a72');

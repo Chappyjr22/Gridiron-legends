@@ -1,7 +1,8 @@
+import {catchTolerance} from '../simulation/receiving.js';
 import { simulationNow } from '../state/clock.js';
 import { canvas, ctx } from './canvas.js';
 import { game, entities } from '../state/gameState.js';
-import { XPX, BASE_X, LAT_MIN, LAT_MAX, DL_KEYS, OFF, DEF, CATCH_TOL_BASE, MIN_PULL, clamp, ratingMultiplier } from '../state/constants.js';
+import { XPX, BASE_X, LAT_MIN, LAT_MAX, DL_KEYS, OFF, DEF,  MIN_PULL, clamp, ratingMultiplier } from '../state/constants.js';
 import { currentDiff } from '../state/difficulty.js';
 import { PLAYS } from '../data/plays.js';
 import { interaction } from '../input/interactionState.js';
@@ -137,7 +138,7 @@ export function draw(){
         Object.keys(playDef.routes).forEach(k=>{
           const r=entities.players[k];
           const d=Math.hypot(r.x-fLat,r.yfield-fDown);
-          const tolerance=CATCH_TOL_BASE*currentDiff().catchRadiusMult*ratingMultiplier(r.rating,0.18);
+          const tolerance=catchTolerance(r,currentDiff());
           const score=d/tolerance;
           if(score<bestScore){bestScore=score;bestRD=d;bestR=r;bestTol=tolerance;}
         });

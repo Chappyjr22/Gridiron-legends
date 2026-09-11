@@ -2,9 +2,9 @@ import { game } from './gameState.js';
 import { clamp } from './constants.js';
 
 export const DIFFICULTIES={
-  easy:{pursueMult:0.78,reactionDelay:0.6,engageMin:1800,engageMax:2800,catchRadiusMult:1.4,breakTackle:0.35,blockWinChance:0.6,offenseSpeedMult:1.14,runBreakBonus:0.22,blitzChance:0.2,approachDelay:0.35},
-  medium:{pursueMult:1.0,reactionDelay:0.42,engageMin:850,engageMax:1600,catchRadiusMult:1.0,breakTackle:0.18,blockWinChance:0.15,offenseSpeedMult:1.0,runBreakBonus:0.08,blitzChance:0.2,approachDelay:0.15},
-  hard:{pursueMult:1.15,reactionDelay:0.26,engageMin:600,engageMax:1150,catchRadiusMult:0.8,breakTackle:0.08,blockWinChance:0.05,offenseSpeedMult:0.95,runBreakBonus:0.03,blitzChance:0.2,approachDelay:0.08}
+  easy:{pursueMult:0.78,reactionDelay:0.22,engageMin:1800,engageMax:2800,catchRadiusMult:1.4,breakTackle:0.35,blockWinChance:0.6,offenseSpeedMult:1.14,runBreakBonus:0.22,blitzChance:0.2,approachDelay:0.35},
+  medium:{pursueMult:1.0,reactionDelay:0.16,engageMin:850,engageMax:1600,catchRadiusMult:1.0,breakTackle:0.18,blockWinChance:0.15,offenseSpeedMult:1.0,runBreakBonus:0.08,blitzChance:0.2,approachDelay:0.15},
+  hard:{pursueMult:1.15,reactionDelay:0.10,engageMin:600,engageMax:1150,catchRadiusMult:0.8,breakTackle:0.08,blockWinChance:0.05,offenseSpeedMult:0.95,runBreakBonus:0.03,blitzChance:0.2,approachDelay:0.08}
 };
 export function currentDiff(){
   if(game.difficulty!=='gridiron')return DIFFICULTIES[game.difficulty];
