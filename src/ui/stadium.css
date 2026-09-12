@@ -345,3 +345,31 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
 .cloud-body p{margin:8px 0 12px}.cloud-body label{display:block;margin:8px 0 4px}.cloud-body input{box-sizing:border-box;width:100%;font:18px Arial,sans-serif;padding:9px;border:2px solid #153d63;background:white;color:#102d4b;border-radius:0}
 .cloud-body button{font-size:22px;min-height:42px;margin:6px 0;padding:8px 12px}.cloud-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cloud-body [hidden]{display:none!important}#cloud-history-list button{display:block;width:100%;font-size:18px}#cloud-message{font-weight:bold}#cloud-conflict{padding:10px;border:3px solid #c99413}
 @media(max-height:500px){#cloud-account header{padding:5px 12px}.cloud-body{font-size:14px;padding:8px 12px}.cloud-body button{font-size:19px;min-height:36px}.cloud-menu-button{font-size:18px!important;min-height:30px!important}}
+
+/* Phone menus: stable text, bounded content, and separate touch navigation. */
+.career-scroll{touch-action:pan-x pan-y;overscroll-behavior:contain;scroll-padding:10px;}
+#career-screen .career-panel{touch-action:pan-x pan-y;}
+.career-scroll p{line-height:1.4;overflow-wrap:break-word;}
+.scouting-help summary{min-height:44px;display:list-item;padding:12px 0;color:#174a7e;font-weight:700;cursor:pointer;}
+.scouting-help p{margin-top:0;}
+.career-scroll>h3:first-child,#college-progress>h3:first-child{margin-top:2px;}
+.career-page select{min-height:44px;}
+@media(orientation:landscape) and (max-height:550px){
+ .career-scroll h3{font-size:25px;}
+ #college-progress{padding-bottom:6px;margin-bottom:8px;}
+ .career-scroll p{margin:6px 0;}
+ .career-upgrades button{font-size:22px;min-height:88px;padding:8px;}
+ .career-upgrades strong{font-size:32px;margin:4px 0;}
+ .career-header .sports-button,.career-nav .sports-button{min-height:44px;}
+ .career-nav{margin-bottom:4px;}
+ .locker-layout{width:calc(100% - max(16px,env(safe-area-inset-left)) - max(16px,env(safe-area-inset-right)));}
+ .career-header{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));}
+ .sports-dialog{max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));}
+ #cloud-account header button,.cloud-body button,.guide-actions .sports-button,.experience-dialog footer .sports-button{min-height:44px;}
+}
+@media(orientation:portrait){
+ .career-nav{padding-bottom:max(8px,env(safe-area-inset-bottom));}
+ .career-nav .sports-button{min-height:44px;}
+ .cloud-actions{grid-template-columns:1fr;}
+ .career-list-row{flex-wrap:wrap;gap:4px 12px;}
+}
