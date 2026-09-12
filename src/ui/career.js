@@ -116,7 +116,7 @@ function render(){
  el('career-standings').innerHTML=(career.stage==='college'?collegeStandings(career,team.conference):League.standings(career.league,team.conference)).map((t,i)=>`<div class="career-list-row ${t.id===team.id?'career-selected':''}"><span>${i+1}. ${escape(t.abbr)} ${escape(t.name)}</span><b>${recordLabel(t)}</b></div>`).join('');
  el('career-history').innerHTML=career.history.slice(-8).reverse().map(r=>`<div class="career-list-row"><span>S${r.season} · ${r.week>(career.stage==='college'?12:17)?'Playoffs':`Week ${r.week}`}</span><b>${r.userScore}–${r.cpuScore}</b></div>`).join('')||'<p>Your first game is waiting.</p>';
  renderCollegeCareer(career);renderCareerStats(career);renderMyTeam(career);
- el('career-awards').textContent=career.awards.map(a=>`${career.stage==='college'?'College':'Season '+a.season}: ${a.title}`).join(' · ')||'First milestone: finish your rookie game.';
+ el('career-awards').textContent=career.awards.map(a=>`${career.stage==='college'?'College':'Season '+a.season}: ${a.title}`).join(' · ')||'First milestone: finish your first game.';
 }
 function launch(){
  const match=Career.nextMatch(career);if(!match)return;
@@ -166,6 +166,12 @@ export function initCareer(){
    event.preventDefault();setCareerTab(tabs[next].dataset.careerTab);tabs[next].focus();
   });
  }
+ for(const button of document.querySelectorAll('[data-league-jump]'))button.onclick=()=>{
+  const panel=el('career-league-panel'),target=el(button.dataset.leagueJump);
+  if(target.tagName==='DETAILS')target.open=true;
+  const offset=target.getBoundingClientRect().top-panel.getBoundingClientRect().top+panel.scrollTop;
+  panel.scrollTop=Math.max(0,offset-panel.querySelector('.league-jumps').offsetHeight-12);
+ };
  el('career-open-player').addEventListener('click',()=>{setCareerTab('player');el('career-player-tab').focus();});
  const download=(raw,filename)=>{const url=URL.createObjectURL(new Blob([raw],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
  const openBackups=()=>{

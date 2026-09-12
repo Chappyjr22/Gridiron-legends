@@ -5,6 +5,9 @@ import { hideAllOverlays } from './hud.js';
 import { editState } from '../input/editState.js';
 import { updateEditJSON } from '../input/editControls.js';
 
+const dataDialog=document.getElementById('formation-data-dialog');
+document.getElementById('btn-formation-data').onclick=()=>dataDialog.showModal();
+document.getElementById('btn-close-formation-data').onclick=()=>dataDialog.close();
 const formationEditorSelect=document.getElementById('formation-editor-select');
 FORMATION_ORDER.forEach(id=>{
   const option=document.createElement('option');option.value=id;option.textContent=FORMATIONS[id].name;formationEditorSelect.appendChild(option);

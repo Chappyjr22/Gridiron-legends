@@ -207,6 +207,7 @@ document.getElementById('btn-main-menu').addEventListener('click',()=>{
 
 export function openSetup(settingsOnly=false){
   syncSettingsUI();
+  document.querySelector('#setup-screen .setup-scroll').scrollTop=0;
   document.getElementById('start-screen').classList.remove('show');
   document.getElementById('setup-screen').classList.add('show');
   document.getElementById('setup-title').textContent=settingsOnly?'Settings':'New Game';

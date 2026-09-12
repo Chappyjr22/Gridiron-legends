@@ -815,3 +815,40 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
 
 /* Approved wordmark is tightly cropped; keep it inside its title column. */
 .title-art h1{width:100%;max-width:700px}
+
+/* Mobile review: keep navigation visible while the options scroll. */
+#setup-screen .setup-panel{display:flex;flex-direction:column;overflow:hidden;max-height:94dvh}
+#setup-screen .panel-heading,#setup-screen .setup-actions{flex:none}
+#setup-screen .setup-scroll{min-height:0;overflow:auto;overscroll-behavior:contain;padding:0 2px 8px}
+#setup-screen .setup-actions{margin-top:8px;padding-top:8px;border-top:1px solid #c2b28f}
+#setup-screen .card-close,#league-screen .card-close{min-width:44px;min-height:44px}
+#setup-screen .roster-details summary{min-height:44px;display:flex;align-items:center;font:16px/1.2 Arial,sans-serif;color:#153e6b}
+#league-screen .league-section{color:#f7efd6}
+#league-screen .matchup-row{color:#f7efd6;min-height:44px;font:14px/1.25 Arial,sans-serif}
+#league-screen .standing-row{min-height:32px;font:13px/1.2 Arial,sans-serif}
+#league-screen .standing-row.header{color:#c5d5e3}
+#league-screen .week-nav button{min-width:44px;min-height:44px}
+#league-screen .panel-heading{position:sticky;top:-12px;background:var(--paper);z-index:2}
+#career-close-backups{position:sticky;bottom:-20px;background:#153e6b;box-shadow:0 -8px 0 var(--paper)}
+#career-screen .league-jumps{display:flex;gap:8px;position:sticky;top:-8px;z-index:3;background:#143e63;padding:4px 0 8px;margin-bottom:8px}
+#career-screen .league-jumps button{flex:1;min-height:44px;background:#153e6b;color:#fff3d4;border:1px solid #7391a8;font:22px/1 var(--sports-face);box-shadow:none}
+#edit-panel .formation-actions{display:flex;gap:8px}
+#edit-panel .formation-actions button{flex:1;min-height:44px;margin:0}
+#formation-data-dialog{width:min(600px,92vw);max-width:92vw}
+#edit-json{width:100%;height:120px;background:#102337;color:#fff3d4;border:1px solid #7894a8;padding:8px;font:13px/1.3 monospace}
+@media (orientation:landscape) and (max-height:500px){
+ #setup-screen .panel-heading{margin-bottom:8px;padding-bottom:6px}
+ #setup-screen .panel-heading p{display:none}
+ #setup-screen .setup-panel{padding:8px 12px}
+ #setup-screen .setup-actions{margin-top:4px;padding-top:4px}
+ #career-gateway .career-gateway-card{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:min(650px,94vw);padding:10px 16px}
+ #career-gateway h2,#career-gateway-error{grid-column:1/-1;margin:0}
+ #career-gateway .sports-button{margin:0;min-height:44px;font-size:23px}
+ #career-gateway #career-gateway-backups{min-height:44px;font:16px Arial,sans-serif}
+ #career-gateway-error:empty{display:none}
+ #edit-panel{padding:4px 8px!important;border-radius:0!important}
+ #edit-panel>p{display:none}
+ #edit-panel #formation-editor-select{width:45%;min-height:44px!important;margin:0!important;float:left}
+ #edit-panel .formation-actions{margin-left:46%;}
+ #edit-panel .formation-actions button{font:20px/1 var(--sports-face);padding:5px}
+}
