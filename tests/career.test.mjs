@@ -80,3 +80,25 @@ console.log('Slot migration, isolation, failed-write protection and simulated bo
 }
 
 await import('./college.test.mjs');
+
+{
+ const c=C.createCareer({name:'Checkpoint validation'}),m=C.nextMatch(c);c.activeMatch=m.id;
+ const h=await harness();h.game.userTeamId=c.teamId;h.game.cpuTeamId=m.homeTeamId===c.teamId?m.awayTeamId:m.homeTeamId;h.engine.startNewGame({career:true});
+ c.checkpoint=JSON.parse(JSON.stringify(h.engine.getCheckpoint({type:'offense'})));
+ assert.ok(C.parseCareer(JSON.stringify(c)));
+ for(const edit of [s=>s.stats={},s=>s.game.clock=null,s=>s.game.cpuTeamId='missing',s=>s.resume={type:'turnover'},s=>s.stats.players={unknown:emptyStats()}]){
+  const bad=structuredClone(c);edit(bad.checkpoint);assert.equal(C.parseCareer(JSON.stringify(bad)),null);
+ }
+ c.checkpoint={game:{},stats:{},resume:{type:'offense'}};assert.equal(C.parseCareer(JSON.stringify(c)),null);
+ console.log('Checkpoint imports reject incomplete state and unknown identities.');
+}
+{
+ const c=C.createCareer({name:'Roster stats'}),team=c.league.teams.find(t=>t.id===c.teamId);
+ for(let seed=0;seed<1000;seed++){
+  const players=simulatedBoxScore(team,[0,7,3,0,6],String(seed)),qb=players[c.playerId];assert.ok(qb.completions+qb.interceptions<=qb.attempts);
+  assert.equal(qb.attempts,Object.values(players).reduce((n,s)=>n+s.targets,0));
+ }
+ const m=C.nextMatch(c);m.status='completed';m.boxScore={players:{[`${team.id}-generic-15`]:{...emptyStats(),receptions:3,receivingYards:42}}};
+ const slot=seasonPlayerRows(c).rows.find(r=>r.player.id===`${team.id}-generic-15`);assert.equal(slot.stats.receivingYards,42);
+ console.log('Simulated pass outcomes and legacy slot receiver statistics passed.');
+}

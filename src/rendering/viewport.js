@@ -1,3 +1,4 @@
+import {entities} from '../state/gameState.js';
 import {canvas} from './canvas.js';
 import {BASE_X,setFieldWidth} from '../state/constants.js';
 import {interaction} from '../input/interactionState.js';
@@ -10,7 +11,7 @@ export function fitFieldViewport(width,height){
   canvas.width=next;
   setFieldWidth(next);
   // Keep an active gesture attached to the same world point on rotation/toolbar resize.
-  const points=new Set([interaction.aimTarget,interaction.steerAnchor,interaction.steerCurrent]);
+  const points=new Set([interaction.aimTarget,interaction.steerAnchor,interaction.steerCurrent,entities.pendingTapThrow?.target]);
   for(const point of points)if(point)point.x+=BASE_X-previous;
 }
 export function initFieldViewport(){

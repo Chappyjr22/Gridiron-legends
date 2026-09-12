@@ -1,3 +1,4 @@
+import {saveControlPreferences} from '../state/preferences.js';
 import { contrastingOpponent } from '../rendering/uniforms.js';
 import * as League from '../state/league.js';
 import { game, teamState } from '../state/gameState.js';
@@ -124,7 +125,7 @@ export function returnToMainMenu(){
 }
 
 function syncActive(selector,dataKey,value){
-  document.querySelectorAll(selector).forEach(x=>x.classList.toggle('active',String(x.dataset[dataKey])===String(value)));
+  document.querySelectorAll(selector).forEach(x=>{const active=String(x.dataset[dataKey])===String(value);x.classList.toggle('active',active);x.setAttribute('aria-pressed',String(active));});
 }
 const difficultyHelp={
   easy:'More broken tackles, slower pursuit, and forgiving catches.',
@@ -141,14 +142,14 @@ export function syncSettingsUI(){
   document.getElementById('difficulty-help').textContent=difficultyHelp[game.difficulty];
 }
 document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>{
-  game.passMode=b.dataset.mode;syncActive('[data-mode]','mode',game.passMode);
+  game.passMode=b.dataset.mode;saveControlPreferences(game);syncActive('[data-mode]','mode',game.passMode);
   if(game.phase==='presnap'){
     const hint=document.getElementById('presnap-hint');
     hint.innerHTML=hint.innerHTML.replace(/Drag from QB to pass|Tap a receiver to pass/,game.passMode==='tap'?'Tap a receiver to pass':'Drag from QB to pass');
   }
 }));
 document.querySelectorAll('[data-type]').forEach(b=>b.addEventListener('click',()=>{
-  game.throwType=b.dataset.type;syncActive('[data-type]','type',game.throwType);
+  game.throwType=b.dataset.type;saveControlPreferences(game);syncActive('[data-type]','type',game.throwType);
 }));
 document.querySelectorAll('[data-diff]').forEach(b=>b.addEventListener('click',()=>{
   game.difficulty=b.dataset.diff;
@@ -162,7 +163,7 @@ document.querySelectorAll('[data-minutes]').forEach(b=>b.addEventListener('click
   game.quarterMinutes=Number(b.dataset.minutes);syncActive('[data-minutes]','minutes',game.quarterMinutes);
 }));
 document.querySelectorAll('[data-routes]').forEach(b=>b.addEventListener('click',()=>{
-  game.showRoutes=b.dataset.routes==='on';syncActive('[data-routes]','routes',game.showRoutes?'on':'off');
+  game.showRoutes=b.dataset.routes==='on';saveControlPreferences(game);syncActive('[data-routes]','routes',game.showRoutes?'on':'off');
 }));
 document.getElementById('team-select').addEventListener('change',event=>{
   game.userTeamId=event.target.value;

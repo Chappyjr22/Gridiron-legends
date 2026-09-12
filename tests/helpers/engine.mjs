@@ -13,7 +13,7 @@ export async function harness(){
     const e={id,events,children:[],style:{setProperty(){}},dataset:{},value:'',innerHTML:'',textContent:'',width:800,height:380,
       classList:{add(...v){v.forEach(x=>classes.add(x));},remove(...v){v.forEach(x=>classes.delete(x));},contains(x){return classes.has(x);},toggle(x,on){if(on??!classes.has(x))classes.add(x);else classes.delete(x);}},
       addEventListener(type,fn){(events[type]??=[]).push(fn);},appendChild(child){this.children.push(child);},insertBefore(child){this.children.push(child);},
-      setPointerCapture(){},getBoundingClientRect(){return {left:0,top:0,width:800,height:380};},focus(){},select(){},getContext(){return {};}};
+      setAttribute(k,v){this[k]=v;},setPointerCapture(){},getBoundingClientRect(){return {left:0,top:0,width:800,height:380};},focus(){},select(){},getContext(){return {};}};
     elements.set(id,e);return e;
   }
   const document={getElementById:element,querySelectorAll(){return [];},createElement(type){return element(type+elements.size);},addEventListener(){}};

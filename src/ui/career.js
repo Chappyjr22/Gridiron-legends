@@ -1,3 +1,4 @@
+import {playingRoster} from '../career/roster.js';
 import {collegeStandings} from '../career/college.js';
 import {initCollegeUI,syncCollegeEnrollment,renderCollegeCareer} from './college.js';
 import {renderMyTeam,showPostgame,initCareerExperience} from './careerExperience.js';
@@ -86,7 +87,7 @@ function render(){
   el('career-result-stats').textContent=`${last.stats.completions}/${last.stats.attempts} · ${last.stats.passingYards} YDS · ${last.stats.passingTD} TD · ${last.stats.interceptions} INT`;
   el('career-result-xp').textContent=`+${last.xp} XP${last.levels?` · ${last.levels} upgrade point earned`:''}`;
  }
- const teammates=team.roster.filter(p=>['RB','WR1','WR2','TE'].includes(p.slot));
+ const teammates=playingRoster(team).filter(p=>['RB','WR1','WR2','WR3','TE'].includes(p.slot));
  el('career-teammates').innerHTML=teammates.map(p=>`<div class="career-list-row"><span>${escape(p.slot)} · #${p.number} ${escape(rosterName(p))}</span><b>${p.rating}</b></div>`).join('');
  el('career-standings').innerHTML=(career.stage==='college'?collegeStandings(career,team.conference):League.standings(career.league,team.conference)).map((t,i)=>`<div class="career-list-row ${t.id===team.id?'career-selected':''}"><span>${i+1}. ${escape(t.abbr)} ${escape(t.name)}</span><b>${recordLabel(t)}</b></div>`).join('');
  el('career-history').innerHTML=career.history.slice(-8).reverse().map(r=>`<div class="career-list-row"><span>S${r.season} · ${r.week>(career.stage==='college'?12:17)?'Playoffs':`Week ${r.week}`}</span><b>${r.userScore}–${r.cpuScore}</b></div>`).join('')||'<p>Your first game is waiting.</p>';

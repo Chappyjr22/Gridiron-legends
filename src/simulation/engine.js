@@ -1,9 +1,11 @@
+import {playingRoster,uniqueLineupNumbers} from '../career/roster.js';
+import {controlPreferences} from '../state/preferences.js';
 import {advanceRoute,passingRead,throwProfile} from './passing.js';
 import {stickVector,jukeStep,syncRunnerControls} from '../input/runnerControls.js';
 import {catchTolerance,catchOutcome} from './receiving.js';
 import {separation, touching, pursuitTarget, startDive, advanceDive} from './contact.js';
 import { emptyMatch, recordPlay } from '../career/stats.js';
-import { simulationNow } from '../state/clock.js';
+import { simulationNow, advanceSimulation } from '../state/clock.js';
 import * as League from '../state/league.js';
 import { game, entities, teamState } from '../state/gameState.js';
 import {
@@ -36,7 +38,7 @@ export function getCheckpoint(resume){
 }
 function checkpoint(resume){if(game.career&&!restoring)uiHooks.checkpoint(getCheckpoint(resume));}
 export function restoreCheckpoint(saved){
- restoring=true;Object.assign(game,saved.game);game.paused=false;initPlay();Object.assign(game,saved.game);matchState.stats=saved.stats;restoring=false;
+ restoring=true;Object.assign(game,saved.game);game.paused=false;initPlay();Object.assign(game,saved.game,controlPreferences());matchState.stats=saved.stats;restoring=false;
  const r=saved.resume;
  if(r.type==='offense'){game.phase='callsheet';updateHUD();return;}
  let action;
@@ -48,13 +50,13 @@ export function restoreCheckpoint(saved){
 }
 
 
-function rosterPlayer(team,slot){return team?.roster?.find(player=>player.slot===slot)||null;}
+function rosterPlayer(team,slot){return (team?playingRoster(team):[]).find(player=>player.slot===slot)||null;}
 function rosterNumber(team,slot,fallback){return String(rosterPlayer(team,slot)?.number??fallback);}
 function genericRating(team,side){return team?.ratings?.[side==='offense'?'genericOffense':'genericDefense']||68;}
 function positionRating(team,slot,side){return rosterPlayer(team,slot)?.rating||genericRating(team,side);}
 function ratedEntity(base,team,slot,side){
   const star=rosterPlayer(team,slot);
-  return {...base,slot,playerId:star?.id||`${team.id}-generic-${base.num}`,attributes:star?.attributes,skin:star?.skin,rating:star?.rating||genericRating(team,side),isStar:!!star};
+  return {...base,slot,playerId:star?.id||`${team.id}-generic-${base.num}`,attributes:star?.attributes,skin:star?.skin,rating:star?.rating||genericRating(team,side),isStar:!!star&&!star.generic};
 }
 export function scoreLine(){return teamState.userTeam.abbr+' '+game.playerScore+'  |  '+teamState.cpuTeam.abbr+' '+game.cpuScore;}
 export function chooseOpponent(){
@@ -108,7 +110,7 @@ export function initPlay(){
     qb:ratedEntity({x:191,yfield:(los-3.4)*XPX,num:rosterNumber(teamState.userTeam,'QB','7'),presnapRole:'qb'},teamState.userTeam,'QB','offense'),
     rb:ratedEntity({x:228,yfield:(los-3.4)*XPX,num:rosterNumber(teamState.userTeam,'RB','22'),routeIdx:0,presnapRole:'rb'},teamState.userTeam,'RB','offense'),
     wr1:ratedEntity({x:39,yfield:(los-1.6)*XPX,num:rosterNumber(teamState.userTeam,'WR1','81'),routeIdx:0,presnapRole:'wr'},teamState.userTeam,'WR1','offense'),
-    wr3:ratedEntity({x:84,yfield:(los-0.7)*XPX,num:'15',routeIdx:0,presnapRole:'wr'},teamState.userTeam,null,'offense'),
+    wr3:ratedEntity({x:84,yfield:(los-0.7)*XPX,num:rosterNumber(teamState.userTeam,'WR3','15'),routeIdx:0,presnapRole:'wr'},teamState.userTeam,'WR3','offense'),
     te:ratedEntity({x:293,yfield:(los-0.6)*XPX,num:rosterNumber(teamState.userTeam,'TE','87'),routeIdx:0,presnapRole:'wr'},teamState.userTeam,'TE','offense'),
     wr2:ratedEntity({x:333,yfield:(los-1.7)*XPX,num:rosterNumber(teamState.userTeam,'WR2','84'),routeIdx:0,presnapRole:'wr'},teamState.userTeam,'WR2','offense'),
     cb1:ratedEntity({x:48,yfield:(los+2.9)*XPX,num:rosterNumber(teamState.cpuTeam,'DB1','24'),presnapRole:'cb'},teamState.cpuTeam,'DB1','defense'),
@@ -129,6 +131,8 @@ export function initPlay(){
     ratedEntity({x:157,yfield:(los+2.4)*XPX,team:DEF,num:'51'},teamState.cpuTeam,null,'defense'),ratedEntity({x:241,yfield:(los+2)*XPX,team:DEF,num:'52'},teamState.cpuTeam,null,'defense'),
     ratedEntity({x:223,yfield:(los+6.8)*XPX,team:DEF,num:'3',presnapRole:'s'},teamState.cpuTeam,null,'defense')
   ];
+  uniqueLineupNumbers([...['qb','rb','wr1','wr2','wr3','te'].map(k=>entities.players[k]),...entities.decor.filter(p=>p.team===OFF)],teamState.userTeam);
+  uniqueLineupNumbers([...['cb1','cb2','s1','lb1',...DL_KEYS].map(k=>entities.players[k]),...entities.decor.filter(p=>p.team===DEF)],teamState.cpuTeam);
   applyFormation('trips');
   Object.entries(entities.players).forEach(([key,e])=>{e.skin=e.skin??SKIN_BY_POSITION[key]??0;});
   entities.decor.forEach((e,i)=>{e.skin=(i+(e.team===DEF?2:0))%SKIN_PALETTES.length;});
@@ -581,17 +585,12 @@ function finishTackle(){
   endPlay(tackle.yardGained,tackle.label,false,tackle.exactSpot);
 }
 
-let lastT=null;
 let loopStarted=false;
 export function ensureLoopStarted(){
   if(!loopStarted){loopStarted=true;requestAnimationFrame(tick);}
 }
-function tick(){
-  const now=simulationNow();
-  if(lastT===null)lastT=now;
-  const dt=Math.min((now-lastT)/1000,0.05);
-  lastT=now;
-  if(editState.editMode){draw();requestAnimationFrame(tick);return;}
+function updateSimulation(dt,now){
+  if(editState.editMode)return;
   if(!game.paused&&!game.overtime&&game.phase==='live'){
     game.clock=Math.max(0,game.clock-dt);
     updateHUD();
@@ -807,6 +806,9 @@ function tick(){
     }
   }
   if(game.phase==='tackle'&&!game.paused&&game.tackle&&now-game.tackle.startTime>=TACKLE_RESULT_DELAY)finishTackle();
+}
+function tick(){
+  advanceSimulation(updateSimulation);
   syncRunnerControls();
   draw();
   requestAnimationFrame(tick);
