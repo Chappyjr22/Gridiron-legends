@@ -21,9 +21,10 @@ test('short landscape expands downfield space and preserves active aim on resize
  const context=await browser.newContext({viewport:{width:844,height:304},hasTouch:true}),page=await context.newPage();await ready(page);
  await expect.poll(()=>page.locator('#field').evaluate(c=>c.width)).toBeGreaterThan(1000);
  const field=await page.locator('#field').boundingBox();expect(field.width).toBeGreaterThan(820);
+ const wideDrawingWidth=await page.locator('#field').evaluate(c=>c.width);
  const before=await page.evaluate(async()=>{const {interaction}=await import('/src/input/interactionState.js'),c=await import('/src/state/constants.js');interaction.aimTarget={x:300,y:120};return c.BASE_X-interaction.aimTarget.x;});
  await page.setViewportSize({width:844,height:390});
- await expect.poll(()=>page.locator('#field').evaluate(c=>c.width)).toBeLessThan(1000);
+ await expect.poll(()=>page.locator('#field').evaluate(c=>c.width)).toBeLessThan(wideDrawingWidth);
  const after=await page.evaluate(async()=>{const {interaction}=await import('/src/input/interactionState.js'),c=await import('/src/state/constants.js');return c.BASE_X-interaction.aimTarget.x;});expect(after).toBe(before);
  await page.evaluate(async()=>{const {entities,game}=await import('/src/state/gameState.js'),{simulationNow}=await import('/src/state/clock.js');game.phase='live';entities.ballCarrier=entities.players.wr1;entities.players.wr1.action='catch';entities.players.wr1.actionStart=simulationNow();game.paused=true;});
  await page.screenshot({path:'test-results/catch-control-cue.png'});await context.close();

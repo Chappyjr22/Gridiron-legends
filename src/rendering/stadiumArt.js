@@ -47,5 +47,6 @@ export function drawGeneratedTurf(xAt,width,top,bottom){
   const anchor=Math.round(xAt(0)),start=((anchor%128)+128)%128-128;
   ctx.save();ctx.beginPath();ctx.rect(0,top,width,bottom-top);ctx.clip();
   for(let x=start;x<width;x+=128)for(let y=top;y<bottom;y+=128)ctx.drawImage(stadiumArt.turf,x,y);
+  ctx.fillStyle='rgba(62,133,46,0.28)';ctx.fillRect(0,top,width,bottom-top);
   ctx.restore();return true;
 }
