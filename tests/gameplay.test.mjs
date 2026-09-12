@@ -188,7 +188,6 @@ await test('routine results keep the field clear while scoring remains a full re
  h.hud.showResult('TOUCHDOWN!\nExtra point is good.',()=>{});assert.equal(h.element('result-overlay').classList.contains('compact-result'),false);
 });
 
-console.log(`${checks+2} gameplay/league checks passed.`);
 
 await test('stalled frames match normal movement, clock and ball flight',async h=>{
  const other=await harness();
@@ -231,3 +230,5 @@ await test('play-action fake keeps QB possession and cancels on an early throw',
  h.engine.startPractice();h.engine.choosePlay('ace_pa_cross');h.engine.onSnap();assert.ok(h.entities.playFake);const y=h.entities.players.rb.yfield;h.step(180);assert.notEqual(h.entities.players.rb.yfield,y);assert.equal(h.entities.ballCarrier,h.entities.players.qb);
  h.engine.releaseThrow({x:100,y:39});assert.equal(h.entities.playFake,null);assert.equal(h.game.runActive,false);assert.ok(h.entities.ball.inFlight);
 });
+
+console.log(`${checks+2} gameplay/league checks passed.`);
