@@ -207,7 +207,6 @@ document.getElementById('btn-main-menu').addEventListener('click',()=>{
 
 export function openSetup(settingsOnly=false){
   syncSettingsUI();
-  document.querySelector('#setup-screen .setup-scroll').scrollTop=0;
   document.getElementById('start-screen').classList.remove('show');
   document.getElementById('setup-screen').classList.add('show');
   document.getElementById('setup-title').textContent=settingsOnly?'Settings':'New Game';
@@ -216,6 +215,7 @@ export function openSetup(settingsOnly=false){
   document.getElementById('quarter-setting').style.display=settingsOnly?'none':'block';
   document.getElementById('team-setting').style.display=settingsOnly?'none':'block';
   document.getElementById('opponent-setting').style.display=settingsOnly?'none':'block';
+  document.querySelector('#setup-screen .setup-scroll').scrollTop=0;
 }
 export function closeSetup(){
   document.getElementById('setup-screen').classList.remove('show');

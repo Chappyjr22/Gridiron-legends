@@ -54,6 +54,10 @@ for(const viewport of [{width:844,height:304},{width:844,height:390},{width:932,
   await expect(page.locator('.leaderboard-caption')).toContainText('Touchdowns');
   expect(await page.locator('#career-league-panel').evaluate(e=>e.scrollWidth<=e.clientWidth+1)).toBe(true);
   await page.screenshot({path:`test-results/mobile-leaders-${viewport.width}-${viewport.height}.png`});
+  await page.locator('[data-league-jump=standings-heading]').tap();await expect(page.locator('#standings-heading')).toBeInViewport();
+  await page.screenshot({path:`test-results/mobile-standings-${viewport.width}-${viewport.height}.png`});
+  await page.locator('[data-league-jump=career-schedule-section]').tap();await expect(page.locator('#career-schedule-section')).toHaveAttribute('open','');
+  await page.locator('[data-league-jump=league-toolbar]').tap();await expect(page.locator('#league-toolbar')).toBeInViewport();
   await page.getByRole('tab',{name:'Home',exact:true}).tap();
   await expect(page.locator('#career-player-sprite')).toBeVisible();
   const helmets=await page.locator('.helmet-matchup').boundingBox(),opponent=await page.locator('#career-next-opponent').boundingBox();

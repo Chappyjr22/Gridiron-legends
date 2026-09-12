@@ -852,3 +852,10 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
  #edit-panel .formation-actions{margin-left:46%;}
  #edit-panel .formation-actions button{font:20px/1 var(--sports-face);padding:5px}
 }
+#career-gateway #career-gateway-backups{color:#153e6b}
+#practice-guide[open]{display:flex;flex-direction:column;overflow:hidden;padding:12px 18px}
+#practice-guide-heading{flex:none;margin-bottom:8px;font-size:28px}
+#practice-guide .guide-scroll{min-height:0;overflow:auto;overscroll-behavior:contain}
+#practice-guide .guide-actions{flex:none;padding-top:8px;margin-top:6px;border-top:1px solid #b9a681}
+#practice-guide .guide-actions button{min-height:44px}
+@media(max-width:1000px){#league-screen .standings-grid{grid-template-columns:1fr}#league-screen .standing-row{grid-template-columns:18px 1fr 50px 40px}#league-screen .standing-row.header{font-size:11px}}
