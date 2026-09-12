@@ -121,16 +121,15 @@ export function drawBackLinePerson(x,y,outward,shirt){
   ctx.fillStyle='#e3aa72';ctx.fillRect(x+inward*4-2,y-3,4,5);
   ctx.fillStyle='#f2f0dc';ctx.fillRect(x-outward*4-1,y-3,2,6);
 }
-export function drawEndZoneApron(backX,outward){
+export function drawEndZoneApron(backX,outward,xAt){
   if(backX<0||backX>canvas.width)return;
   const lo=outward<0?0:backX;
   const hi=outward<0?backX:canvas.width;
   ctx.fillStyle='#4d9639';ctx.fillRect(lo,LAT_MIN,hi-lo,LAT_MAX-LAT_MIN);
-  ctx.fillStyle='#65ad45';
-  for(let px=lo;px<hi;px+=10){
-    for(let py=LAT_MIN;py<LAT_MAX;py+=10){
-      if((((px-lo)/10+(py-LAT_MIN)/10)|0)&1)ctx.fillRect(px,py,3,3);
-    }
+  if(xAt){
+    ctx.save();ctx.beginPath();ctx.rect(lo,LAT_MIN,hi-lo,LAT_MAX-LAT_MIN);ctx.clip();
+    drawGeneratedTurf(xAt,canvas.width,LAT_MIN,LAT_MAX);
+    ctx.restore();
   }
 
   const restrictedX=Math.round(backX+outward*54);
@@ -156,15 +155,12 @@ export function drawPixelEndZone(xAt,goalYard,backYard,style,rotation){
   const goalX=Math.round(xAt(goalYard)),backX=Math.round(xAt(backYard));
   const lo=Math.min(goalX,backX),hi=Math.max(goalX,backX);
   const outward=backYard<goalYard?1:-1;
-  drawEndZoneApron(backX,outward);
+  drawEndZoneApron(backX,outward,xAt);
   if(hi>=0&&lo<=canvas.width){
     ctx.fillStyle=style.base;ctx.fillRect(lo,LAT_MIN,hi-lo,LAT_MAX-LAT_MIN);
     ctx.fillStyle=style.accent;
-    for(let px=lo;px<hi;px+=12){
-      for(let py=LAT_MIN;py<LAT_MAX;py+=12){
-        if((((px-lo)/12+(py-LAT_MIN)/12)|0)&1)ctx.fillRect(px,py,6,6);
-      }
-    }
+    ctx.fillRect(lo+6,LAT_MIN+6,3,LAT_MAX-LAT_MIN-12);
+    ctx.fillRect(hi-9,LAT_MIN+6,3,LAT_MAX-LAT_MIN-12);
     drawPixelText(style.label,(goalX+backX)/2,(LAT_MIN+LAT_MAX)/2,6,rotation);
     ctx.fillStyle='#f2f4e8';ctx.fillRect(goalX-2,LAT_MIN,4,LAT_MAX-LAT_MIN);
   }
