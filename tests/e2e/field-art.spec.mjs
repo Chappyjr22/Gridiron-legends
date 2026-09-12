@@ -15,8 +15,6 @@ for(const viewport of [{width:844,height:304},{width:932,height:430}]){
       return !!stadiumArt.turf&&!!stadiumArt.crowd&&stadiumArt.equipment.length===4&&staffFrames.length===6;
     })).toBe(true);
     await page.screenshot({path:`test-results/daytime-field-${viewport.width}.png`});
-    await page.evaluate(async()=>{const {game}=await import('/src/state/gameState.js');game.cameraYard=50;(await import('/src/rendering/draw.js')).draw();});
-    await page.screenshot({path:`test-results/brand-midfield-${viewport.width}.png`});
     const rb=await page.evaluate(async()=>{
       const {entities}=await import('/src/state/gameState.js');
       const {toCanvas}=await import('/src/rendering/players.js');
@@ -26,6 +24,8 @@ for(const viewport of [{width:844,height:304},{width:932,height:430}]){
     });
     await page.touchscreen.tap(rb.x,rb.y);
     expect(await page.evaluate(async()=>(await import('/src/state/gameState.js')).game.runActive)).toBe(true);
+    await page.evaluate(async()=>{const {game}=await import('/src/state/gameState.js');game.paused=true;game.cameraYard=50;(await import('/src/rendering/draw.js')).draw();});
+    await page.screenshot({path:`test-results/brand-midfield-${viewport.width}.png`});
     await page.evaluate(async()=>{
       const {game}=await import('/src/state/gameState.js');game.paused=true;game.cameraYard=99;
       (await import('/src/rendering/draw.js')).draw();
