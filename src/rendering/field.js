@@ -142,7 +142,15 @@ export function drawEndZoneApron(backX,outward,xAt){
   const mediaX=Math.round(backX+outward*94);
   const barrierX=Math.round(backX+outward*160);
   const outerLo=outward<0?0:barrierX,outerHi=outward<0?barrierX:canvas.width;
-  ctx.fillStyle='#34404b';ctx.fillRect(outerLo,LAT_MIN,Math.max(0,outerHi-outerLo),LAT_MAX-LAT_MIN);
+  ctx.fillStyle='#172638';ctx.fillRect(outerLo,LAT_MIN,Math.max(0,outerHi-outerLo),LAT_MAX-LAT_MIN);
+  if(stadiumArt.crowd){
+    ctx.save();ctx.beginPath();ctx.rect(outerLo,LAT_MIN,Math.max(0,outerHi-outerLo),LAT_MAX-LAT_MIN);ctx.clip();
+    const seatAnchor=barrierX-630;
+    for(let x=seatAnchor-Math.ceil(canvas.width/630)*630;x<canvas.width;x+=630){
+      for(let y=LAT_MIN;y<LAT_MAX;y+=39)ctx.drawImage(stadiumArt.crowd,x,y,630,39);
+    }
+    ctx.restore();
+  }
   ctx.fillStyle='#87949b';ctx.fillRect(barrierX-3,LAT_MIN,6,LAT_MAX-LAT_MIN);
   ctx.fillStyle='#162c43';
   for(let y=LAT_MIN+4;y<LAT_MAX-4;y+=40)ctx.fillRect(barrierX-5,y,10,32);

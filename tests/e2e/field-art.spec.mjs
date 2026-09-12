@@ -32,7 +32,7 @@ for(const viewport of [{width:844,height:304},{width:932,height:430}]){
     });
     expect(chains[0]).toEqual({showChains:true,start:20,target:30,down:26,number:2});
     expect(chains[1].showChains).toBe(false);
-    await page.evaluate(async()=>{const {game}=await import('/src/state/gameState.js');game.cameraYard=0;(await import('/src/rendering/draw.js')).draw();});
+    await page.evaluate(async()=>{const {game}=await import('/src/state/gameState.js');game.cameraYard=-10;(await import('/src/rendering/draw.js')).draw();});
     await page.screenshot({path:`test-results/daytime-home-endzone-${viewport.width}.png`});
     expect(errors).toEqual([]);await context.close();
   });
