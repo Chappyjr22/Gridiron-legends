@@ -334,3 +334,5 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
 @media(max-height:500px){.guide-grid p{font-size:14px}.guide-grid h3{font-size:24px}#practice-coach strong{font-size:18px}#practice-coach span{font-size:12px}.audio-settings{gap:6px}.guide-actions .sports-button{min-height:38px;font-size:22px}}
 @media(max-width:600px){.guide-grid{grid-template-columns:1fr;gap:8px}}
 #practice-guide{width:min(820px,94vw);max-width:94vw;max-height:92dvh}
+
+.audio-settings [data-audio-status]{flex-basis:100%;font:14px/1.35 Arial,sans-serif;}
