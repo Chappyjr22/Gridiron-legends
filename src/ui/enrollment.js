@@ -1,11 +1,12 @@
-import {paintMenuPlayer} from './menuArt.js';
+import {paintPlayerPortrait} from './playerPortrait.js';
+import {openPortraitPicker} from './portraitPicker.js';
 import {COLLEGE_TEAMS} from '../career/collegeData.js';
 import {TEAMS} from '../state/league.js';
 const el=id=>document.getElementById(id);
 let step=0;
 function preview(){
  const team=(el('career-path').value==='college'?COLLEGE_TEAMS:TEAMS).find(t=>t.id===el(el('career-path').value==='college'?'career-school':'career-team').value);
- paintMenuPlayer(el('enrollment-sprite'),team,el('career-skin').value);
+ paintPlayerPortrait(el('enrollment-sprite'),team,{id:'created-player',skin:Number(el('career-skin').value),portrait:Number(el('career-portrait').value)});
  el('enrollment-preview-name').textContent=el('career-name').value.trim()||'Your quarterback';
  el('enrollment-preview-detail').textContent=`#${el('career-number').value||'7'} · QB`;
 }
@@ -18,6 +19,7 @@ function show(value){
 }
 export function resetEnrollment(){show(0);}
 export function initEnrollment(){
+ el('enrollment-face').onclick=()=>{const t=(el('career-path').value==='college'?COLLEGE_TEAMS:TEAMS).find(t=>t.id===el(el('career-path').value==='college'?'career-school':'career-team').value);openPortraitPicker({skin:Number(el('career-skin').value),portrait:Number(el('career-portrait').value)},t,choice=>{el('career-skin').value=choice.skin;el('career-portrait').value=choice.portrait;preview();});};
  el('enrollment-next').onclick=()=>{
   for(const id of ['career-name','career-number'])if(!el(id).reportValidity())return;
   show(1);el('enrollment-back').focus();

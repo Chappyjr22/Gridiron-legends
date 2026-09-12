@@ -1,3 +1,5 @@
+import {paintPlayerPortrait} from './playerPortrait.js';
+import {initPortraitPicker,openPortraitPicker} from './portraitPicker.js';
 import {initEnrollment,resetEnrollment} from './enrollment.js';
 import {careerStorage} from '../cloud/storage.js';
 import {readSlots,SLOTS_KEY,importSlotArchive} from '../career/slots.js';
@@ -75,7 +77,7 @@ function render(){
  el('career-screen').style.setProperty('--career-color',team.colors.primary);
  el('career-jersey-number').textContent=player.number;
  paintMenuPlayer(el('career-player-sprite'),team,player.skin);
- paintMenuPlayer(el('qb-profile-sprite'),team,player.skin);el('qb-profile-name').textContent=rosterName(player);el('qb-profile-detail').textContent=`#${player.number} · QB · LV ${career.level}`;el('qb-profile-xp').value=career.xp;
+ paintPlayerPortrait(el('qb-profile-sprite'),team,player);el('qb-profile-name').textContent=rosterName(player);el('qb-profile-detail').textContent=`#${player.number} · QB · LV ${career.level}`;el('qb-profile-xp').value=career.xp;
  el('career-user-abbr').textContent=team.abbr;el('career-user-record').textContent=recordLabel(team);
  el('career-open-player').textContent=career.points?`${career.points} upgrade ${career.points===1?'point':'points'}`:'View your player';
  el('career-season').textContent=`Season ${career.league.season} · ${career.postseason?'Playoffs':`Week ${career.league.week}`} · ${recordLabel(team)}`;
@@ -131,7 +133,8 @@ function launch(){
  persist();ensureLoopStarted();
 }
 export function initCareer(){
- initCareerExperience(()=>career,persist);initEnrollment();
+ initCareerExperience(()=>career,persist);initEnrollment();initPortraitPicker();
+ el('career-edit-face').onclick=()=>{const player=Career.careerPlayer(career),team=League.findTeamState(career.league,career.teamId);openPortraitPicker(player,team,choice=>{Object.assign(player,choice);persist();render();});};
  for(const [open,dialog,close] of [['career-menu-open','career-options','career-options-close'],['league-filters-open','league-filters','league-filters-close'],['scouting-info-open','scouting-info','scouting-info-close']]){
   el(open).onclick=()=>el(dialog).showModal();el(close).onclick=()=>el(dialog).close();
  }
@@ -215,7 +218,7 @@ export function initCareer(){
  el('career-create').addEventListener('submit',event=>{
   event.preventDefault();if(career&&!creating)return;
   try{
-   const candidate=Career.createCareer({name:el('career-name').value,number:el('career-number').value,teamId:el('career-team').value,archetype:el('career-archetype').value,skin:el('career-skin').value,difficulty:el('career-difficulty').value,quarterMinutes:el('career-minutes').value,schoolId:el('career-path').value==='college'?el('career-school').value:null});
+   const candidate=Career.createCareer({name:el('career-name').value,number:el('career-number').value,teamId:el('career-team').value,archetype:el('career-archetype').value,skin:el('career-skin').value,portrait:Number(el('career-portrait').value),difficulty:el('career-difficulty').value,quarterMinutes:el('career-minutes').value,schoolId:el('career-path').value==='college'?el('career-school').value:null});
    if(!Career.saveCareer(candidate))throw Error('Could not save the new career. Existing careers are unchanged. Free some device storage and try again.');
    career=candidate;creating=false;persist();render();
   }catch(error){el('career-create-error').textContent=error.message;}

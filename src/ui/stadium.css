@@ -777,3 +777,29 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
  #upgrade-status{font-size:15px;}
  #career-screen #career-upgrades .upgrade-cost{font-size:16px;min-width:92px;}
 }
+#portrait-dialog header{display:flex;align-items:center;gap:12px;}
+#portrait-dialog header h2{margin:0 auto 0 0;font-size:26px;}
+#portrait-dialog header label{font:18px var(--sports-face);white-space:nowrap;}
+#portrait-tone{min-height:44px;font:16px Arial,sans-serif;padding:6px;}
+#portrait-dialog .experience-body{background:#143e63;}
+#portrait-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;}
+#portrait-grid button{min-width:44px;min-height:44px;display:flex;flex-direction:column;align-items:center;background:#143e63;border:2px solid #6a8ca8;color:#fff1c9;padding:4px;font:20px var(--sports-face);}
+#portrait-grid button[aria-pressed=true]{border-color:#ffe061;box-shadow:inset 0 0 0 2px #ffe061;color:#ffe061;}
+#portrait-grid canvas{width:100%;height:auto;aspect-ratio:1;image-rendering:pixelated;background:transparent;}
+#portrait-dialog footer{display:flex;justify-content:space-between;gap:12px;}
+#portrait-dialog footer button{width:auto;min-height:44px;font-size:23px;}
+.profile-face-button{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0;border:1px solid #7594ac;background:#143e63;color:#ffdf75;font:16px var(--sports-face);}
+.profile-face-button span{max-width:55px;}
+#career-create #enrollment-face{border:1px solid #8fa2ac;min-height:44px;width:100%;text-align:left;background:#234f70;font-size:20px;}
+#career-screen .roster-card{background:#143e63;}
+@media(orientation:landscape) and (max-height:350px){
+ #portrait-dialog .experience-body{padding-block:6px;}
+ #portrait-grid{gap:7px;}
+ #portrait-grid button{padding:2px;}
+ #portrait-grid canvas{max-height:100px;object-fit:contain;}
+}
+@media(orientation:portrait){
+ #portrait-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
+ #portrait-dialog header{flex-wrap:wrap;}
+ #portrait-dialog header h2{width:100%;}
+}

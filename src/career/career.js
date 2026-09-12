@@ -15,7 +15,7 @@ export const ARCHETYPES={
  quick:{name:'Quick release',description:'Get the ball out before pressure arrives.',attributes:{accuracy:74,arm:69,release:83}}
 };
 export function careerPlayer(c){return League.findTeamState(c.league,c.teamId).roster.find(p=>p.id===c.playerId);}
-export function createCareer({name,number=7,teamId='bos',archetype='precision',skin=2,difficulty='medium',quarterMinutes=2,schoolId=null}){
+export function createCareer({name,number=7,teamId='bos',archetype='precision',skin=2,portrait=0,difficulty='medium',quarterMinutes=2,schoolId=null}){
  const cleanName=String(name||'').trim().replace(/\s+/g,' ').slice(0,28);
  if(!cleanName)throw Error('Enter your player name.');
  if(!(schoolId?COLLEGE_TEAMS.some(t=>t.id===schoolId):League.TEAMS.some(t=>t.id===teamId))||!ARCHETYPES[archetype])throw Error('Choose a team and playing style.');
@@ -24,7 +24,7 @@ export function createCareer({name,number=7,teamId='bos',archetype='precision',s
  const league=schoolId?createCollegeLeague(schoolId):League.createFranchise(teamId),team=League.findTeamState(league,teamId),player=team.roster.find(p=>p.slot==='QB');
  const used=new Set(team.roster.map(p=>p.number));
  for(const teammate of team.roster)if(teammate!==player&&teammate.number===number){for(let n=0;n<100;n++)if(!used.has(n)&&n!==number){teammate.number=n;used.add(n);break;}}
- const names=cleanName.split(' ');Object.assign(player,{firstName:names.shift(),lastName:names.join(' '),number,age:21,skin:Math.max(0,Math.min(3,Number(skin)||0)),archetype,attributes:{...ARCHETYPES[archetype].attributes}});
+ const names=cleanName.split(' ');Object.assign(player,{firstName:names.shift(),lastName:names.join(' '),number,age:21,portrait:Number.isInteger(portrait)&&portrait>=0&&portrait<7?portrait:0,skin:Math.max(0,Math.min(3,Number(skin)||0)),archetype,attributes:{...ARCHETYPES[archetype].attributes}});
  if(schoolId)for(const key of Object.keys(player.attributes))player.attributes[key]+=SCHOOL_TIERS[team.tier].attributeBonus;
  player.rating=Math.round(Object.values(player.attributes).reduce((a,b)=>a+b)/3);
  League.refreshRatings(league);

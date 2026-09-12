@@ -1,6 +1,6 @@
 // Stable portraits for both existing saves and newly generated rosters.
 export function identitySeed(id){let n=2166136261;for(const c of String(id)){n=Math.imul(n^c.charCodeAt(0),16777619);}return n>>>0;}
-export function paintPlayerPortrait(canvas,team,player){
+function paintFallbackPortrait(canvas,team,player){
  if(!canvas||!team)return;
  const seed=identitySeed(player.id),skinIndex=player.skin??(seed%4);
  const skin=['#f1c49d','#cd936a','#a76b48','#72452f'][skinIndex];
@@ -29,4 +29,22 @@ export function paintPlayerPortrait(canvas,team,player){
  const digits=['111101101101111','010110010010111','111001111100111','111001111001111','101101111001001','111100111001111','111100111101111','111001010010010','111101111101111','111101111001111'];
  const number=String(player.number??0),x=16-(number.length*4-1)/2;
  [...number].forEach((d,i)=>[...digits[Number(d)]].forEach((v,j)=>{if(v==='1')rect(x+i*4+j%3,26+Math.floor(j/3),1,1,'#fff5da');}));
+}
+
+const atlas=new Image();atlas.src='/assets/portraits/players-v1.webp';
+const pending=new WeakMap();
+export function paintPlayerPortrait(canvas,team,player){
+ if(!canvas||!team)return;
+ const token={};pending.set(canvas,token);
+ const draw=()=>{
+  if(pending.get(canvas)!==token)return;
+  if(!atlas.naturalWidth){paintFallbackPortrait(canvas,team,player);return;}
+  const seed=identitySeed(player.id);
+  const tone=Number.isInteger(Number(player.skin))&&Number(player.skin)>=0&&Number(player.skin)<4?Number(player.skin):seed%4;
+  const face=Number.isInteger(player.portrait)&&player.portrait>=0&&player.portrait<7?player.portrait:(seed>>>4)%7;
+  const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);
+  const w=atlas.naturalWidth/7,h=atlas.naturalHeight/4;
+  ctx.drawImage(atlas,face*w,tone*h,w,h,0,0,canvas.width,canvas.height);
+ };
+ draw();if(!atlas.complete){atlas.addEventListener('load',draw,{once:true});}
 }

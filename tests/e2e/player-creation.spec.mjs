@@ -10,6 +10,13 @@ for(const viewport of [{width:844,height:304},{width:390,height:740}]){
   expect(await fields.evaluate(e=>e.scrollWidth<=e.clientWidth+1)).toBe(true);
   await page.getByLabel('Player name',{exact:true}).fill('Touch QB');
   await page.getByLabel('Jersey number',{exact:true}).fill('12');
+  await page.getByRole('button',{name:'Choose face',exact:true}).tap();
+  await page.locator('#portrait-tone').selectOption('3');
+  await expect(page.locator('#portrait-grid button')).toHaveCount(7);
+  await page.getByRole('button',{name:'Face 6',exact:true}).tap();
+  await expect(page.getByRole('button',{name:'Face 6',exact:true})).toHaveAttribute('aria-pressed','true');
+  await page.screenshot({path:`test-results/face-picker-${viewport.width}-${viewport.height}.png`});
+  await page.getByRole('button',{name:'Use this face',exact:true}).tap();
   await page.screenshot({path:`test-results/create-player-${viewport.width}-${viewport.height}.png`});
   await page.getByRole('button',{name:'Next',exact:true}).tap();
   await expect(page.locator('#career-begin')).toBeInViewport({ratio:1});
@@ -27,6 +34,17 @@ for(const viewport of [{width:844,height:304},{width:390,height:740}]){
   await page.getByLabel('Career starting point',{exact:true}).selectOption('college');await page.getByRole('button',{name:'Next',exact:true}).tap();
   await expect(page.locator('#career-begin')).toHaveText('Begin senior season');
   await page.locator('#career-begin').tap();await expect(page.locator('#career-header-name')).toHaveText('Touch QB');
+  await page.getByRole('tab',{name:'Player',exact:true}).tap();
+  await page.getByRole('button',{name:'Change face',exact:true}).tap();
+  await expect(page.locator('#portrait-tone')).toHaveValue('3');
+  await expect(page.getByRole('button',{name:'Face 6',exact:true})).toHaveAttribute('aria-pressed','true');
+  await page.locator('#portrait-tone').selectOption('1');
+  await page.getByRole('button',{name:'Face 2',exact:true}).tap();
+  await page.getByRole('button',{name:'Use this face',exact:true}).tap();
+  await page.reload();await page.getByRole('button',{name:'Career Mode',exact:true}).tap();await page.getByRole('button',{name:'Continue last career',exact:true}).tap();
+  await page.getByRole('tab',{name:'Player',exact:true}).tap();await page.getByRole('button',{name:'Change face',exact:true}).tap();
+  await expect(page.locator('#portrait-tone')).toHaveValue('1');
+  await expect(page.getByRole('button',{name:'Face 2',exact:true})).toHaveAttribute('aria-pressed','true');
   await context.close();
  });
 }
