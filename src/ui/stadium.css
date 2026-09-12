@@ -754,3 +754,4 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
 @media(orientation:landscape) and (max-height:350px){
  #career-screen #career-upgrades{gap:0;}
 }
+#career-qb-stats .stat-tiles>div{flex-direction:row;}
