@@ -7,6 +7,8 @@
 <style>
   :root{--ink:#080b0c;--panel:#101719;--panel2:#182225;--cream:#f5edcf;--gold:#f4c542;--green:#2c7a3f;--green2:#205b31;--blue:#2868a8;--red:#a83232;--muted:#9ca9a5;--line:#3d4d48;}
   *{box-sizing:border-box;}
+  /* Keep iPhone landscape text at the authored size across every menu. */
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
   html,body{height:100%;margin:0;padding:0;background:var(--ink);color:var(--cream);font-family:"Courier New",ui-monospace,monospace;overflow:hidden;position:fixed;inset:0;overscroll-behavior:none;touch-action:none;image-rendering:pixelated;}
   .app{display:flex;flex-direction:column;height:100%;padding:7px;background:radial-gradient(circle at 50% 20%,#1b2925 0,#080b0c 60%);touch-action:none;}
   button{font:700 13px/1.1 "Courier New",monospace;letter-spacing:.02em;border:2px solid #52615c;background:#172022;color:var(--cream);padding:11px 12px;cursor:pointer;box-shadow:inset 0 0 0 2px #0b0f10,3px 3px 0 #050707;text-transform:uppercase;}
@@ -190,7 +192,7 @@
         <button id="btn-career" class="sports-button gold" aria-label="Career Mode"><span id="career-menu-label">Career</span><small id="career-menu-detail">Your player. Your season.</small><span class="menu-arrow" aria-hidden="true">▶</span></button>
         <button id="btn-new-game" class="sports-button">Quick Play <span aria-hidden="true">▶</span></button>
         <button id="btn-practice" class="sports-button">Practice <span aria-hidden="true">▶</span></button>
-        <div class="stadium-utilities"><button id="btn-menu-settings" class="sports-button blue">Settings</button><button id="btn-extras" class="sports-button blue">Extras</button></div>
+        <div class="stadium-utilities"><button id="btn-menu-settings" class="sports-button blue">Settings</button><button id="btn-extras" class="sports-button blue">Extras</button><button data-open-account class="sports-button blue cloud-menu-button">Account</button></div>
       </nav>
     </div>
   </div>
@@ -379,7 +381,7 @@
     <button id="career-league-tab" class="sports-button blue" role="tab" aria-selected="false" aria-controls="career-league-panel" data-career-tab="league" tabindex="-1">League</button>
    </nav>
   </div>
-  <div class="career-save-bar"><span id="career-quiet-save" role="status">Saved on this device</span><button id="career-open-backups">Save &amp; backup</button></div>
+  <div class="career-save-bar"><span data-cloud-status id="career-quiet-save" role="status">Saved on this device</span><button id="career-open-backups">Save &amp; backup</button></div>
   <dialog id="school-dialog" class="sports-dialog experience-dialog school-dialog" aria-labelledby="school-heading"><header><h2 id="school-heading">Choose your school</h2></header><nav id="school-conferences" aria-label="College conferences"></nav><div class="school-picker-body"><div id="school-grid"></div><section id="school-preview" aria-live="polite"></section></div><footer><button id="school-back" class="sports-button blue">Back</button><button id="school-confirm" class="sports-button gold">Choose this school</button></footer></dialog>
  <dialog id="draft-dialog" class="sports-dialog experience-dialog" aria-labelledby="draft-heading"><header><h2 id="draft-heading">Draft night</h2></header><div id="draft-selection" class="experience-body"></div><footer><button id="draft-back" class="sports-button blue">Back</button><button id="draft-continue" class="sports-button gold">Begin pro career</button></footer></dialog>
  <dialog id="team-player-dialog" class="sports-dialog experience-dialog" aria-labelledby="team-player-heading"><header><h2 id="team-player-heading">Player card</h2></header><div id="team-player-content" class="experience-body"></div><footer><button id="team-player-close" class="sports-button blue">Back to My Team</button></footer></dialog>
@@ -391,7 +393,7 @@
   <footer class="career-footer"><p id="career-save-status" role="status">Career saves on this device. Quick games keep their existing save.</p><div class="career-backup-actions"><button id="career-export">Export backup</button><button id="career-import">Restore backup</button><input id="career-backup-file" type="file" accept=".json,application/json" hidden></div></footer>
 <button id="career-export-all" class="sports-button blue">Export all saved data</button><div id="career-recovery-list"></div>
 <button id="career-close-backups" class="sports-button blue">Back</button></dialog>
-  <dialog id="practice-guide" class="sports-dialog" aria-labelledby="practice-guide-heading"><h2 id="practice-guide-heading">Make the play</h2><div class="guide-grid"><section><h3>Passing</h3><p><b>Slingshot:</b> pull away from your target, then release. The ball flies in the opposite direction.</p><p><b>Direct drag:</b> drag toward the spot you want to throw to.</p><p><b>Tap receiver:</b> tap near a receiver to snap and throw. During a live play, tap your target spot.</p><p><b>Lob</b> gives the route more time. <b>Bullet</b> arrives faster.</p></section><section><h3>Read and react</h3><p>The small lead ring predicts where a receiver can arrive: <b>green</b> is on target, <b>gold</b> needs an adjustment, and <b>white</b> is out of reach. Coverage can still contest a pass.</p><p>Defenders crouch before a dive. Juke up or down as they commit. Jukes share a one-second cooldown.</p><p>Drag to steer after the catch. Keyboard: <b>↑ / ↓</b> to juke, <b>Esc</b> to pause.</p></section></div><p id="practice-guide-note"></p><div class="guide-actions"><button id="practice-guide-start" class="sports-button gold">Start guided practice</button><button id="practice-guide-close" class="sports-button blue">Back</button></div></dialog>
+  <dialog id="practice-guide" class="sports-dialog" aria-labelledby="practice-guide-heading"><h2 id="practice-guide-heading">Make the play</h2><div class="guide-grid"><section><h3>Passing</h3><p><b>Slingshot:</b> pull away from your target, then release. The ball flies in the opposite direction.</p><p><b>Direct drag:</b> drag toward the spot you want to throw to.</p><p><b>Tap receiver:</b> tap near a receiver to snap and throw. During a live play, tap your target spot.</p><p><b>Lob</b> gives the route more time. <b>Bullet</b> arrives faster.</p></section><section><h3>Read and react</h3><p>The small lead ring predicts where a receiver can arrive: <b>green</b> is on target, <b>gold</b> needs an adjustment, and <b>white</b> is out of reach. Coverage can still contest a pass.</p><p>Defenders crouch before a dive. Juke up or down as they commit. Jukes share a one-second cooldown.</p><p>Drag to steer after the catch. Tap <b>Juke up / Juke down</b> to dodge, and tap <b>Pause</b> to take a break.</p></section></div><p id="practice-guide-note"></p><div class="guide-actions"><button id="practice-guide-start" class="sports-button gold">Start guided practice</button><button id="practice-guide-close" class="sports-button blue">Back</button></div></dialog>
 <svg width="0" height="0" class="svg-definitions" aria-hidden="true"><defs><symbol id="helmet-icon" viewBox="0 0 32 28">
 
   <!-- Stepped shell, white crown stripe and bright cage echo the on-field sprites. -->
@@ -534,5 +536,25 @@
   </div>
 </div>
 <script type="module" src="./src/main.js"></script>
+<dialog id="cloud-account" aria-labelledby="cloud-title">
+ <header><h2 id="cloud-title">Your account</h2><button id="cloud-close" class="sports-button blue">Back</button></header>
+ <div class="cloud-body">
+ <p id="cloud-message" role="status" aria-live="polite">Guest careers are saved on this device.</p>
+ <form id="cloud-login">
+  <p>Sign in with an email code to save your careers across devices. Your guest careers stay on this device until you choose to upload them.</p>
+  <label for="cloud-email">Email</label><input id="cloud-email" type="email" autocomplete="email" required maxlength="254">
+  <button id="cloud-send" type="button" class="sports-button gold">Email me a code</button>
+  <div id="cloud-code-row" hidden><label for="cloud-code">Email code</label><input id="cloud-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required><button id="cloud-verify" class="sports-button gold">Sign in</button></div>
+ </form>
+ <button id="cloud-switch" class="sports-button gold" hidden>Open signed-in account</button>
+ <section id="cloud-signed-in" hidden><p id="cloud-email-label"></p>
+  <div class="cloud-actions"><button id="cloud-retry" class="sports-button gold">Sync now</button><button id="cloud-upload" class="sports-button blue">Upload device careers</button><button id="cloud-history" class="sports-button blue">Recovery backups</button><button id="cloud-signout" class="sports-button blue">Sign out</button></div>
+  <p>Uploads and restores keep separate copies when progress differs. Your device saves remain available if syncing fails.</p>
+  <section id="cloud-conflict" hidden><p>This career changed on two devices. Keep both versions so no progress is lost.</p><button id="cloud-keep-both" class="sports-button gold">Keep both versions</button></section>
+  <div id="cloud-history-list"></div>
+ </section>
+ <button id="cloud-guest" class="sports-button blue">Play as guest</button>
+ </div>
+</dialog>
 </body>
 </html>
