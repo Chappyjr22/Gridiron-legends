@@ -1,7 +1,7 @@
 import {playingRoster} from '../career/roster.js';
 import * as League from '../state/league.js';
 import {playerGameLog,playerSeasonStats} from '../career/recap.js';
-import {paintMenuPlayer} from './menuArt.js';
+import {paintPlayerPortrait} from './playerPortrait.js';
 const el=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=p=>[p.firstName,p.lastName].filter(Boolean).join(' ');
@@ -19,14 +19,14 @@ function openPlayer(c,p){
  ${p.attributes?'<div class="teammate-attributes">'+Object.entries(p.attributes).map(([k,v])=>`<div><span>${esc(k)}</span><b>${v}</b><span class="teammate-meter"><i style="width:${Math.min(100,v)}%"></i></span></div>`).join('')+'</div>':''}
  <h3>Season production</h3><p>${esc(line(season.tracked?season.stats:null,p.position))}</p><p class="experience-note">${season.tracked} tracked games this season</p>
  <h3>Game log</h3><div class="player-game-log">${log.map(r=>`<article><b>S${r.season} · Week ${r.week} · ${r.userScore>r.cpuScore?'WIN':'LOSS'} ${r.userScore}–${r.cpuScore}</b><p>${esc(line(r.stats,p.position))}</p></article>`).join('')||'<p>Your first game is waiting.</p>'}</div>`;
- paintMenuPlayer(el('team-card-sprite'),team,p.skin??2);
+ paintPlayerPortrait(el('team-card-sprite'),team,p);
  el('team-player-dialog').showModal();
 }
 export function renderMyTeam(c){
  const team=League.findTeamState(c.league,c.teamId);
  el('my-team-name').textContent=`${team.city} ${team.name}`;
  el('my-team-roster').innerHTML=playingRoster(team).map(p=>`<button class="roster-card" data-player-id="${esc(p.id)}"><span>#${p.number} · ${esc(p.position)}${p.id===c.playerId?' · YOU':''}</span><canvas width="64" height="64" aria-hidden="true"></canvas><strong>${esc(name(p))}</strong><span>${p.rating} OVR</span><span class="roster-rating" aria-hidden="true"><i style="width:${p.rating}%"></i></span></button>`).join('');
- for(const b of el('my-team-roster').querySelectorAll('button')){const p=playingRoster(team).find(p=>p.id===b.dataset.playerId);paintMenuPlayer(b.querySelector('canvas'),team,p.skin??2);b.onclick=()=>openPlayer(c,p);}
+ for(const b of el('my-team-roster').querySelectorAll('button')){const p=playingRoster(team).find(p=>p.id===b.dataset.playerId);paintPlayerPortrait(b.querySelector('canvas'),team,p);b.onclick=()=>openPlayer(c,p);}
 }
 export function showPostgame(c){
  const r=c.lastResult;if(!r)return;

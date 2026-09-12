@@ -762,3 +762,18 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
  #career-qb-stats .stat-tiles>div{padding:0;}
  #career-qb-stats .stat-tiles dt,#career-qb-stats .stat-tiles dd{font:16px/.95 var(--sports-face);}
 }
+#upgrade-status{font:16px/1.1 var(--sports-face);color:#ffdf75;text-align:center;}
+#career-screen #career-upgrades .upgrade-cost{display:flex;flex-direction:column;justify-content:center;align-items:center;grid-row:1/3;grid-column:3;min-width:100px;min-height:44px;padding:3px 6px;background:#f4ce42;color:#16354a;border:1px solid #fff0a0;font:18px/1 var(--sports-face);}
+#career-screen #career-upgrades .upgrade-cost small{font:13px/1 var(--sports-face);color:inherit;margin-top:3px;}
+#career-screen #career-upgrades .rating-track{grid-column:1/3;}
+#career-screen #career-upgrades button:disabled .upgrade-cost{background:#315772;color:#d3e0e9;border-color:#63839a;}
+#career-screen #career-upgrades button:enabled:hover .upgrade-cost{background:#ffe880;}
+#career-screen #career-upgrades button:focus-visible{outline:2px solid #fff0a0;outline-offset:2px;}
+#career-screen #career-upgrades button strong{grid-column:2;}
+.roster-card canvas{width:76px;height:76px;}
+@media(orientation:landscape) and (max-height:350px){
+ #qb-profile-sprite{width:44px;height:44px;}
+ .qb-passport{gap:2px;}
+ #upgrade-status{font-size:15px;}
+ #career-screen #career-upgrades .upgrade-cost{font-size:16px;min-width:92px;}
+}

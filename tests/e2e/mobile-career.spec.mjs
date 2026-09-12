@@ -19,6 +19,8 @@ for(const viewport of [{width:844,height:304},{width:844,height:390},{width:932,
   await expect(page.locator('#career-upgrades button').first()).toBeInViewport();
   await page.screenshot({path:`test-results/mobile-player-${viewport.width}-${viewport.height}.png`});
   await expect(page.locator('#career-player-sprite')).not.toBeVisible();
+  await expect(page.locator('#upgrade-status')).toHaveText('0 points · Level up to earn 1');
+  await expect(page.getByRole('button',{name:'Upgrade accuracy by 2 for 1 point',exact:true})).toBeDisabled();
   for(const button of await page.locator('#career-upgrades button').all())await expect(button).toBeInViewport({ratio:1});
   await page.getByRole('button',{name:'Career story',exact:true}).tap();
   await expect(page.locator('#career-progress-dialog')).toBeVisible();
@@ -38,6 +40,9 @@ for(const viewport of [{width:844,height:304},{width:844,height:390},{width:932,
   await page.screenshot({path:`test-results/simple-stats-${viewport.width}-${viewport.height}.png`});
   await page.getByRole('tab',{name:'My Team',exact:true}).tap();
   await page.screenshot({path:`test-results/simple-roster-${viewport.width}-${viewport.height}.png`});
+  await expect(page.locator('#my-team-roster')).not.toContainText('Slot Receiver');
+  const portraits=await page.locator('.roster-card canvas').evaluateAll(cs=>cs.map(c=>c.toDataURL()));
+  expect(new Set(portraits).size).toBeGreaterThan(5);
   await page.getByRole('tab',{name:'Player',exact:true}).tap();
   expect(await panel.evaluate(e=>e.scrollTop)).toBe(0);
   await expect(page.locator('#career-upgrades button').first()).toBeInViewport();
