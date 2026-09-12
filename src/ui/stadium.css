@@ -735,3 +735,19 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
  #career-screen #career-upgrades button{min-height:44px;}
  #career-screen .player-section-heading{display:none;}
 }
+#qb-profile-sprite,#enrollment-sprite,.roster-card canvas{background:transparent;}
+#career-screen #career-upgrades button strong{color:#fff2d2;}
+#qb-profile-xp{appearance:none;border:0;background:#092741;border-radius:0;}
+#qb-profile-xp::-webkit-progress-bar{background:#092741;}
+#qb-profile-xp::-webkit-progress-value{background:#f3cd3f;}
+#qb-profile-xp::-moz-progress-bar{background:#f3cd3f;}
+@media(orientation:landscape) and (max-height:350px){
+ #career-create .enrollment-position{font-size:17px;padding:2px 6px;}
+ #career-create .career-form-grid{gap:5px 10px;}
+ #career-create label{margin:0 0 3px;font-size:17px;}
+ #career-create .enrollment-fields{padding-block:5px;}
+ .enrollment-preview{padding:4px 10px;}
+ #enrollment-sprite{width:66px;height:66px;}
+ .enrollment-preview strong{font-size:22px;}
+ .enrollment-preview span{font-size:17px;}
+}

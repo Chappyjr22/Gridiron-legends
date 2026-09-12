@@ -29,12 +29,14 @@ for(const viewport of [{width:844,height:304},{width:844,height:390},{width:932,
   await page.getByRole('button',{name:'Back to story',exact:true}).tap();
   await page.getByRole('button',{name:'Back to Player',exact:true}).tap();
   await page.getByRole('button',{name:'Stats',exact:true}).tap();
-  await expect(page.locator('.stat-tiles')).toBeVisible();
+  await expect(page.locator('.stat-comparison>section')).toHaveCount(3);await expect(page.locator('.stat-tiles').first()).toBeVisible();
   await checkLayout();
   // Scrolling long content must not move the navigation or strand the next tab.
   await panel.evaluate(e=>{e.scrollTop=e.scrollHeight;});await checkLayout();
   await expect(page.locator('.stat-comparison>section')).toHaveCount(3);
+  await page.screenshot({path:`test-results/simple-stats-${viewport.width}-${viewport.height}.png`});
   await page.getByRole('tab',{name:'My Team',exact:true}).tap();
+  await page.screenshot({path:`test-results/simple-roster-${viewport.width}-${viewport.height}.png`});
   await page.getByRole('tab',{name:'Player',exact:true}).tap();
   expect(await panel.evaluate(e=>e.scrollTop)).toBe(0);
   await expect(page.locator('#career-upgrades button').first()).toBeInViewport();
