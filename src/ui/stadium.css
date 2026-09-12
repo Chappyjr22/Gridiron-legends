@@ -859,3 +859,9 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
 #practice-guide .guide-actions{flex:none;padding-top:8px;margin-top:6px;border-top:1px solid #b9a681}
 #practice-guide .guide-actions button{min-height:44px}
 @media(max-width:1000px){#league-screen .standings-grid{grid-template-columns:1fr}#league-screen .standing-row{grid-template-columns:18px 1fr 50px 40px}#league-screen .standing-row.header{font-size:11px}}
+@media(orientation:landscape) and (max-height:500px){
+ #formation-data-dialog{padding:10px 16px}
+ #formation-data-dialog h2{font-size:26px;margin-bottom:6px}
+ #formation-data-dialog #edit-json{height:70px}
+ #formation-data-dialog>.sports-button{margin-top:6px;min-height:44px;font-size:22px;padding:5px 10px}
+}
