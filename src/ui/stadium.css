@@ -474,7 +474,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
  #career-upgrades small{font-size:11px;}
 }
 /* Matchup content keeps its own height instead of compressing helmet labels. */
-#career-hub[data-view=home] .match-board{display:grid;grid-template-rows:auto minmax(min-content,1fr) auto auto auto;gap:6px;}
+#career-hub[data-view=home] .match-board{display:grid;grid-template-columns:minmax(0,1fr);justify-content:stretch;grid-template-rows:auto minmax(min-content,1fr) auto auto auto;gap:6px;}
 #career-hub[data-view=home] .helmet-matchup{min-height:min-content;}
 @media(orientation:landscape) and (max-height:550px){
  #career-hub[data-view=home] .helmet{height:clamp(36px,12dvh,52px);}
