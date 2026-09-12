@@ -1,0 +1,33 @@
+[
+  {
+    "issue": "Cancelled tap still throws",
+    "pendingAfterCancel": true,
+    "thrown": true
+  },
+  {
+    "issue": "Pending tap point omitted by resize",
+    "before": 100,
+    "after": 100,
+    "newAnchor": 920
+  },
+  {
+    "issue": "Frame stall advances timers but caps movement/clock",
+    "elapsedMs": 1000,
+    "gameClockSeconds": 0.05000000000001137,
+    "receiverDistance": 4.280953599999975
+  },
+  {
+    "issue": "Malformed checkpoint passes backup validation",
+    "accepted": true,
+    "error": "Cannot read properties of undefined (reading 'some')"
+  },
+  {
+    "issue": "Simulated QB can have 100% completions and an INT",
+    "seed": "8",
+    "attempts": 1,
+    "completions": 1,
+    "interceptions": 1
+  }
+]
+{"issue":"Playable slot receiver absent from roster","id":"bos-generic-15","number":"15","rosterContains":false}
+{"issue":"Duplicate offensive jersey numbers","team":"BOS","duplicates":["68"],"numbers":["5","37","1","3","15","89","68","66","67","68","62"]}

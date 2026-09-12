@@ -80,3 +80,44 @@ console.log('Slot migration, isolation, failed-write protection and simulated bo
 }
 
 await import('./college.test.mjs');
+
+{
+ const c=C.createCareer({name:'Checkpoint validation'}),m=C.nextMatch(c);c.activeMatch=m.id;
+ const h=await harness();h.game.userTeamId=c.teamId;h.game.cpuTeamId=m.homeTeamId===c.teamId?m.awayTeamId:m.homeTeamId;h.engine.startNewGame({career:true});
+ c.checkpoint=JSON.parse(JSON.stringify(h.engine.getCheckpoint({type:'offense'})));
+ assert.ok(C.parseCareer(JSON.stringify(c)));
+ for(const edit of [s=>s.stats={},s=>s.game.clock=null,s=>s.game.cpuTeamId='missing',s=>s.resume={type:'turnover'},s=>s.stats.players={unknown:emptyStats()}]){
+  const bad=structuredClone(c);edit(bad.checkpoint);assert.equal(C.parseCareer(JSON.stringify(bad)),null);
+ }
+ c.checkpoint={game:{},stats:{},resume:{type:'offense'}};assert.equal(C.parseCareer(JSON.stringify(c)),null);
+ console.log('Checkpoint imports reject incomplete state and unknown identities.');
+}
+{
+ const c=C.createCareer({name:'Roster stats'}),team=c.league.teams.find(t=>t.id===c.teamId);
+ for(let seed=0;seed<1000;seed++){
+  const players=simulatedBoxScore(team,[0,7,3,0,6],String(seed)),qb=players[c.playerId];assert.ok(qb.completions+qb.interceptions<=qb.attempts);
+  assert.equal(qb.attempts,Object.values(players).reduce((n,s)=>n+s.targets,0));
+ }
+ const m=C.nextMatch(c);m.status='completed';m.boxScore={players:{[`${team.id}-generic-15`]:{...emptyStats(),receptions:3,receivingYards:42}}};
+ const slot=seasonPlayerRows(c).rows.find(r=>r.player.id===`${team.id}-generic-15`);assert.equal(slot.stats.receivingYards,42);
+ console.log('Simulated pass outcomes and legacy slot receiver statistics passed.');
+}
+{
+ const c=C.createCareer({name:'Recovery test'}),good=C.createCareer({name:'Unaffected'}),broken=structuredClone(c);broken.activeMatch=C.nextMatch(broken).id;broken.checkpoint={game:{},stats:{},resume:{type:'offense'}};
+ const raw=JSON.stringify({version:1,lastId:c.careerId,careers:{[c.careerId]:broken,[good.careerId]:good}}),data=new Map([[SLOTS_KEY,raw]]),store={getItem:k=>data.get(k)||null,setItem:(k,v)=>data.set(k,v)};
+ const bank=readSlots(store,C.parseCareer,C.CAREER_KEY);assert.equal(Object.keys(bank.careers).length,1);assert.equal(bank.lastId,good.careerId);assert.equal(bank.recovery.length,1);assert.equal(data.get(SLOTS_KEY),raw);
+ writeSlot(store,C.parseCareer,C.CAREER_KEY,good);assert.deepEqual(JSON.parse(readSlots(store,C.parseCareer,C.CAREER_KEY).recovery[0].raw),broken);
+ data.set(SLOTS_KEY,'broken-json');writeSlot(store,C.parseCareer,C.CAREER_KEY,good);assert.equal(readSlots(store,C.parseCareer,C.CAREER_KEY).recovery[0].raw,'broken-json');
+ const {opponentBoxScore}=await import('../src/career/leagueStats.js'),team=c.league.teams[1],drives=[{points:7,yards:80,turnover:false},{points:0,yards:22,turnover:true}],box=opponentBoxScore(team,drives,'fixed');
+ const qb=box[team.roster.find(p=>p.slot==='QB').id],values=Object.values(box);
+ assert.equal(qb.passingYards+values.reduce((n,s)=>n+s.rushingYards,0)-qb.sackYards,102);assert.equal(values.reduce((n,s)=>n+s.receivingTD+s.rushingTD,0),1);assert.equal(qb.interceptions,1);assert.ok(qb.attempts>=qb.completions+qb.interceptions);
+ console.log('Save quarantine and opponent drive allocation passed.');
+}
+{
+ const {importSlotArchive}=await import('../src/career/slots.js'),original=C.createCareer({name:'Archive original'}),data=new Map(),store={getItem:k=>data.get(k)||null,setItem:(k,v)=>data.set(k,v)};
+ writeSlot(store,C.parseCareer,C.CAREER_KEY,original);
+ const archive=JSON.stringify({format:'gridiron-all-saved-data-v1',careers:data.get(SLOTS_KEY),legacy:null});
+ const result=importSlotArchive(store,C.parseCareer,C.CAREER_KEY,archive);assert.equal(result.count,1);assert.notEqual(result.career.careerId,original.careerId);assert.equal(Object.keys(readSlots(store,C.parseCareer,C.CAREER_KEY).careers).length,2);
+ const before=data.get(SLOTS_KEY);assert.throws(()=>importSlotArchive({...store,setItem(){throw Error('Quota');}},C.parseCareer,C.CAREER_KEY,archive));assert.equal(data.get(SLOTS_KEY),before);
+ console.log('Full saved-data archives restore as separate careers with atomic writes.');
+}

@@ -188,4 +188,47 @@ await test('routine results keep the field clear while scoring remains a full re
  h.hud.showResult('TOUCHDOWN!\nExtra point is good.',()=>{});assert.equal(h.element('result-overlay').classList.contains('compact-result'),false);
 });
 
+
+await test('stalled frames match normal movement, clock and ball flight',async h=>{
+ const other=await harness();
+ for(const x of [h,other]){x.engine.startNewGame();x.engine.startPlayerDrive(20);x.engine.choosePlay('trips_verticals');x.engine.onSnap();x.engine.releaseThrow({x:100,y:39});}
+ for(let i=0;i<62;i++)h.step(16);h.step(8);other.step(1000);
+ assert.equal(h.game.clock,other.game.clock);
+ assert.equal(h.entities.players.wr1.yfield,other.entities.players.wr1.yfield);
+ assert.equal(h.entities.ball.inFlight,other.entities.ball.inFlight);
+ const clock=await other.load('src/state/clock.js');const before=clock.simulationNow();other.step(60000);
+ assert.equal(clock.simulationNow()-before,1000);
+});
+await test('cancelled tap is discarded; completed tap survives capture release',async h=>{
+ await h.load('src/input/pointer.js');h.engine.startPractice();h.engine.choosePlay('trips_slants');h.game.passMode='tap';
+ h.event('pointerdown',{clientX:565,clientY:39});h.event('pointercancel');h.step(250);assert.equal(h.game.thrown,false);
+ h.engine.startPractice();h.engine.choosePlay('trips_slants');h.event('pointerdown',{clientX:565,clientY:39});h.event('pointerup');h.event('lostpointercapture');h.step(250);assert.equal(h.game.thrown,true);
+});
+await test('queued field taps retain world destination on resize',async h=>{
+ await h.load('src/input/pointer.js');h.engine.startPractice();h.engine.choosePlay('trips_slants');h.game.passMode='tap';
+ h.event('pointerdown',{clientX:100,clientY:150});const target=h.entities.pendingTapThrow.target;
+ const viewport=await h.load('src/rendering/viewport.js');viewport.fitFieldViewport(1200,380);assert.equal(target.x,500);
+});
+await test('device controls override stale career checkpoint preferences',async h=>{
+ h.engine.startNewGame({career:true});const saved=h.engine.getCheckpoint({type:'offense'});
+ h.game.passMode='direct';h.game.throwType='bullet';h.game.showRoutes=false;
+ const prefs=await h.load('src/state/preferences.js');assert.ok(prefs.saveControlPreferences(h.game));
+ h.engine.restoreCheckpoint(saved);assert.equal(h.game.passMode,'direct');assert.equal(h.game.throwType,'bullet');assert.equal(h.game.showRoutes,false);
+});
+await test('supporting receiver keeps legacy identity and every lineup number is unique',async h=>{
+ h.engine.startPractice();assert.equal(h.entities.players.wr3.playerId,'bos-generic-15');
+ const {OFF,DEF,DL_KEYS}=await h.load('src/state/constants.js');
+ for(const [keys,side] of [[['qb','rb','wr1','wr2','wr3','te'],OFF],[['cb1','cb2','s1','lb1',...DL_KEYS],DEF]]){
+  const numbers=[...keys.map(k=>h.entities.players[k].num),...h.entities.decor.filter(p=>p.team===side).map(p=>p.num)];assert.equal(new Set(numbers).size,numbers.length);
+ }
+});
+await test('skill blocks require contact and delayed routes release after their chip',async h=>{
+ h.engine.startPractice();h.engine.choosePlay('ace_levels');h.engine.onSnap();
+ const chip=h.entities.players.wr3;h.step(100);assert.equal(chip.isBlocking,true);const start=chip.yfield;h.step(400);assert.equal(chip.isBlocking,false);assert.ok(chip.yfield>start);
+});
+await test('play-action fake keeps QB possession and cancels on an early throw',async h=>{
+ h.engine.startPractice();h.engine.choosePlay('ace_pa_cross');h.engine.onSnap();assert.ok(h.entities.playFake);const y=h.entities.players.rb.yfield;h.step(180);assert.notEqual(h.entities.players.rb.yfield,y);assert.equal(h.entities.ballCarrier,h.entities.players.qb);
+ h.engine.releaseThrow({x:100,y:39});assert.equal(h.entities.playFake,null);assert.equal(h.game.runActive,false);assert.ok(h.entities.ball.inFlight);
+});
+
 console.log(`${checks+2} gameplay/league checks passed.`);

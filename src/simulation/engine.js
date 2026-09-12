@@ -1,9 +1,13 @@
+import {feedback} from '../state/feedback.js';
+import {advanceSkillBlocks} from './blocking.js';
+import {playingRoster,uniqueLineupNumbers} from '../career/roster.js';
+import {controlPreferences} from '../state/preferences.js';
 import {advanceRoute,passingRead,throwProfile} from './passing.js';
 import {stickVector,jukeStep,syncRunnerControls} from '../input/runnerControls.js';
 import {catchTolerance,catchOutcome} from './receiving.js';
 import {separation, touching, pursuitTarget, startDive, advanceDive} from './contact.js';
 import { emptyMatch, recordPlay } from '../career/stats.js';
-import { simulationNow } from '../state/clock.js';
+import { simulationNow, advanceSimulation, resetFrameClock } from '../state/clock.js';
 import * as League from '../state/league.js';
 import { game, entities, teamState } from '../state/gameState.js';
 import {
@@ -36,7 +40,7 @@ export function getCheckpoint(resume){
 }
 function checkpoint(resume){if(game.career&&!restoring)uiHooks.checkpoint(getCheckpoint(resume));}
 export function restoreCheckpoint(saved){
- restoring=true;Object.assign(game,saved.game);game.paused=false;initPlay();Object.assign(game,saved.game);matchState.stats=saved.stats;restoring=false;
+ restoring=true;Object.assign(game,saved.game);game.paused=false;initPlay();Object.assign(game,saved.game,controlPreferences());matchState.stats=saved.stats;restoring=false;
  const r=saved.resume;
  if(r.type==='offense'){game.phase='callsheet';updateHUD();return;}
  let action;
@@ -48,13 +52,13 @@ export function restoreCheckpoint(saved){
 }
 
 
-function rosterPlayer(team,slot){return team?.roster?.find(player=>player.slot===slot)||null;}
+function rosterPlayer(team,slot){return (team?playingRoster(team):[]).find(player=>player.slot===slot)||null;}
 function rosterNumber(team,slot,fallback){return String(rosterPlayer(team,slot)?.number??fallback);}
 function genericRating(team,side){return team?.ratings?.[side==='offense'?'genericOffense':'genericDefense']||68;}
 function positionRating(team,slot,side){return rosterPlayer(team,slot)?.rating||genericRating(team,side);}
 function ratedEntity(base,team,slot,side){
   const star=rosterPlayer(team,slot);
-  return {...base,slot,playerId:star?.id||`${team.id}-generic-${base.num}`,attributes:star?.attributes,skin:star?.skin,rating:star?.rating||genericRating(team,side),isStar:!!star};
+  return {...base,slot,playerId:star?.id||`${team.id}-generic-${base.num}`,attributes:star?.attributes,skin:star?.skin,rating:star?.rating||genericRating(team,side),isStar:!!star&&!star.generic};
 }
 export function scoreLine(){return teamState.userTeam.abbr+' '+game.playerScore+'  |  '+teamState.cpuTeam.abbr+' '+game.cpuScore;}
 export function chooseOpponent(){
@@ -108,7 +112,7 @@ export function initPlay(){
     qb:ratedEntity({x:191,yfield:(los-3.4)*XPX,num:rosterNumber(teamState.userTeam,'QB','7'),presnapRole:'qb'},teamState.userTeam,'QB','offense'),
     rb:ratedEntity({x:228,yfield:(los-3.4)*XPX,num:rosterNumber(teamState.userTeam,'RB','22'),routeIdx:0,presnapRole:'rb'},teamState.userTeam,'RB','offense'),
     wr1:ratedEntity({x:39,yfield:(los-1.6)*XPX,num:rosterNumber(teamState.userTeam,'WR1','81'),routeIdx:0,presnapRole:'wr'},teamState.userTeam,'WR1','offense'),
-    wr3:ratedEntity({x:84,yfield:(los-0.7)*XPX,num:'15',routeIdx:0,presnapRole:'wr'},teamState.userTeam,null,'offense'),
+    wr3:ratedEntity({x:84,yfield:(los-0.7)*XPX,num:rosterNumber(teamState.userTeam,'WR3','15'),routeIdx:0,presnapRole:'wr'},teamState.userTeam,'WR3','offense'),
     te:ratedEntity({x:293,yfield:(los-0.6)*XPX,num:rosterNumber(teamState.userTeam,'TE','87'),routeIdx:0,presnapRole:'wr'},teamState.userTeam,'TE','offense'),
     wr2:ratedEntity({x:333,yfield:(los-1.7)*XPX,num:rosterNumber(teamState.userTeam,'WR2','84'),routeIdx:0,presnapRole:'wr'},teamState.userTeam,'WR2','offense'),
     cb1:ratedEntity({x:48,yfield:(los+2.9)*XPX,num:rosterNumber(teamState.cpuTeam,'DB1','24'),presnapRole:'cb'},teamState.cpuTeam,'DB1','defense'),
@@ -129,6 +133,8 @@ export function initPlay(){
     ratedEntity({x:157,yfield:(los+2.4)*XPX,team:DEF,num:'51'},teamState.cpuTeam,null,'defense'),ratedEntity({x:241,yfield:(los+2)*XPX,team:DEF,num:'52'},teamState.cpuTeam,null,'defense'),
     ratedEntity({x:223,yfield:(los+6.8)*XPX,team:DEF,num:'3',presnapRole:'s'},teamState.cpuTeam,null,'defense')
   ];
+  uniqueLineupNumbers([...['qb','rb','wr1','wr2','wr3','te'].map(k=>entities.players[k]),...entities.decor.filter(p=>p.team===OFF)],teamState.userTeam);
+  uniqueLineupNumbers([...['cb1','cb2','s1','lb1',...DL_KEYS].map(k=>entities.players[k]),...entities.decor.filter(p=>p.team===DEF)],teamState.cpuTeam);
   applyFormation('trips');
   Object.entries(entities.players).forEach(([key,e])=>{e.skin=e.skin??SKIN_BY_POSITION[key]??0;});
   entities.decor.forEach((e,i)=>{e.skin=(i+(e.team===DEF?2:0))%SKIN_PALETTES.length;});
@@ -136,6 +142,7 @@ export function initPlay(){
   entities.ball={inFlight:false};
   game.passFeedback='';
   entities.runExchange=null;
+  entities.playFake=null;
   entities.pendingTapThrow=null;
   game.phase='callsheet';
   game.message='';
@@ -297,6 +304,7 @@ function simulateExtraPoint(team){
   return good;
 }
 function handlePlayerTouchdown(){
+  feedback('score');
   game.playerScore+=6;
   const patGood=simulateExtraPoint('player');
   adjustMomentum(0.35);
@@ -304,7 +312,7 @@ function handlePlayerTouchdown(){
 }
 export function endPlay(yardGained,label,outOfBounds=false,exactSpot=game.los+yardGained){
   if(game.playResolved)return;
-  game.playResolved=true;
+  game.playResolved=true;feedback('whistle');
   const newLOS=clamp(exactSpot,0,100);
   if(!game.practice){
     const facts=game.playFacts||{};
@@ -405,6 +413,8 @@ function cpuStrength(){
   return clamp(difficultyStrength+matchup,0,2.5);
 }
 function simulateOpponentDrive(startField,reason){
+  const scoreBefore=game.cpuScore;
+  let driveTurnover=false;
   const strength=cpuStrength();
   let driveSeconds=Math.round(38+Math.random()*58+strength*5);
   if(!game.overtime&&game.quarter===4&&game.cpuScore>game.playerScore)driveSeconds+=20;
@@ -421,6 +431,7 @@ function simulateOpponentDrive(startField,reason){
   let playerStart=20;
   let outcome='';
   if(roll<turnoverChance){
+    driveTurnover=true;
     playerStart=clamp(100-endField,5,95);
     outcome='Turnover! You take over at '+formatFieldPosition(playerStart)+'.';
     adjustMomentum(-0.08);
@@ -451,6 +462,7 @@ function simulateOpponentDrive(startField,reason){
     playerStart=touchback?20:clamp(100-landing,5,95);
     outcome='Opponent punts '+puntNet+' yards.'+(touchback?' Touchback.':' You start at '+formatFieldPosition(playerStart)+'.');
   }
+  (matchState.stats.opponentDrives??=[]).push({points:game.cpuScore-scoreBefore,yards:Math.round(gain),turnover:driveTurnover});
   lines.push('The drive gains '+Math.round(gain)+(Math.round(gain)===1?' yard.':' yards.'));
   lines.push(outcome);
   lines.push('Drive time: '+Math.floor(consumedSeconds/60)+':'+String(consumedSeconds%60).padStart(2,'0'));
@@ -475,10 +487,11 @@ export function startOpponentPossession(startField,reason){
 }
 export function onSnap(){
   if(game.phase!=='presnap')return false;
-  game.phase='live';game.snapTime=simulationNow();
+  game.phase='live';game.snapTime=simulationNow();feedback('snap');
   document.getElementById('presnap-hint').style.display='none';
   const play=PLAYS[game.playCall];
-  game.blitzBlockedUntil=game.snapTime+Math.min(850,(play?.blocks?.length||0)*150);
+  game.blitzBlockedUntil=game.snapTime;
+  if(play?.type==='playaction')entities.playFake={start:game.snapTime,duration:380,from:{x:entities.players.rb.x,yfield:entities.players.rb.yfield}};
   if(Math.random()<currentDiff().blitzChance){
     game.blitzer=Math.random()<0.5?'lb1':'s1';
   }
@@ -488,6 +501,7 @@ export function startRunOption(){
   if(!onSnap())return;
   const now=simulationNow();
   const play=PLAYS[game.playCall];
+  entities.playFake=null;
   game.thrown=true;
   game.runActive=true;
   game.runType=play.runOption||'handoff';
@@ -499,7 +513,8 @@ export function startRunOption(){
 export function releaseThrow(t){
   if(game.paused||game.thrown||game.phase!=='live')return;
   game.thrown=true;
-  game.playFacts.threw=true;
+  entities.playFake=null;
+  game.playFacts.threw=true;feedback('throw');
   const qb=entities.players.qb;
   const throwStart=simulationNow();
   qb.action='throw';qb.actionStart=throwStart;
@@ -545,6 +560,7 @@ function resolveCatchAtTarget(){
   }
   entities.ballCarrier=best;
   game.playFacts.receiverId=best.playerId;
+  feedback('catch');
   best.action='catch';best.actionStart=simulationNow();
   game.carrierSince=simulationNow();
 }
@@ -556,7 +572,7 @@ function resolveTackle(tackler){
   else label='Catch';
   if(!tackler){endPlay(yardGained,label,false,entities.ballCarrier.yfield/XPX);return;}
   const now=simulationNow();
-  game.phase='tackle';
+  game.phase='tackle';feedback('tackle');
   game.tackle={startTime:now,carrier:entities.ballCarrier,tackler,yardGained,label,exactSpot:entities.ballCarrier.yfield/XPX};
   entities.ballCarrier.action='tackled';entities.ballCarrier.actionStart=now;
   if(Math.abs(entities.ballCarrier.yfield-tackler.yfield)>0.5)tackler.facing=entities.ballCarrier.yfield>tackler.yfield?'left':'right';
@@ -581,17 +597,12 @@ function finishTackle(){
   endPlay(tackle.yardGained,tackle.label,false,tackle.exactSpot);
 }
 
-let lastT=null;
 let loopStarted=false;
 export function ensureLoopStarted(){
-  if(!loopStarted){loopStarted=true;requestAnimationFrame(tick);}
+  if(!loopStarted){resetFrameClock();loopStarted=true;requestAnimationFrame(tick);}
 }
-function tick(){
-  const now=simulationNow();
-  if(lastT===null)lastT=now;
-  const dt=Math.min((now-lastT)/1000,0.05);
-  lastT=now;
-  if(editState.editMode){draw();requestAnimationFrame(tick);return;}
+function updateSimulation(dt,now){
+  if(editState.editMode)return;
   if(!game.paused&&!game.overtime&&game.phase==='live'){
     game.clock=Math.max(0,game.clock-dt);
     updateHUD();
@@ -603,6 +614,15 @@ function tick(){
     const playDef=PLAYS[game.playCall];
     const screenMult=(playDef?.type==='screen'&&t<1.3)?0.25:1;
     entities.breakCooldown=Math.max(0,entities.breakCooldown-dt);
+    for(const p of Object.values(entities.players))p.isBlocking=false;
+    if(playDef&&(entities.ballCarrier===qb||game.runActive))advanceSkillBlocks({players:entities.players,defenders:[cb1,cb2,s1,lb1,...DL_KEYS.map(k=>entities.players[k]),...entities.decor.filter(p=>p.team===DEF)],play:playDef,los:game.los,elapsed:now-game.snapTime,now,dt,moveToward});
+    if(entities.playFake){
+      const fake=entities.playFake,progress=clamp((now-fake.start)/fake.duration,0,1),rb=entities.players.rb;
+      const reach=Math.sin(progress*Math.PI);
+      rb.x=fake.from.x+(qb.x-fake.from.x)*reach;
+      rb.yfield=fake.from.yfield+(qb.yfield-fake.from.yfield)*reach;
+      if(progress>=1)entities.playFake=null;
+    }
 
     if(entities.runExchange&&now-entities.runExchange.startTime>=entities.runExchange.duration){
       entities.runExchange=null;
@@ -621,6 +641,7 @@ function tick(){
     DL_KEYS.forEach(key=>{
       const dl=entities.players[key];
       if(entities.ballCarrier!==qb&&!game.runActive)return;
+      if(now<(dl.blockedUntil||0))return;
       if(dl.state==='approach'){
         if(t>diff.approachDelay){
           moveToward(dl,dl.blockerX,game.centerYfield,RUSH_SPEED*screenMult*ratingMultiplier(dl.rating,0.18),dt);
@@ -630,8 +651,7 @@ function tick(){
             const matchup=(dl.blockRating||68)-(dl.rating||68);
             const blockWinChance=clamp(diff.blockWinChance+matchup*0.006,0.02,0.82);
             const baseDuration=diff.engageMin+Math.random()*(diff.engageMax-diff.engageMin);
-            const extraProtection=1+Math.min(0.36,(playDef?.blocks?.length||0)*0.09);
-            dl.engageDur=Math.random()<blockWinChance?20000:baseDuration*clamp(1+matchup/55,0.55,1.55)*extraProtection;
+            dl.engageDur=Math.random()<blockWinChance?20000:baseDuration*clamp(1+matchup/55,0.55,1.55);
           }
         }
       } else if(dl.state==='engaged'){
@@ -657,11 +677,11 @@ function tick(){
         if(coverAssign[dk]&&dk!==game.blitzer){
           const recv=entities.players[coverAssign[dk]];
           const sMult=(playDef.type==='screen'&&dk==='cb1')?screenMult:1;
-          moveToward(entities.players[dk],recv.x,recv.yfield-4,COVER_YPS*XPX*SPEED_SCALE*sMult*ratingMultiplier(entities.players[dk].rating,0.18),dt);
+          moveToward(entities.players[dk],recv.x,recv.yfield-4,COVER_YPS*XPX*SPEED_SCALE*sMult*(now<(entities.players[dk].blockedUntil||0)?.25:1)*ratingMultiplier(entities.players[dk].rating,0.18),dt);
         }
       });
       if(game.blitzer&&t>0.25&&now>=(game.blitzBlockedUntil||0)){
-        moveToward(entities.players[game.blitzer],qb.x,qb.yfield,RUSH_SPEED_BLITZ*screenMult*ratingMultiplier(entities.players[game.blitzer].rating,0.18),dt);
+        moveToward(entities.players[game.blitzer],qb.x,qb.yfield,RUSH_SPEED_BLITZ*screenMult*(now<(entities.players[game.blitzer].blockedUntil||0)?.25:1)*ratingMultiplier(entities.players[game.blitzer].rating,0.18),dt);
       }
     }
 
@@ -745,7 +765,7 @@ function tick(){
         // Receivers and nearby linemen can escort the runner, one blocker per defender.
         const blocked=new Set();
         if(entities.ballCarrier!==qb){
-          const blockers=[...Object.keys(playDef.routes||{}).map(k=>entities.players[k]),...entities.decor.filter(d=>d.team===OFF)];
+          const blockers=[...new Set([...Object.keys(playDef.routes||{}),...(playDef.blocks||[])]).values()].map(k=>entities.players[k]).concat(entities.decor.filter(d=>d.team===OFF));
           for(const blocker of blockers){
             if(blocker===entities.ballCarrier||blocker===qb)continue;
             let target=null,distance=110;
@@ -807,6 +827,9 @@ function tick(){
     }
   }
   if(game.phase==='tackle'&&!game.paused&&game.tackle&&now-game.tackle.startTime>=TACKLE_RESULT_DELAY)finishTackle();
+}
+function tick(){
+  advanceSimulation(updateSimulation);
   syncRunnerControls();
   draw();
   requestAnimationFrame(tick);

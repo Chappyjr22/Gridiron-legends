@@ -38,6 +38,11 @@ export function drawPlayDiagram(canvas,formationId,play){
     context.strokeStyle='#f4c542';context.lineWidth=2.5;context.beginPath();context.moveTo(points[0].x,points[0].y);points.slice(1).forEach(p=>context.lineTo(p.x,p.y));context.stroke();
     drawDiagramArrow(context,points[points.length-2],points[points.length-1],'#f4c542');
   }
+  if(play.type==='playaction'){
+    const qb=formation.players.qb,rb=formation.players.rb,a=diagramPoint(qb.x,qb.y,width,height),b=diagramPoint(rb.x,rb.y,width,height);
+    context.strokeStyle='#f4c542';context.setLineDash([2,2]);context.beginPath();context.moveTo(a.x,a.y);context.lineTo(b.x,b.y);context.stroke();context.setLineDash([]);
+    context.fillStyle='#f4c542';context.font='bold 9px monospace';context.fillText('FAKE',6,height-6);
+  }
   (play.blocks||[]).forEach(key=>{
     const player=formation.players[key];if(!player)return;
     const p=diagramPoint(player.x,player.y,width,height);context.strokeStyle='#fff';context.lineWidth=2;

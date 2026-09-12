@@ -1,3 +1,5 @@
+import {opponentBoxScore} from './leagueStats.js';
+import {validCheckpoint} from './checkpoints.js';
 import {COLLEGE_TEAMS,SCHOOL_TIERS} from './collegeData.js';
 import {createCollegeLeague,seedCollegePostseason,collegeGameAssessment,draftProjection} from './college.js';
 export {enterDraft,beginProCareer,draftProjection} from './college.js';
@@ -39,7 +41,8 @@ export function parseCareer(raw){
   const p=careerPlayer(c);if(!p||!ARCHETYPES[p.archetype]||!['accuracy','arm','release'].every(k=>Number.isFinite(p.attributes?.[k])&&p.attributes[k]>=0&&p.attributes[k]<=100))return null;
   if(!['xp','level','points'].every(k=>Number.isFinite(c[k])&&c[k]>=0)||!c.settings)return null;
   if(c.activeMatch&&![...c.league.schedule,...(c.postseason?.games||[])].some(g=>g.id===c.activeMatch&&g.status==='scheduled'))return null;
-  if(c.checkpoint&&(!c.activeMatch||!c.checkpoint.game||!c.checkpoint.stats||!['offense','afterPlay','turnover','cpuResult','kickoff'].includes(c.checkpoint.resume?.type)))return null;
+  if(!['easy','medium','hard','gridiron'].includes(c.settings.difficulty)||![2,3,4,5].includes(c.settings.quarterMinutes))return null;
+  if(c.checkpoint&&(!c.activeMatch||!validCheckpoint(c.checkpoint,c)))return null;
   return c;
  }catch{return null;}
 }
@@ -88,6 +91,10 @@ export function completeCareerGame(c,gameId,userScore,cpuScore,matchStats){
  const stats={...emptyStats(),...(matchStats.players[c.playerId]||{}),games:1};
  addStats(c.totals,stats);addStats(c.seasonStats,stats);
  const opponent=League.findTeamState(c.league,home?match.awayTeamId:match.homeTeamId);
+ if(matchStats.opponentDrives){
+  Object.assign(match.boxScore.players,opponentBoxScore(opponent,matchStats.opponentDrives,`${c.careerId}-${gameId}`));
+  match.boxScore.teamSources={[c.teamId]:'played',[opponent.id]:'simulated'};
+ }
  const assessment=c.stage==='college'?collegeGameAssessment(c,stats,userScore>cpuScore,opponent):null;
  const breakdown=xpBreakdown(stats,userScore>cpuScore);
  if(assessment)breakdown.push({label:'Weekly development goal',xp:assessment.goal.xp});

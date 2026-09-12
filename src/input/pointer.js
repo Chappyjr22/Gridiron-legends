@@ -26,7 +26,7 @@ function beginTapPass(point){
     const distance=Math.hypot(point.x-pos.cx,point.y-pos.cy);
     if(distance<best){best=distance;playerKey=key;}
   });
-  entities.pendingTapThrow={playerKey:best<=36?playerKey:null,target:{x:point.x,y:point.y},releaseAt:simulationNow()+240};
+  entities.pendingTapThrow={pointerId:activePointer,playerKey:best<=36?playerKey:null,target:{x:point.x,y:point.y},releaseAt:simulationNow()+240};
 }
 let activePointer=null,pendingRunTap=null;
 canvas.addEventListener('pointerdown',ev=>{
@@ -119,6 +119,7 @@ canvas.addEventListener('pointerup',ev=>{
 });
 function cancelPointer(ev){
   if(ev&&activePointer!==null&&ev.pointerId!==activePointer)return;
+  if(activePointer!==null&&entities.pendingTapThrow?.pointerId===activePointer)entities.pendingTapThrow=null;
   activePointer=null;pendingRunTap=null;
   editState.dragEntity=null;
   interaction.aiming=false;interaction.steering=false;
