@@ -44,6 +44,8 @@ function updateTitle(){
  paintMenuPlayer(el('title-player'),team,player?.skin??2);
 }
 function setCareerTab(tab){
+ el('career-hub').dataset.view=tab;
+ if(tab==='player')setPlayerView('upgrades');
  for(const button of document.querySelectorAll('[data-career-tab]')){
   const active=button.dataset.careerTab===tab;
   button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;
@@ -53,6 +55,14 @@ function setCareerTab(tab){
   panel.hidden=!active;
   if(opening)panel.scrollTop=0;
  }
+}
+function setPlayerView(view){
+ for(const button of document.querySelectorAll('[data-player-view]')){
+  const active=button.dataset.playerView===view;
+  button.setAttribute('aria-pressed',String(active));button.classList.toggle('gold',active);button.classList.toggle('blue',!active);
+  el(`player-${button.dataset.playerView}-view`).hidden=!active;
+ }
+ el('career-player-panel').scrollTop=0;
 }
 function render(){
  updateTitle();
@@ -68,6 +78,8 @@ function render(){
  el('career-season').textContent=`Season ${career.league.season} · ${career.postseason?'Playoffs':`Week ${career.league.week}`} · ${recordLabel(team)}`;
  el('career-level').textContent=`Level ${career.level} · ${career.xp}/100 XP · ${career.points} upgrade ${career.points===1?'point':'points'}`;
  el('career-xp').value=career.xp;
+ el('career-points').textContent=`${career.points} ${career.points===1?'point':'points'} available`;
+ el('career-weekly-goal').textContent=match?'Win your matchup. Earn XP through your play and develop your quarterback.':'Season complete. Your next chapter is ready.';
  const s=career.seasonStats;el('career-yards').textContent=s.passingYards;el('career-td').textContent=s.passingTD;el('career-int').textContent=s.interceptions;el('career-stat-line').textContent=`${s.passingYards} YDS · ${s.passingTD} TD · ${s.interceptions} INT`;
  el('career-completions').textContent=`${s.completions}/${s.attempts} completed · ${s.sacks} sacks · ${s.games} games`;
  const t=career.totals;el('career-lifetime').textContent=`Career: ${t.passingYards} passing yards · ${t.passingTD} TD · ${t.games} games`;
@@ -116,6 +128,20 @@ function launch(){
 }
 export function initCareer(){
  initCareerExperience(()=>career,persist);
+ for(const b of document.querySelectorAll('[data-player-view]'))b.onclick=()=>setPlayerView(b.dataset.playerView);
+ el('career-open-progress').onclick=()=>el('career-progress-dialog').showModal();
+ el('career-progress-close').onclick=()=>el('career-progress-dialog').close();
+ const updateSaveIndicator=()=>{
+  const text=el('career-quiet-save').textContent;
+  const warning=/failed|unavailable|two versions|sign in|newer|changed|connect to/i.test(text);
+  const syncing=/checking|saving|waiting|syncing/i.test(text);
+  const cloud=/saved to cloud/i.test(text);
+  el('career-save-label').textContent=warning?'Check':syncing?'Syncing':cloud?'Cloud':'Device';
+  el('career-open-backups').dataset.state=warning?'warning':syncing?'syncing':cloud?'cloud':'device';
+  el('career-open-backups').title=text;
+  el('career-open-backups').setAttribute('aria-description',text);
+ };
+ new MutationObserver(updateSaveIndicator).observe(el('career-quiet-save'),{childList:true,characterData:true,subtree:true});updateSaveIndicator();
  initCollegeUI(()=>career,persist,render);
  for(const button of document.querySelectorAll('[data-career-tab]')){
   button.addEventListener('click',()=>setCareerTab(button.dataset.careerTab));
@@ -174,7 +200,7 @@ export function initCareer(){
   }catch(error){el('career-gateway-error').textContent=error.message;}
  });
  el('league-stat-team').innerHTML='<option value="">All teams</option>'+League.TEAMS.map(t=>`<option value="${t.id}">${escape(League.fullName(t))}</option>`).join('');
- for(const id of ['career-stat-scope','league-stat-team','league-stat-category'])el(id).addEventListener('change',()=>{if(career)renderCareerStats(career);});
+ for(const id of ['career-stat-scope','league-stat-team','league-stat-category','league-stat-metric'])el(id).addEventListener('change',()=>{if(career)renderCareerStats(career);});
  el('career-back').addEventListener('click',()=>{restoreExhibition();el('career-screen').classList.remove('show');el('start-screen').classList.add('show');});
  el('career-create').addEventListener('submit',event=>{
   event.preventDefault();if(career&&!creating)return;

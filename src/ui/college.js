@@ -32,9 +32,10 @@ export function renderCollegeCareer(c){
  if(college){
   const projection=Career.draftProjection(c),school=COLLEGE_TEAMS.find(t=>t.id===c.teamId),tier=SCHOOL_TIERS[school.tier];
   el('college-progress').innerHTML=`<h3>Road to the draft</h3><p>${projection.label}</p><p>${tier.expectation}. Weekly goal: complete ${Math.round(tier.goalCompletions*100)}% of passes with at most ${tier.goalTurnovers} INT (6+ attempts), +${tier.goalXP} XP.</p><details class="scouting-help"><summary>What scouts look for</summary><p>Scouts value efficiency, ball security, wins and opponent strength. Difficulty is considered; longer quarters do not directly boost draft stock.</p></details>`;
+  el('career-weekly-goal').textContent=ready?'Senior season complete. See where you land in the draft.':`${Math.round(tier.goalCompletions*100)}% completions · ${tier.goalTurnovers} INT max · 6+ attempts. Earn +${tier.goalXP} XP.`;
   el('career-season').textContent=`College senior · ${c.postseason?'Postseason':'Week '+c.league.week+' / 12'} · ${League.findTeamState(c.league,c.teamId).record.wins}–${League.findTeamState(c.league,c.teamId).record.losses}`;
   el('career-next-season').hidden=true;
-  el('career-matchup').textContent+=' · '+projection.label;
+
   if(ready){el('career-matchup').textContent='Senior season complete. Your next chapter awaits.';el('career-draft').textContent=c.draft?'View draft selection':'Enter the draft';}
  }else if(c.collegeArchive){
   const a=c.collegeArchive,team=League.findTeam(a.draft.teamId);

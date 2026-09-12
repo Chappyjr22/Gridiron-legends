@@ -9,7 +9,7 @@ test('career submenu creates and switches independent saves',async({page})=>{
  await page.getByRole('button',{name:'My careers',exact:true}).click();await expect(page.locator('#career-list button')).toHaveCount(2);
  await page.locator('#career-list button').filter({hasText:'First QB'}).click();await expect(page.locator('#career-player-name')).toHaveText('First QB');
  await page.reload();await page.getByRole('button',{name:'Career Mode',exact:true}).click();await page.getByRole('button',{name:'Continue last career',exact:true}).click();await expect(page.locator('#career-player-name')).toHaveText('First QB');
- await page.getByRole('tab',{name:'Player',exact:true}).click();await page.locator('#career-stat-scope').selectOption('last');await expect(page.locator('#career-qb-stats')).toContainText('No completed game');
+ await page.getByRole('tab',{name:'Player',exact:true}).click();await page.getByRole('button',{name:'Stats',exact:true}).click();await page.locator('#career-stat-scope').selectOption('last');await expect(page.locator('#career-qb-stats')).toContainText('No completed game');
 });
 test('short landscape playbook pages without losing formation',async({browser})=>{
  const context=await browser.newContext({viewport:{width:844,height:304},hasTouch:true});const page=await context.newPage();await page.goto('/');await page.locator('#btn-practice').tap();

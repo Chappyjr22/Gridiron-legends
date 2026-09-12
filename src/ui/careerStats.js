@@ -1,14 +1,25 @@
 import {seasonPlayerRows} from '../career/leagueStats.js';
+const el=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const rate=(n,d,suffix='')=>d?`${(n/d).toFixed(1)}${suffix}`:'—';
-function table(headers,rows){return `<table class="player-stats-table"><thead><tr>${headers.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;}
+function tiles(values){return `<dl class="stat-tiles">${values.map(([label,value])=>`<div><dt>${esc(label)}</dt><dd>${esc(value)}</dd></div>`).join('')}</dl>`;}
+const metrics={
+ passing:[['passingYards','Passing yards'],['passingTD','Touchdowns'],['completionPct','Completion %'],['completions','Completions'],['attempts','Attempts'],['interceptions','Interceptions'],['sacks','Sacks']],
+ receiving:[['receivingYards','Receiving yards'],['receivingTD','Touchdowns'],['receptions','Receptions'],['targets','Targets']],
+ rushing:[['rushingYards','Rushing yards'],['rushingTD','Touchdowns'],['carries','Carries']]
+};
+const score=(s,key)=>!s?null:key==='completionPct'?(s.attempts?s.completions*100/s.attempts:null):s[key];
 export function renderCareerStats(c){
- const scope=document.getElementById('career-stat-scope').value,s=scope==='last'?c.lastResult?.stats:scope==='career'?c.totals:c.seasonStats;
- document.getElementById('career-qb-stats').innerHTML=s?table(['CMP / ATT','CMP %','YDS','TD','INT','Y/A','SACKS','RUSH YDS','RUSH TD'],[[`${s.completions}/${s.attempts}`,rate(s.completions*100,s.attempts,'%'),s.passingYards,s.passingTD,s.interceptions,rate(s.passingYards,s.attempts),s.sacks,s.rushingYards,s.rushingTD]]):'<p>No completed game yet.</p>';
- const teamId=document.getElementById('league-stat-team').value,category=document.getElementById('league-stat-category').value;
- const data=seasonPlayerRows(c),key=category==='passing'?'passingYards':category==='receiving'?'receivingYards':'rushingYards';
- const rows=data.rows.filter(r=>(!teamId||r.team.id===teamId)&&(category==='passing'?r.player.slot==='QB':category==='receiving'?/^(WR|TE|RB)/.test(r.player.slot):/^(RB|QB)/.test(r.player.slot))).sort((a,b)=>(b.stats?.[key]??-1)-(a.stats?.[key]??-1));
- const headers=category==='passing'?['PLAYER','TEAM','GP','CMP/ATT','YDS','TD','INT','CMP %','Y/A','SACKS']:category==='receiving'?['PLAYER','TEAM','GP','TGT','REC','YDS','TD','CATCH %','Y/REC']:['PLAYER','TEAM','GP','CAR','YDS','TD','Y/CAR'];
- document.getElementById('league-player-stats').innerHTML=table(headers,rows.map(({team,player,stats:s})=>{const prefix=[`${player.firstName} ${player.lastName}`,team.abbr];if(!s)return [...prefix,...headers.slice(2).map(()=> '—')];return [...prefix,s.games,...(category==='passing'?[`${s.completions}/${s.attempts}`,s.passingYards,s.passingTD,s.interceptions,rate(s.completions*100,s.attempts,'%'),rate(s.passingYards,s.attempts),s.sacks]:category==='receiving'?[s.targets,s.receptions,s.receivingYards,s.receivingTD,rate(s.receptions*100,s.targets,'%'),rate(s.receivingYards,s.receptions)]:[s.carries,s.rushingYards,s.rushingTD,rate(s.rushingYards,s.carries)])];}));
- document.getElementById('league-stat-coverage').textContent=`Current season including playoffs. ${data.covered}/${data.games} completed games have box scores. Your team uses recorded plays. Opponents and other teams use simulated production. Earlier untracked games show —, not zero. GP counts tracked appearances.`;
+ const scope=el('career-stat-scope').value,s=scope==='last'?c.lastResult?.stats:scope==='career'?c.totals:c.seasonStats;
+ el('career-qb-stats').innerHTML=s?tiles([['Passing yards',s.passingYards],['Touchdowns',s.passingTD],['Completion %',rate(s.completions*100,s.attempts,'%')],['CMP / ATT',`${s.completions}/${s.attempts}`],['Interceptions',s.interceptions],['Yards / attempt',rate(s.passingYards,s.attempts)],['Sacks',s.sacks],['Rushing yards',s.rushingYards],['Rushing TD',s.rushingTD]]):'<p>No completed game yet.</p>';
+ const teamId=el('league-stat-team').value,category=el('league-stat-category').value,select=el('league-stat-metric');
+ if(select.dataset.category!==category){select.innerHTML=metrics[category].map(([key,label])=>`<option value="${key}">${label}</option>`).join('');select.dataset.category=category;}
+ const key=select.value,data=seasonPlayerRows(c);
+ const rows=data.rows.filter(r=>(!teamId||r.team.id===teamId)&&(category==='passing'?r.player.slot==='QB':category==='receiving'?/^(WR|TE|RB)/.test(r.player.slot):/^(RB|QB)/.test(r.player.slot))).sort((a,b)=>(score(b.stats,key)??-1)-(score(a.stats,key)??-1)||a.player.lastName.localeCompare(b.player.lastName));
+ const label=metrics[category].find(m=>m[0]===key)[1];
+ el('league-player-stats').innerHTML=`<p class="leaderboard-caption">${esc(label)} · highest first${key==='completionPct'?' · all players with a pass attempt':''}</p><ol class="leaderboard">${rows.map(({team,player,stats:s})=>{
+  const value=score(s,key),display=value==null?'—':key==='completionPct'?value.toFixed(1)+'%':value;
+  return `<li><span class="leader-name">${esc(player.firstName+' '+player.lastName)}<small>${esc(team.abbr)} · ${esc(player.slot)} · ${s?s.games+' tracked games':'Not tracked yet'}</small></span><strong>${esc(display)}</strong></li>`;
+ }).join('')}</ol>`;
+ el('league-stat-coverage').textContent=`Current season including playoffs. ${data.covered}/${data.games} completed games have box scores. Your team uses recorded plays. Opponents and other teams use simulated production. Earlier untracked games show —, not zero. GP counts tracked appearances.`;
 }
