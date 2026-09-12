@@ -10,10 +10,10 @@ export async function harness(){
   function element(id){
     if(elements.has(id))return elements.get(id);
     const classes=new Set(),events={};
-    const e={id,events,children:[],style:{setProperty(){}},dataset:{},value:'',innerHTML:'',textContent:'',width:800,height:380,
+    const e={id,events,children:[],style:{setProperty(){}},dataset:{},value:'',innerHTML:'',textContent:'',width:800,height:420,
       classList:{add(...v){v.forEach(x=>classes.add(x));},remove(...v){v.forEach(x=>classes.delete(x));},contains(x){return classes.has(x);},toggle(x,on){if(on??!classes.has(x))classes.add(x);else classes.delete(x);}},
       addEventListener(type,fn){(events[type]??=[]).push(fn);},appendChild(child){this.children.push(child);},insertBefore(child){this.children.push(child);},
-      setAttribute(k,v){this[k]=v;},setPointerCapture(){},getBoundingClientRect(){return {left:0,top:0,width:800,height:380};},focus(){},select(){},getContext(){return {};}};
+      setAttribute(k,v){this[k]=v;},setPointerCapture(){},getBoundingClientRect(){return {left:0,top:0,width:800,height:420};},focus(){},select(){},getContext(){return {};}};
     elements.set(id,e);return e;
   }
   const document={getElementById:element,querySelectorAll(){return [];},createElement(type){return element(type+elements.size);},addEventListener(){}};
@@ -47,6 +47,6 @@ export async function harness(){
   engine.ensureLoopStarted();
   function step(ms=16){now+=ms;const cb=frame;frame=null;assert.ok(cb);cb(now);}
   function click(id){for(const fn of element(id).events.click??[])fn({target:element(id)});}
-  function event(type,props={}){for(const fn of element('field').events[type]??[])fn({pointerId:1,clientX:615,clientY:191,...props});}
+  function event(type,props={}){for(const fn of element('field').events[type]??[])fn({pointerId:1,clientX:615,clientY:231,...props});}
   return {...state,engine,hud,interaction,editState,load,step,click,event,element,setRandom(v){random=v;},get now(){return now;}};
 }

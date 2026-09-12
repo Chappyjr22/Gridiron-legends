@@ -10,6 +10,7 @@ import { PLAYS } from '../data/plays.js';
 import { interaction } from '../input/interactionState.js';
 import { drawPixelTurf, drawPixelStadium, drawPixelEndZone, drawPixelNumber, END_ZONE_STYLE } from './field.js';
 import { drawPlayer, toCanvas, drawRoutePreview } from './players.js';
+import { SCENE_TOP } from './sceneLayout.js';
 
 export function drawArcPath(x0,y0,x1,y1,arcHeight,color,width){
   ctx.strokeStyle=color;ctx.lineWidth=width;
@@ -39,7 +40,8 @@ function drawTackleImpact(){
   });
 }
 export function draw(){
-  const w=canvas.width,h=canvas.height;
+  const w=canvas.width;
+  ctx.setTransform(1,0,0,1,0,SCENE_TOP);
   const camPx=game.cameraYard*XPX;
   const xAt=(yard)=>BASE_X-(yard*XPX-camPx);
   ctx.imageSmoothingEnabled=false;

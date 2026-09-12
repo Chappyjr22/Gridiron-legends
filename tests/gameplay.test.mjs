@@ -161,17 +161,17 @@ await test('a paused throw cannot be released by a delayed pointer-up',async h=>
 await test('drag from the RB on a pass play stays a pass, but a tap hands off',async h=>{
  await h.load('src/input/pointer.js');h.engine.startPractice();h.engine.choosePlay('trips_slants');
  const {toCanvas}=await h.load('src/rendering/players.js');let p=toCanvas(h.entities.players.rb);
- h.event('pointerdown',{clientX:p.cx,clientY:p.cy});assert.equal(h.game.phase,'presnap');
- h.event('pointermove',{clientX:p.cx+90,clientY:p.cy});assert.equal(h.interaction.aiming,true);assert.equal(h.game.runActive,false);
- h.event('pointerup',{clientX:p.cx+90,clientY:p.cy});assert.equal(h.game.playFacts.threw,true);assert.equal(h.game.runActive,false);
+ h.event('pointerdown',{clientX:p.cx,clientY:p.cy+40});assert.equal(h.game.phase,'presnap');
+ h.event('pointermove',{clientX:p.cx+90,clientY:p.cy+40});assert.equal(h.interaction.aiming,true);assert.equal(h.game.runActive,false);
+ h.event('pointerup',{clientX:p.cx+90,clientY:p.cy+40});assert.equal(h.game.playFacts.threw,true);assert.equal(h.game.runActive,false);
  h.engine.initPlay();h.engine.choosePlay('trips_slants');p=toCanvas(h.entities.players.rb);
- h.event('pointerdown',{clientX:p.cx,clientY:p.cy});h.event('pointerup',{clientX:p.cx,clientY:p.cy});assert.equal(h.game.runActive,true);
+ h.event('pointerdown',{clientX:p.cx,clientY:p.cy+40});h.event('pointerup',{clientX:p.cx,clientY:p.cy+40});assert.equal(h.game.runActive,true);
 });
 await test('cancelled or paused RB taps cannot snap a run',async h=>{
  await h.load('src/input/pointer.js');h.engine.startPractice();h.engine.choosePlay('trips_slants');
  const {toCanvas}=await h.load('src/rendering/players.js'),p=toCanvas(h.entities.players.rb);
- h.event('pointerdown',{clientX:p.cx,clientY:p.cy});h.event('pointercancel');h.event('pointerup');assert.equal(h.game.phase,'presnap');
- h.event('pointerdown',{clientX:p.cx,clientY:p.cy});h.game.paused=true;h.event('pointerup');assert.equal(h.game.runActive,false);
+ h.event('pointerdown',{clientX:p.cx,clientY:p.cy+40});h.event('pointercancel');h.event('pointerup');assert.equal(h.game.phase,'presnap');
+ h.event('pointerdown',{clientX:p.cx,clientY:p.cy+40});h.game.paused=true;h.event('pointerup');assert.equal(h.game.runActive,false);
 });
 await test('route turns spend distance without overshoot and prediction leaves players unchanged',async h=>{
  const {advanceRoute,passingRead}=await h.load('src/simulation/passing.js');
@@ -207,7 +207,7 @@ await test('cancelled tap is discarded; completed tap survives capture release',
 await test('queued field taps retain world destination on resize',async h=>{
  await h.load('src/input/pointer.js');h.engine.startPractice();h.engine.choosePlay('trips_slants');h.game.passMode='tap';
  h.event('pointerdown',{clientX:100,clientY:150});const target=h.entities.pendingTapThrow.target;
- const viewport=await h.load('src/rendering/viewport.js');viewport.fitFieldViewport(1200,380);assert.equal(target.x,500);
+ const viewport=await h.load('src/rendering/viewport.js');viewport.fitFieldViewport(1200,420);assert.equal(target.x,500);
 });
 await test('device controls override stale career checkpoint preferences',async h=>{
  h.engine.startNewGame({career:true});const saved=h.engine.getCheckpoint({type:'offense'});

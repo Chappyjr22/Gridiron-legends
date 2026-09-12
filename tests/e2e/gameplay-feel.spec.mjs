@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 async function ready(page){await page.goto('/');await page.locator('#btn-practice').click();await page.locator('[data-play="trips_slants"]').click();}
-async function rbPoint(page){return page.evaluate(async()=>{const {entities}=await import('/src/state/gameState.js'),{toCanvas}=await import('/src/rendering/players.js'),p=toCanvas(entities.players.rb),canvas=document.getElementById('field'),r=canvas.getBoundingClientRect();return {x:r.x+p.cx*r.width/canvas.width,y:r.y+p.cy*r.height/canvas.height};});}
+async function rbPoint(page){return page.evaluate(async()=>{const {entities}=await import('/src/state/gameState.js'),{toCanvas}=await import('/src/rendering/players.js'),p=toCanvas(entities.players.rb),canvas=document.getElementById('field'),r=canvas.getBoundingClientRect();return {x:r.x+p.cx*r.width/canvas.width,y:r.y+(p.cy+40)*r.height/canvas.height};});}
 for(const touch of [false,true])test(`RB-origin drag remains a pass (${touch?'touch':'mouse'})`,async({browser})=>{
  const context=await browser.newContext({viewport:{width:844,height:390},hasTouch:true}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));await ready(page);
  const p=await rbPoint(page);

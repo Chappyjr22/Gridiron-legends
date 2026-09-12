@@ -2,12 +2,13 @@ import {entities} from '../state/gameState.js';
 import {canvas} from './canvas.js';
 import {BASE_X,setFieldWidth} from '../state/constants.js';
 import {interaction} from '../input/interactionState.js';
+import {SCENE_HEIGHT} from './sceneLayout.js';
 
 export function fitFieldViewport(width,height){
   if(width<=0||height<=0)return;
-  const next=Math.max(800,Math.min(1600,Math.round(width/height*380)));
-  const scale=Math.min(width/next,height/380,2);
-  canvas.style.width=`${Math.floor(next*scale)}px`;canvas.style.height=`${Math.floor(380*scale)}px`;
+  const next=Math.max(800,Math.min(1600,Math.round(width/height*SCENE_HEIGHT)));
+  const scale=Math.min(width/next,height/SCENE_HEIGHT,2);
+  canvas.style.width=`${Math.floor(next*scale)}px`;canvas.style.height=`${Math.floor(SCENE_HEIGHT*scale)}px`;
   if(next===canvas.width)return;
   const previous=BASE_X;
   canvas.width=next;

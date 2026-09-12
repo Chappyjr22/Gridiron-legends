@@ -1,5 +1,6 @@
 import { simulationNow } from '../state/clock.js';
 import { canvas } from '../rendering/canvas.js';
+import { SCENE_TOP } from '../rendering/sceneLayout.js';
 import { toCanvas } from '../rendering/players.js';
 import { game, entities } from '../state/gameState.js';
 import { XPX, BASE_X, MIN_PULL, clamp } from '../state/constants.js';
@@ -12,7 +13,7 @@ import { findNearEntity, updateEditJSON } from './editControls.js';
 
 function pointerPos(ev){
   const r=canvas.getBoundingClientRect();
-  return {x:(ev.clientX-r.left)*(canvas.width/r.width), y:(ev.clientY-r.top)*(canvas.height/r.height)};
+  return {x:(ev.clientX-r.left)*(canvas.width/r.width), y:(ev.clientY-r.top)*(canvas.height/r.height)-SCENE_TOP};
 }
 function pointNearPlayer(point,player,radius=32){
   const pos=toCanvas(player);

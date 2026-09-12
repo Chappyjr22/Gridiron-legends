@@ -2,6 +2,8 @@ import { canvas, ctx } from './canvas.js';
 import { LAT_MIN, LAT_MAX } from '../state/constants.js';
 import { goalPostImage, spriteState } from './spriteSheets.js';
 import { drawSidelinePlayer } from './sidelinePlayers.js';
+import { SCENE_TOP, FIELD_HEIGHT } from './sceneLayout.js';
+import { stadiumArt, drawGeneratedTurf, drawStadiumEquipment } from './stadiumArt.js';
 
 export const PIXEL_DIGITS={
   '0':['111','101','101','101','111'],
@@ -172,14 +174,16 @@ export function drawPixelEndZone(xAt,goalYard,backYard,style,rotation){
   }
 }
 export function drawPixelTurf(xAt,w){
-  ctx.fillStyle='#174b22';ctx.fillRect(0,0,w,canvas.height);
+  ctx.fillStyle='#285f28';ctx.fillRect(0,-SCENE_TOP,w,FIELD_HEIGHT+SCENE_TOP);
+  const textured=drawGeneratedTurf(xAt,w,LAT_MIN,LAT_MAX);
   for(let yard=-10;yard<=110;yard+=5){
     const x0=xAt(yard),x1=xAt(yard+5);
     const lo=Math.round(Math.min(x0,x1)),hi=Math.round(Math.max(x0,x1));
     if(hi<0||lo>w)continue;
-    ctx.fillStyle=(Math.floor(yard/5)&1)?'#2f7d35':'#37883b';
+    ctx.fillStyle=textured?((Math.floor(yard/5)&1)?'rgba(17,62,25,0.15)':'rgba(84,141,47,0.05)'):((Math.floor(yard/5)&1)?'#2f7d35':'#37883b');
     ctx.fillRect(lo,LAT_MIN,hi-lo,LAT_MAX-LAT_MIN);
   }
+  if(textured)return;
   for(let yard=-10;yard<=110;yard++){
     const baseX=Math.round(xAt(yard));
     if(baseX<-6||baseX>w+6)continue;
@@ -200,44 +204,36 @@ export function drawTinyPerson(x,y,shirt,facesDown){
   ctx.fillStyle='#f2f0dc';ctx.fillRect(x-4,y+dir,1,3*dir);ctx.fillRect(x+4,y+dir,1,3*dir);
 }
 export function drawPixelStadium(xAt,w){
-  ctx.fillStyle='#070b09';ctx.fillRect(0,0,w,11);
-  ctx.fillStyle='#285f28';ctx.fillRect(0,11,w,LAT_MIN-11);
-  ctx.fillStyle='#4d9937';ctx.fillRect(0,LAT_MAX,w,canvas.height-LAT_MAX);
-  ctx.fillStyle='#d7e8c8';ctx.fillRect(0,11,w,2);
-  ctx.fillStyle='#8fc96a';ctx.fillRect(0,LAT_MIN-5,w,3);
+  ctx.fillStyle='#172638';ctx.fillRect(0,-SCENE_TOP,w,26);
+  if(stadiumArt.crowd){
+    const anchor=Math.round(xAt(0)),start=((anchor%280)+280)%280-280;
+    for(let x=start;x<w;x+=280)ctx.drawImage(stadiumArt.crowd,x,-SCENE_TOP);
+  }
+  ctx.fillStyle='#4c8434';ctx.fillRect(0,-14,w,LAT_MIN+14);
+  ctx.fillStyle='#718164';ctx.fillRect(0,-14,w,3);
+  ctx.fillStyle='#98b775';ctx.fillRect(0,LAT_MIN-7,w,4);
   ctx.fillStyle='#f0d43f';
-  for(let x=0;x<w;x+=18)ctx.fillRect(x,LAT_MIN-3,11,1);
-
-  const crowdColors=['#f05b2b','#f5f1dc','#2f72b7','#e3c134','#a93232','#8d58a6'];
-  for(let yard=-10;yard<=110;yard+=2.5){
+  const stripeStart=((Math.round(xAt(0))%18)+18)%18-18;
+  for(let x=stripeStart;x<w;x+=18)ctx.fillRect(x,LAT_MIN-4,11,1);
+  for(let yard=6.25,index=0;yard<=96.25;yard+=10,index++){
     const x=Math.round(xAt(yard));
-    if(x<-8||x>w+8)continue;
-    const seed=Math.abs(Math.round(yard*37));
-    ctx.fillStyle='#d49a68';ctx.fillRect(x-1,1+(seed%2),3,3);
-    ctx.fillStyle=crowdColors[seed%crowdColors.length];ctx.fillRect(x-3,4,7,5);
-    ctx.fillStyle='#e7e5d5';ctx.fillRect(x-3,9,2,2);ctx.fillRect(x+2,9,2,2);
+    if(x<-50||x>w+50)continue;
+    drawStadiumEquipment(x,12,index);
   }
   for(let yard=5,index=0;yard<=95;yard+=2.5,index++){
     const x=Math.round(xAt(yard));
-    if(x<-10||x>w+10)continue;
-    drawSidelinePlayer(x,LAT_MIN-3,index);
+    if(x<-20||x>w+20)continue;
+    drawSidelinePlayer(x,LAT_MIN-5,index,false,30);
   }
-  for(let yard=0;yard<=100;yard+=20){
-    const x=Math.round(xAt(yard+4));
-    if(x<-12||x>w+12)continue;
-    ctx.fillStyle='#f18419';ctx.fillRect(x-5,LAT_MIN-10,10,5);
-    ctx.fillStyle='#101514';ctx.fillRect(x-4,LAT_MIN-9,8,2);
-    ctx.fillStyle='#ffd24a';ctx.fillRect(x-1,LAT_MIN-12,3,2);
-  }
-  ctx.fillStyle='#245f2a';ctx.fillRect(0,LAT_MAX+4,w,canvas.height-LAT_MAX-4);
-  ctx.fillStyle='#f3d53d';
-  for(let x=-8;x<w;x+=18)ctx.fillRect(x,LAT_MAX+9,12,2);
+  ctx.fillStyle='#3d7730';ctx.fillRect(0,LAT_MAX,w,FIELD_HEIGHT-LAT_MAX);
   ctx.fillStyle='#a8d77c';ctx.fillRect(0,LAT_MAX+4,w,2);
+  ctx.fillStyle='#f3d53d';
+  for(let x=stripeStart;x<w;x+=18)ctx.fillRect(x,LAT_MAX+9,12,2);
   for(let yard=5,index=0;yard<=95;yard+=2.5,index++){
-    if((yard+5)%20===0)continue; // Keep the orange sideline markers unobstructed.
+    if((yard+5)%20===0)continue;
     const x=Math.round(xAt(yard));
     if(x<-16||x>w+16)continue;
-    drawSidelinePlayer(x,canvas.height-1,index,true);
+    drawSidelinePlayer(x,FIELD_HEIGHT-1,index,true);
   }
   for(let yard=-5;yard<=105;yard+=20){
     const x=Math.round(xAt(yard));

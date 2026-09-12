@@ -57,11 +57,11 @@ function coloredFrame(team,pose,skin){
   context.putImageData(image,0,0);cache.set(key,out);return out;
 }
 
-export function drawSidelinePlayer(x,feetY,index,away=false){
+export function drawSidelinePlayer(x,feetY,index,away=false,height=22){
   if(frames.length!==4)return;
   const pose=index%4,skin=Math.floor(index/3)%SKIN_PALETTES.length;
   const frame=coloredFrame(away?DEF:OFF,pose,skin);
-  const height=22,width=Math.round(frame.width/frame.height*height);
+  const width=Math.round(frame.width/frame.height*height);
   ctx.imageSmoothingEnabled=false;
   ctx.drawImage(frame,Math.round(x-width/2),feetY-height,width,height);
 }
