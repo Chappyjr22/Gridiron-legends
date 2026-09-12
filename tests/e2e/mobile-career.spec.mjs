@@ -24,6 +24,9 @@ for(const viewport of [{width:844,height:304},{width:844,height:390},{width:932,
   await expect(page.locator('#career-progress-dialog')).toBeVisible();
   await expect(page.getByRole('button',{name:'Back to Player',exact:true})).toBeInViewport({ratio:1});
   await page.screenshot({path:`test-results/mobile-story-${viewport.width}-${viewport.height}.png`});
+  await page.getByRole('button',{name:'Info',exact:true}).tap();
+  await expect(page.locator('#scouting-info')).toBeVisible();
+  await page.getByRole('button',{name:'Back to story',exact:true}).tap();
   await page.getByRole('button',{name:'Back to Player',exact:true}).tap();
   await page.getByRole('button',{name:'Stats',exact:true}).tap();
   await expect(page.locator('.stat-tiles')).toBeVisible();
@@ -36,7 +39,10 @@ for(const viewport of [{width:844,height:304},{width:844,height:390},{width:932,
   expect(await panel.evaluate(e=>e.scrollTop)).toBe(0);
   await expect(page.getByRole('heading',{name:'Develop your quarterback',exact:true})).toBeInViewport();
   await page.getByRole('tab',{name:'League',exact:true}).tap();
+  await expect(page.locator('.leaderboard li').first()).toBeInViewport();
+  await page.getByRole('button',{name:'Filters',exact:true}).tap();
   await page.locator('#league-stat-metric').selectOption('passingTD');
+  await page.getByRole('button',{name:'Show rankings',exact:true}).tap();
   await expect(page.locator('.leaderboard-caption')).toContainText('Touchdowns');
   expect(await page.locator('#career-league-panel').evaluate(e=>e.scrollWidth<=e.clientWidth+1)).toBe(true);
   await page.screenshot({path:`test-results/mobile-leaders-${viewport.width}-${viewport.height}.png`});
@@ -45,7 +51,7 @@ for(const viewport of [{width:844,height:304},{width:844,height:390},{width:932,
   const helmets=await page.locator('.helmet-matchup').boundingBox(),opponent=await page.locator('#career-next-opponent').boundingBox();
   expect(helmets.y+helmets.height).toBeLessThanOrEqual(opponent.y);
   await page.screenshot({path:`test-results/mobile-home-${viewport.width}-${viewport.height}.png`});
-  await page.getByRole('button',{name:'Save & backup',exact:true}).tap();
+  await page.getByRole('button',{name:'Career menu',exact:true}).tap();await page.getByRole('button',{name:'Save & backup',exact:true}).tap();
   await expect(page.locator('#career-quiet-save')).toBeVisible();
   await context.close();
  });

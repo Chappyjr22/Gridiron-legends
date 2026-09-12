@@ -19,13 +19,13 @@ for(const viewport of [{width:844,height:304},{width:844,height:390},{width:932,
   await expect(page.locator('#career-player-name')).toHaveText('Jacob Chapman');
   await expect(page.locator('#career-jersey-number')).toHaveText('7');
   await expect(page.locator('#career-home-panel')).toBeVisible();
-  await assertInViewport(page,'#career-back,#career-play,#career-open-player,.career-nav button');
+  await assertInViewport(page,'#career-menu-open,#career-play,#career-open-player,.career-nav button');
   const playBox=await page.locator('#career-play').boundingBox(),navBox=await page.locator('.career-nav').boundingBox();expect(playBox.y+playBox.height).toBeLessThanOrEqual(navBox.y);
   await page.screenshot({path:`test-results/ui-career-${viewport.width}-${viewport.height}.png`});
   await page.getByRole('tab',{name:'Player',exact:true}).tap();await expect(page.locator('#career-upgrades')).toBeVisible();
   await page.getByRole('tab',{name:'League',exact:true}).tap();await expect(page.locator('#career-standings')).toBeVisible();
   await page.getByRole('tab',{name:'Home',exact:true}).tap();
-  await page.getByRole('button',{name:'Save & backup',exact:true}).tap();await expect(page.locator('#career-backups')).toBeVisible();
+  await page.getByRole('button',{name:'Career menu',exact:true}).tap();await page.getByRole('button',{name:'Save & backup',exact:true}).tap();await expect(page.locator('#career-backups')).toBeVisible();
   await page.locator('#career-close-backups').tap();
   await page.getByRole('button',{name:'Play next game'}).tap();
   await assertInViewport(page,'#btn-pause');
