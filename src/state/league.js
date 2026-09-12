@@ -1,3 +1,4 @@
+import {simulatedBoxScore} from '../career/leagueStats.js';
 export const CONFERENCES={
   legacy:{id:'legacy',name:'Legacy Conference'},
   frontier:{id:'frontier',name:'Frontier Conference'}
@@ -235,16 +236,16 @@ export function simulateScore(franchise,game){
   if(!home||!away)return {homeScore:0,awayScore:0};
   const random=rng(hashString(game.id+':result'));
   const possessions=8+Math.floor(random()*4);
-  let homeScore=0,awayScore=0;
+  let homeScore=0,awayScore=0;const homeDrives=[],awayDrives=[];
   for(let possession=0;possession<possessions;possession++){
-    homeScore+=scoringDrive(home,away,random,1.5);
-    awayScore+=scoringDrive(away,home,random,0);
+    const hp=scoringDrive(home,away,random,1.5);homeScore+=hp;homeDrives.push(hp);
+    const ap=scoringDrive(away,home,random,0);awayScore+=ap;awayDrives.push(ap);
   }
-  if(homeScore===awayScore&&random()<0.78){
-    if(random()<0.54)homeScore+=random()<0.7?3:7;
-    else awayScore+=random()<0.7?3:7;
+  if(homeScore===awayScore&&(franchise.kind==='college'||random()<0.78)){
+    if(random()<0.54){const p=random()<0.7?3:7;homeScore+=p;homeDrives.push(p);}
+    else{const p=random()<0.7?3:7;awayScore+=p;awayDrives.push(p);}
   }
-  return {homeScore,awayScore};
+  return {homeScore,awayScore,boxScore:{source:"simulation",players:{...simulatedBoxScore(home,homeDrives,game.id+":home-stats"),...simulatedBoxScore(away,awayDrives,game.id+":away-stats")}}};
 }
 
 function applyResultToRecord(team,opponent,pointsFor,pointsAgainst){
@@ -280,13 +281,13 @@ export function simulateWeek(franchise,week=franchise?.week||1,excludeTeamId=nul
   getWeekGames(franchise,week).forEach(game=>{
     if(game.status==='completed'||(excludeTeamId&&(game.homeTeamId===excludeTeamId||game.awayTeamId===excludeTeamId)))return;
     const score=simulateScore(franchise,game);
-    if(recordGameResult(franchise,game.id,score.homeScore,score.awayScore,'simulation'))completed.push(game);
+    if(recordGameResult(franchise,game.id,score.homeScore,score.awayScore,'simulation')){game.boxScore=score.boxScore;completed.push(game);}
   });
   return completed;
 }
 
 function recordPercentage(record,prefix=''){
-  const wins=record[prefix+'Wins']||0,losses=record[prefix+'Losses']||0,ties=record[prefix+'Ties']||0;
+  const wins=record[prefix?prefix+'Wins':'wins']||0,losses=record[prefix?prefix+'Losses':'losses']||0,ties=record[prefix?prefix+'Ties':'ties']||0;
   const games=wins+losses+ties;
   return games?(wins+ties*0.5)/games:0;
 }
@@ -323,4 +324,8 @@ export function loadFranchise(){
 export function saveFranchise(franchise){
   try{localStorage.setItem('gridironLegendsFranchiseV1',JSON.stringify(ensureLeagueState(franchise)));return true;}
   catch(error){return false;}
+}
+
+export function refreshRatings(franchise){
+  franchise.teams.forEach(team=>{team.ratings=calculateRatings(team.roster,team.coaches);});
 }

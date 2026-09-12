@@ -1,0 +1,540 @@
+{
+  "kind": "Node source-only, browser rendering stubbed",
+  "base": "db4bbf79bf11b161283a50b660cac73f025f6110",
+  "results": [
+    {
+      "id": "AUD-001",
+      "evidence": {
+        "before": {
+          "flight": true,
+          "start": 1091,
+          "duration": 838.0662247922971
+        },
+        "flightWhilePaused": true,
+        "flightAfter16msResume": false,
+        "phase": "result",
+        "message": "Incomplete pass."
+      }
+    },
+    {
+      "id": "AUD-002",
+      "evidence": {
+        "tackleSpot": 99.6,
+        "score": 6,
+        "message": "TOUCHDOWN!\nExtra point missed.\nBOS 6  |  SEA 0"
+      }
+    },
+    {
+      "id": "AUD-003",
+      "evidence": {
+        "receiverSpot": 111,
+        "score": 6,
+        "message": "TOUCHDOWN!\nExtra point missed.\nBOS 6  |  SEA 0"
+      }
+    },
+    {
+      "id": "AUD-004",
+      "evidence": {
+        "catchLateralPosition": 354,
+        "declaredSidelineMaximum": 347,
+        "newLOS": 25,
+        "message": "Catch for 5 yards, out of bounds."
+      }
+    },
+    {
+      "id": "AUD-005",
+      "evidence": {
+        "stillSelectedAfterCancel": true,
+        "lateralBefore": 191,
+        "lateralAfterUnpressedMove": 150
+      }
+    },
+    {
+      "id": "AUD-006",
+      "evidence": {
+        "selectedTeam": "bos",
+        "selectedTeamPresent": true,
+        "highlightedRows": 0
+      }
+    },
+    {
+      "id": "AUD-007",
+      "evidence": {
+        "passMode": "tap",
+        "hint": "Drag from QB to pass <span>|</span> Tap RB to handoff"
+      }
+    },
+    {
+      "id": "AUD-008",
+      "evidence": {
+        "phaseAfterFirst": "result",
+        "clockAfterFirst": 175,
+        "clockAfterSecond": 170,
+        "note": "Exported handler lacks phase guard; live UI double activation still needs browser reproduction."
+      }
+    },
+    {
+      "id": "COVERAGE-PLAYS",
+      "evidence": {
+        "count": 72,
+        "note": "Fixed-input source executions only. Not browser play, route accuracy, balance or visual verification.",
+        "outcomes": [
+          {
+            "difficulty": "easy",
+            "play": "trips_slants",
+            "phase": "result",
+            "message": "Catch for 4 yards."
+          },
+          {
+            "difficulty": "easy",
+            "play": "trips_mesh",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "easy",
+            "play": "trips_verticals",
+            "phase": "result",
+            "message": "Catch for 4 yards."
+          },
+          {
+            "difficulty": "easy",
+            "play": "trips_bubble",
+            "phase": "result",
+            "message": "Catch for 3 yards."
+          },
+          {
+            "difficulty": "easy",
+            "play": "trips_inside",
+            "phase": "result",
+            "message": "Run for 3 yards."
+          },
+          {
+            "difficulty": "easy",
+            "play": "trips_draw",
+            "phase": "result",
+            "message": "Run for 3 yards."
+          },
+          {
+            "difficulty": "easy",
+            "play": "ace_stick",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "easy",
+            "play": "ace_levels",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "easy",
+            "play": "ace_flood",
+            "phase": "result",
+            "message": "Catch for 4 yards."
+          },
+          {
+            "difficulty": "easy",
+            "play": "ace_pa_cross",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "easy",
+            "play": "ace_power",
+            "phase": "result",
+            "message": "Run for 1 yards."
+          },
+          {
+            "difficulty": "easy",
+            "play": "ace_outside",
+            "phase": "result",
+            "message": "Run for 1 yards."
+          },
+          {
+            "difficulty": "easy",
+            "play": "pistol_smash",
+            "phase": "result",
+            "message": "Catch for 4 yards."
+          },
+          {
+            "difficulty": "easy",
+            "play": "pistol_seam",
+            "phase": "result",
+            "message": "Catch for 4 yards."
+          },
+          {
+            "difficulty": "easy",
+            "play": "pistol_screen",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "easy",
+            "play": "pistol_pa_post",
+            "phase": "result",
+            "message": "Catch for 4 yards."
+          },
+          {
+            "difficulty": "easy",
+            "play": "pistol_counter",
+            "phase": "result",
+            "message": "Run for 2 yards."
+          },
+          {
+            "difficulty": "easy",
+            "play": "pistol_toss",
+            "phase": "result",
+            "message": "Pitch for 1 yards."
+          },
+          {
+            "difficulty": "medium",
+            "play": "trips_slants",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "medium",
+            "play": "trips_mesh",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "medium",
+            "play": "trips_verticals",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "medium",
+            "play": "trips_bubble",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "medium",
+            "play": "trips_inside",
+            "phase": "result",
+            "message": "Run for 1 yards."
+          },
+          {
+            "difficulty": "medium",
+            "play": "trips_draw",
+            "phase": "result",
+            "message": "Run for 1 yards."
+          },
+          {
+            "difficulty": "medium",
+            "play": "ace_stick",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "medium",
+            "play": "ace_levels",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "medium",
+            "play": "ace_flood",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "medium",
+            "play": "ace_pa_cross",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "medium",
+            "play": "ace_power",
+            "phase": "result",
+            "message": "Run for 0 yards."
+          },
+          {
+            "difficulty": "medium",
+            "play": "ace_outside",
+            "phase": "result",
+            "message": "Run for 0 yards."
+          },
+          {
+            "difficulty": "medium",
+            "play": "pistol_smash",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "medium",
+            "play": "pistol_seam",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "medium",
+            "play": "pistol_screen",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "medium",
+            "play": "pistol_pa_post",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "medium",
+            "play": "pistol_counter",
+            "phase": "result",
+            "message": "Run for 0 yards."
+          },
+          {
+            "difficulty": "medium",
+            "play": "pistol_toss",
+            "phase": "result",
+            "message": "Pitch for -1 yards."
+          },
+          {
+            "difficulty": "hard",
+            "play": "trips_slants",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "hard",
+            "play": "trips_mesh",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "hard",
+            "play": "trips_verticals",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "hard",
+            "play": "trips_bubble",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "hard",
+            "play": "trips_inside",
+            "phase": "result",
+            "message": "Run for 0 yards."
+          },
+          {
+            "difficulty": "hard",
+            "play": "trips_draw",
+            "phase": "result",
+            "message": "Run for 0 yards."
+          },
+          {
+            "difficulty": "hard",
+            "play": "ace_stick",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "hard",
+            "play": "ace_levels",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "hard",
+            "play": "ace_flood",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "hard",
+            "play": "ace_pa_cross",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "hard",
+            "play": "ace_power",
+            "phase": "result",
+            "message": "Run for -1 yards."
+          },
+          {
+            "difficulty": "hard",
+            "play": "ace_outside",
+            "phase": "result",
+            "message": "Run for -1 yards."
+          },
+          {
+            "difficulty": "hard",
+            "play": "pistol_smash",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "hard",
+            "play": "pistol_seam",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "hard",
+            "play": "pistol_screen",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "hard",
+            "play": "pistol_pa_post",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "hard",
+            "play": "pistol_counter",
+            "phase": "result",
+            "message": "Run for -1 yards."
+          },
+          {
+            "difficulty": "hard",
+            "play": "pistol_toss",
+            "phase": "result",
+            "message": "Pitch for -1 yards."
+          },
+          {
+            "difficulty": "gridiron",
+            "play": "trips_slants",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "gridiron",
+            "play": "trips_mesh",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "gridiron",
+            "play": "trips_verticals",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "gridiron",
+            "play": "trips_bubble",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "gridiron",
+            "play": "trips_inside",
+            "phase": "result",
+            "message": "Run for 1 yards."
+          },
+          {
+            "difficulty": "gridiron",
+            "play": "trips_draw",
+            "phase": "result",
+            "message": "Run for 1 yards."
+          },
+          {
+            "difficulty": "gridiron",
+            "play": "ace_stick",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "gridiron",
+            "play": "ace_levels",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "gridiron",
+            "play": "ace_flood",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "gridiron",
+            "play": "ace_pa_cross",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "gridiron",
+            "play": "ace_power",
+            "phase": "result",
+            "message": "Run for 0 yards."
+          },
+          {
+            "difficulty": "gridiron",
+            "play": "ace_outside",
+            "phase": "result",
+            "message": "Run for 0 yards."
+          },
+          {
+            "difficulty": "gridiron",
+            "play": "pistol_smash",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "gridiron",
+            "play": "pistol_seam",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "gridiron",
+            "play": "pistol_screen",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "gridiron",
+            "play": "pistol_pa_post",
+            "phase": "result",
+            "message": "Incomplete pass."
+          },
+          {
+            "difficulty": "gridiron",
+            "play": "pistol_counter",
+            "phase": "result",
+            "message": "Run for 0 yards."
+          },
+          {
+            "difficulty": "gridiron",
+            "play": "pistol_toss",
+            "phase": "result",
+            "message": "Pitch for -1 yards."
+          }
+        ]
+      }
+    },
+    {
+      "id": "COVERAGE-RULE-FLOW",
+      "evidence": {
+        "fourthDown": true,
+        "puntMessage": "OPPONENT DRIVE\nPunt: opponent starts at its own 30.\nThe drive gains 58 yards.\nOpponent 29-yard field goal is no good.\nDrive time: 1:41\nBOS 0  |  SEA 0",
+        "quarter": "End of the 1st quarter.",
+        "halftime": "HALFTIME\nBOS 0  |  SEA 0\nThe Harborhawks receive the second-half kickoff.",
+        "overtime": "End of regulation. The game is tied.\nOvertime gives each team one possession.",
+        "nextOvertimeRound": 2,
+        "note": "Source callbacks in an isolated Node context, no browser interaction."
+      }
+    },
+    {
+      "id": "COVERAGE-BROKEN-TACKLE",
+      "evidence": {
+        "phase": "live",
+        "tacklerAction": "missedTackle",
+        "recoveryMs": 2150,
+        "slowMs": 280,
+        "cooldown": 0.45
+      }
+    }
+  ]
+}

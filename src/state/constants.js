@@ -2,10 +2,11 @@
 export const XPX=28;
 export const Z=XPX/6;
 export const SPEED_SCALE=0.55;
-export const TACKLE_R=15*Z;
-export const CATCH_TOL_BASE=34*Z, CONTEST_NEAR_BASE=14*Z, CONTEST_MID_BASE=30*Z;
+export const TACKLE_R=18;
+export const CATCH_TOL_BASE=30, CONTEST_NEAR_BASE=20, CONTEST_MID_BASE=40;
 export const BALL_SPEED_LOB=22*XPX, BALL_SPEED_BULLET=36*XPX;
-export const BASE_X=520;
+export let BASE_X=520;
+export function setFieldWidth(width){BASE_X=width-280;}
 export const LAT_MIN=25, LAT_MAX=355, LAT_MID=190;
 export const RUSH_SPEED=3.0*XPX*SPEED_SCALE;
 export const RUSH_SPEED_BLITZ=3.6*XPX*SPEED_SCALE;
@@ -21,7 +22,7 @@ export const MISSED_TACKLE_GET_UP_MS=150;
 export const MISSED_TACKLE_RECOVERY_MS=MISSED_TACKLE_DOWN_MS+MISSED_TACKLE_GET_UP_MS;
 export const SPRITE_GROUND_Y_OFFSET=12;
 export const SIDELINE_STEP_DEPTH=4;
-export const BETWEEN_PLAY_RUNOFF=18;
+export const BETWEEN_PLAY_RUNOFF=8;
 export const PAT_CHANCE=0.97;
 export const SPRITE_CELL=64;
 export const SPRITE_DRAW=56;

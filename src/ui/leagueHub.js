@@ -11,10 +11,10 @@ export function renderLeagueSchedule(){
   document.getElementById('league-week-title').textContent='Week '+leagueViewWeek;
   document.getElementById('btn-week-prev').disabled=leagueViewWeek<=1;
   document.getElementById('btn-week-next').disabled=leagueViewWeek>=League.REGULAR_SEASON_WEEKS;
-  document.getElementById('league-schedule-list').innerHTML=games.map(game=>{
-    const away=League.findTeamState(teamState.franchise,game.awayTeamId),home=League.findTeamState(teamState.franchise,game.homeTeamId);
-    const userGame=game.awayTeamId===game.userTeamId||game.homeTeamId===game.userTeamId;
-    const score=game.status==='completed'?game.awayScore+' - '+game.homeScore:'AT';
+  document.getElementById('league-schedule-list').innerHTML=games.map(match=>{
+    const away=League.findTeamState(teamState.franchise,match.awayTeamId),home=League.findTeamState(teamState.franchise,match.homeTeamId);
+    const userGame=match.awayTeamId===game.userTeamId||match.homeTeamId===game.userTeamId;
+    const score=match.status==='completed'?match.awayScore+' - '+match.homeScore:'AT';
     return '<div class="matchup-row'+(userGame?' user-game':'')+'"><div class="matchup-team" title="'+League.fullName(away)+'">'+away.abbr+' '+away.name+'</div><div class="matchup-score">'+score+'</div><div class="matchup-team" title="'+League.fullName(home)+'">'+home.abbr+' '+home.name+'</div></div>';
   }).join('');
 }

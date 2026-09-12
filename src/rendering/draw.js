@@ -1,6 +1,10 @@
+import {passingRead} from '../simulation/passing.js';
+import {stickVector,STICK_TRAVEL} from '../input/runnerControls.js';
+import {catchTolerance} from '../simulation/receiving.js';
+import { simulationNow } from '../state/clock.js';
 import { canvas, ctx } from './canvas.js';
 import { game, entities } from '../state/gameState.js';
-import { XPX, BASE_X, LAT_MIN, LAT_MAX, DL_KEYS, OFF, DEF, CATCH_TOL_BASE, MIN_PULL, clamp, ratingMultiplier } from '../state/constants.js';
+import { XPX, BASE_X, LAT_MIN, LAT_MAX, DL_KEYS, OFF, DEF,  MIN_PULL, clamp, ratingMultiplier } from '../state/constants.js';
 import { currentDiff } from '../state/difficulty.js';
 import { PLAYS } from '../data/plays.js';
 import { interaction } from '../input/interactionState.js';
@@ -21,7 +25,7 @@ export function drawArcPath(x0,y0,x1,y1,arcHeight,color,width){
 }
 function drawTackleImpact(){
   if(game.phase!=='tackle'||!game.tackle)return;
-  const elapsed=performance.now()-game.tackle.startTime;
+  const elapsed=simulationNow()-game.tackle.startTime;
   if(elapsed>=190)return;
   const carrierPos=toCanvas(game.tackle.carrier);
   const tacklerPos=toCanvas(game.tackle.tackler);
@@ -72,13 +76,25 @@ export function draw(){
     ctx.fillStyle='#edca3a';
     for(let py=LAT_MIN;py<LAT_MAX;py+=10)ctx.fillRect(fdX-1,py,3,6);
   }
+  // Show actual close contact, not the entire blocking assignment or pursuit path.
+  if(game.phase==='live'){
+    const offense=[...entities.decor.filter(p=>p.team===OFF),...['rb','wr1','wr2','wr3','te'].map(k=>entities.players[k])].filter(Boolean);
+    const defense=[...DL_KEYS.map(k=>entities.players[k]),...entities.decor.filter(p=>p.team===DEF)];
+    for(const defender of defense){
+      if(!defender||!(defender.state==='engaged'||simulationNow()<(defender.blockedUntil||0)))continue;
+      const blocker=offense.find(p=>p!==entities.ballCarrier&&Math.hypot(p.x-defender.x,p.yfield-defender.yfield)<24);
+      if(!blocker)continue;
+      const a=toCanvas(blocker),b=toCanvas(defender),x=(a.cx+b.cx)/2,y=(a.cy+b.cy)/2+13;
+      ctx.fillStyle='rgba(255,243,208,.7)';ctx.fillRect(x-5,y,3,2);ctx.fillRect(x+2,y,3,2);
+    }
+  }
   const jitterOn=(game.phase==='live');
   entities.decor.forEach((d,i)=>{
-    if(jitterOn&&!d.isPursuing){
-      const j=Math.sin(performance.now()/160+i*1.7)*1.4;
+    if(jitterOn&&!d.isPursuing&&!d.isBlocking){
+      const j=Math.sin(simulationNow()/160+i*1.7)*1.4;
       drawPlayer({x:d.x+j,yfield:d.yfield,num:d.num,skin:d.skin},d.team,false,true);
     } else {
-      drawPlayer(d,d.team,false,!d.isPursuing);
+      drawPlayer(d,d.team,false,!d.isPursuing&&!d.isBlocking);
     }
   });
   DL_KEYS.forEach(k=>drawPlayer(entities.players[k],DEF));
@@ -94,7 +110,7 @@ export function draw(){
   drawPlayer(entities.players.wr2,OFF,entities.ballCarrier===entities.players.wr2);
   drawPlayer(entities.players.qb,OFF,entities.ballCarrier===entities.players.qb);
   if(entities.runExchange){
-    const progress=clamp((performance.now()-entities.runExchange.startTime)/entities.runExchange.duration,0,1);
+    const progress=clamp((simulationNow()-entities.runExchange.startTime)/entities.runExchange.duration,0,1);
     const from=toCanvas(entities.players.qb),to=toCanvas(entities.players.rb);
     const bx=from.cx+(to.cx-from.cx)*progress;
     const lift=entities.runExchange.type==='pitch'?Math.sin(Math.PI*progress)*12:0;
@@ -132,34 +148,30 @@ export function draw(){
       const fDown=camPx+(BASE_X-tx);
       const playDef=PLAYS[game.playCall];
       if(playDef){
-        let bestR=null,bestRD=Infinity,bestTol=0,bestScore=Infinity;
-        Object.keys(playDef.routes).forEach(k=>{
-          const r=entities.players[k];
-          const d=Math.hypot(r.x-fLat,r.yfield-fDown);
-          const tolerance=CATCH_TOL_BASE*currentDiff().catchRadiusMult*ratingMultiplier(r.rating,0.18);
-          const score=d/tolerance;
-          if(score<bestScore){bestScore=score;bestRD=d;bestR=r;bestTol=tolerance;}
-        });
-        if(bestR&&bestRD<bestTol){
-          const rc=toCanvas(bestR);
-          ctx.strokeStyle='rgba(120,220,255,0.9)';ctx.lineWidth=2.5;
-          ctx.beginPath();ctx.arc(rc.cx,rc.cy-3,18,0,7);ctx.stroke();
+        const read=passingRead({players:entities.players,play:playDef,los:game.los,elapsed:simulationNow()-game.snapTime,landing:{x:fLat,yfield:fDown},kind:game.throwType,difficulty:currentDiff()});
+        if(read.target){
+          const rc=toCanvas(read.target.predicted),current=toCanvas(entities.players[read.target.key]);
+          ctx.strokeStyle=read.target.error<=read.target.tolerance?'#8cf0cf':read.target.reachable?'#ffd166':'rgba(255,255,255,.45)';
+          ctx.lineWidth=1.5;ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(current.cx,current.cy);ctx.lineTo(rc.cx,rc.cy);ctx.stroke();ctx.setLineDash([]);
+          ctx.beginPath();ctx.arc(rc.cx,rc.cy,9,0,Math.PI*2);ctx.stroke();
         }
       }
     }
   }
   if(interaction.steering&&interaction.steerAnchor&&interaction.steerCurrent){
+    const vector=stickVector(interaction.steerAnchor,interaction.steerCurrent);
+    const thumb={x:interaction.steerAnchor.x+vector.x*STICK_TRAVEL,y:interaction.steerAnchor.y+vector.y*STICK_TRAVEL};
     ctx.fillStyle='rgba(255,255,255,0.12)';
     ctx.beginPath();ctx.arc(interaction.steerAnchor.x,interaction.steerAnchor.y,38,0,7);ctx.fill();
     ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=1.5;
     ctx.beginPath();ctx.arc(interaction.steerAnchor.x,interaction.steerAnchor.y,38,0,7);ctx.stroke();
     ctx.strokeStyle='rgba(255,255,255,0.6)';ctx.lineWidth=2;
-    ctx.beginPath();ctx.moveTo(interaction.steerAnchor.x,interaction.steerAnchor.y);ctx.lineTo(interaction.steerCurrent.x,interaction.steerCurrent.y);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(interaction.steerAnchor.x,interaction.steerAnchor.y);ctx.lineTo(thumb.x,thumb.y);ctx.stroke();
     ctx.fillStyle='#fff';
-    ctx.beginPath();ctx.arc(interaction.steerCurrent.x,interaction.steerCurrent.y,9,0,7);ctx.fill();
+    ctx.beginPath();ctx.arc(thumb.x,thumb.y,9,0,7);ctx.fill();
   }
-  if(entities.ball.inFlight&&performance.now()>=entities.ball.startTime){
-    const p=Math.min(1,(performance.now()-entities.ball.startTime)/entities.ball.duration);
+  if(entities.ball.inFlight&&simulationNow()>=entities.ball.startTime){
+    const p=Math.min(1,(simulationNow()-entities.ball.startTime)/entities.ball.duration);
     const bx=entities.ball.fromX+(entities.ball.toX-entities.ball.fromX)*p;
     const byf=entities.ball.fromY+(entities.ball.toY-entities.ball.fromY)*p;
     const {cx,cy}=toCanvas({x:bx,yfield:byf});

@@ -1,9 +1,10 @@
+import { contrastingOpponent } from '../rendering/uniforms.js';
 import * as League from '../state/league.js';
 import { game, teamState } from '../state/gameState.js';
 import { OFF, DEF } from '../state/constants.js';
 import { applyUniform, rebuildSpriteSheets } from '../rendering/spriteSheets.js';
 import { END_ZONE_STYLE } from '../rendering/field.js';
-import { chooseOpponent, startNewGame, startPractice, ensureLoopStarted } from '../simulation/engine.js';
+import { uiHooks, chooseOpponent, startNewGame, startPractice, ensureLoopStarted } from '../simulation/engine.js';
 import { hideAllOverlays, updateHUD } from './hud.js';
 import { editState } from '../input/editState.js';
 
@@ -23,14 +24,20 @@ export function updateTeamPreview(teamId){
   if(source)document.getElementById('team-select').value=source.id;
 }
 export function syncMatchupUI(){
+  syncSettingsUI();
   applyUniform(teamState.userTeam,OFF);
-  applyUniform(teamState.cpuTeam,DEF);
-  document.getElementById('hud-user-name').textContent=teamState.userTeam.name;
+  applyUniform(contrastingOpponent(teamState.userTeam,teamState.cpuTeam),DEF);
+  document.getElementById('hud-user-name').textContent=teamState.userTeam.abbr;
   document.getElementById('hud-user-name').title=League.fullName(teamState.userTeam);
-  document.getElementById('hud-cpu-name').textContent=teamState.cpuTeam.name;
+  document.getElementById('hud-cpu-name').textContent=teamState.cpuTeam.abbr;
   document.getElementById('hud-cpu-name').title=League.fullName(teamState.cpuTeam);
   document.getElementById('hud-user-color').style.background=teamState.userTeam.colors.primary;
   document.getElementById('hud-cpu-color').style.background=teamState.cpuTeam.colors.primary;
+  for(const [side,team] of [['user',teamState.userTeam],['cpu',teamState.cpuTeam]]){
+    const el=document.getElementById('hud-'+side+'-team');
+    el.style.setProperty('--team-primary',team.colors.primary);
+    el.setAttribute('aria-label',League.fullName(team));
+  }
   END_ZONE_STYLE.near.label=teamState.userTeam.abbr;
   END_ZONE_STYLE.near.base=teamState.userTeam.colors.primary;
   END_ZONE_STYLE.near.accent=teamState.userTeam.colors.accent;
@@ -106,6 +113,7 @@ export function populateOpponentSelect(){
   updateOpponentPreview();
 }
 export function returnToMainMenu(){
+  if(game.career)uiHooks.leaveCareer?.();
   game.paused=false;
   game.phase='menu';
   hideAllOverlays();
@@ -124,8 +132,20 @@ const difficultyHelp={
   hard:'Faster pursuit, tighter coverage, and fewer broken tackles.',
   gridiron:'Dynamic difficulty responds to momentum during the game.'
 };
+export function syncSettingsUI(){
+  syncActive('[data-diff]','diff',game.difficulty);
+  syncActive('[data-minutes]','minutes',game.quarterMinutes);
+  syncActive('[data-mode]','mode',game.passMode);
+  syncActive('[data-type]','type',game.throwType);
+  syncActive('[data-routes]','routes',game.showRoutes?'on':'off');
+  document.getElementById('difficulty-help').textContent=difficultyHelp[game.difficulty];
+}
 document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>{
   game.passMode=b.dataset.mode;syncActive('[data-mode]','mode',game.passMode);
+  if(game.phase==='presnap'){
+    const hint=document.getElementById('presnap-hint');
+    hint.innerHTML=hint.innerHTML.replace(/Drag from QB to pass|Tap a receiver to pass/,game.passMode==='tap'?'Tap a receiver to pass':'Drag from QB to pass');
+  }
 }));
 document.querySelectorAll('[data-type]').forEach(b=>b.addEventListener('click',()=>{
   game.throwType=b.dataset.type;syncActive('[data-type]','type',game.throwType);
@@ -136,6 +156,7 @@ document.querySelectorAll('[data-diff]').forEach(b=>b.addEventListener('click',(
   syncActive('[data-diff]','diff',game.difficulty);
   document.getElementById('difficulty-help').textContent=difficultyHelp[game.difficulty];
   updateHUD();
+  if(game.career)uiHooks.careerSettingsChanged?.();
 }));
 document.querySelectorAll('[data-minutes]').forEach(b=>b.addEventListener('click',()=>{
   game.quarterMinutes=Number(b.dataset.minutes);syncActive('[data-minutes]','minutes',game.quarterMinutes);
@@ -167,6 +188,7 @@ function closeSettings(){
   document.getElementById('pause-overlay').classList.remove('show');
 }
 document.getElementById('btn-pause').addEventListener('click',()=>{
+  syncSettingsUI();
   game.paused=true;
   document.getElementById('pause-overlay').classList.add('show');
 });
@@ -182,6 +204,7 @@ document.getElementById('btn-main-menu').addEventListener('click',()=>{
 });
 
 export function openSetup(settingsOnly=false){
+  syncSettingsUI();
   document.getElementById('start-screen').classList.remove('show');
   document.getElementById('setup-screen').classList.add('show');
   document.getElementById('setup-title').textContent=settingsOnly?'Settings':'New Game';

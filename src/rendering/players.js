@@ -1,3 +1,4 @@
+import { simulationNow } from '../state/clock.js';
 import { canvas, ctx } from './canvas.js';
 import { game, entities } from '../state/gameState.js';
 import { XPX, BASE_X, MISSED_TACKLE_DIVE_MS, MISSED_TACKLE_DOWN_MS, SPRITE_CELL, SPRITE_DRAW, SPRITE_ANCHOR_X, SPRITE_ANCHOR_Y, OFF, DEF } from '../state/constants.js';
@@ -26,7 +27,11 @@ export function drawHelmet(cx,cy,team){
   ctx.beginPath();ctx.arc(cx-6,cy-0.5,1.1,0,7);ctx.fill();
 }
 export function playerFrame(e,isDecor){
-  const now=performance.now();
+  const now=simulationNow();
+  if(e.action==='drop')return {row:4,col:2};
+  if(e.action==='deflect')return {row:4,col:1};
+  if(e.action==='diveWindup')return {row:1,col:4};
+  if(e.action==='dive')return {row:4,col:5};
   if(e.action==='tackled'){
     const elapsed=now-e.actionStart;
     return elapsed<140?{row:4,col:3}:{row:4,col:4};
@@ -50,7 +55,7 @@ export function playerFrame(e,isDecor){
   }
   if(e.action==='catch'){
     const elapsed=now-e.actionStart;
-    if(elapsed<285)return {row:4,col:Math.min(2,Math.floor(elapsed/95))};
+    if(elapsed<160)return {row:4,col:0};
     e.action='';
   }
   if(e===entities.players.qb&&interaction.aiming){
@@ -63,7 +68,7 @@ export function playerFrame(e,isDecor){
       return {row:2,col:Math.floor(now/frameMs)%5};
     }
     if(e===entities.players.qb)return {row:0,col:Math.floor(now/260)%2};
-    if(!isDecor&&e.state!=='engaged')return {row:1,col:Math.floor(now/90)%5};
+    if((!isDecor||e.isBlocking)&&e.state!=='engaged')return {row:1,col:Math.floor(now/90)%5};
   }
   return {row:0,col:Math.floor(now/260)%2};
 }
@@ -73,7 +78,7 @@ export function drawPlayer(e,team,highlight,isDecor){
   let cx=position.cx,cy=position.cy;
   if(cx<-30||cx>canvas.width+30)return;
   if(e.action==='tackle'&&game.tackle){
-    const elapsed=performance.now()-e.actionStart;
+    const elapsed=simulationNow()-e.actionStart;
     const target=toCanvas(game.tackle.carrier);
     const dx=target.cx-cx,dy=target.cy-cy;
     const distance=Math.hypot(dx,dy);
@@ -86,8 +91,18 @@ export function drawPlayer(e,team,highlight,isDecor){
     cx+=ux*reach*driveEase;
     cy+=uy*reach*driveEase;
   }
-  const actionElapsed=performance.now()-(e.actionStart||0);
-  const isDiving=(e.action==='tackle'&&actionElapsed>=65)||(e.action==='missedTackle'&&actionElapsed<MISSED_TACKLE_DOWN_MS);
+  const actionElapsed=simulationNow()-(e.actionStart||0);
+  const isDiving=e.action==='dive'||(e.action==='tackle'&&actionElapsed>=65)||(e.action==='missedTackle'&&actionElapsed<MISSED_TACKLE_DOWN_MS);
+  if(e.action==='diveWindup'){
+    ctx.strokeStyle='#ffd166';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(cx,cy+12,13,5,0,0,7);ctx.stroke();
+  }
+  if(highlight&&e.action==='catch'&&game.phase==='live'){
+    const age=simulationNow()-e.actionStart;
+    ctx.strokeStyle='#fff3b0';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(cx,cy+12,13+age*.035,5+age*.012,0,0,Math.PI*2);ctx.stroke();
+  }
+  if(highlight&&game.phase==='live'&&e!==entities.players.qb){
+    ctx.fillStyle='#ffcf39';ctx.beginPath();ctx.moveTo(cx-5,cy-35);ctx.lineTo(cx+5,cy-35);ctx.lineTo(cx,cy-29);ctx.closePath();ctx.fill();
+  }
   if(highlight){
     ctx.fillStyle='rgba(255,209,102,0.16)';
     ctx.strokeStyle='rgba(255,209,102,0.9)';

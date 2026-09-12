@@ -10,7 +10,9 @@
     "preview": "vite preview --host 0.0.0.0",
     "test:data": "node tests/data.test.mjs",
     "test:save": "node tests/save-compatibility.test.mjs",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:gameplay": "node --experimental-vm-modules tests/gameplay.test.mjs",
+    "test:career": "node --experimental-vm-modules tests/career.test.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

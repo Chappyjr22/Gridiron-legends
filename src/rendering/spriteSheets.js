@@ -45,7 +45,7 @@ export function rebuildSpriteSheets(){
     spriteState.defensePresnapSpritesReady=true;
   }
 }
-function makeTeamSpriteSheet(team,skinIndex,sourceImage=spriteImage,expandedSkin=false){
+export function makeTeamSpriteSheet(team,skinIndex,sourceImage=spriteImage,expandedSkin=false){
   const out=document.createElement('canvas');
   out.width=sourceImage.width;out.height=sourceImage.height;
   const outCtx=out.getContext('2d',{willReadFrequently:true});
