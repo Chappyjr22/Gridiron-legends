@@ -865,3 +865,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
  #formation-data-dialog #edit-json{height:70px}
  #formation-data-dialog>.sports-button{margin-top:6px;min-height:44px;font-size:22px;padding:5px 10px}
 }
+/* Standings and schedules share the career screen's navy surface. */
+#career-league-panel .career-list-row{color:#fff3d4;border-color:#6b879d;min-height:40px}
+#career-league-panel .career-list-row.career-selected{color:#ffdc63;background:#244f72}
+#career-league-panel #career-standings-note,#career-league-panel .league-schedule{color:#d2e1ed}
