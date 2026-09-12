@@ -1,6 +1,7 @@
 import { canvas, ctx } from './canvas.js';
 import { LAT_MIN, LAT_MAX } from '../state/constants.js';
 import { goalPostImage, spriteState } from './spriteSheets.js';
+import { drawSidelinePlayer } from './sidelinePlayers.js';
 
 export const PIXEL_DIGITS={
   '0':['111','101','101','101','111'],
@@ -216,11 +217,10 @@ export function drawPixelStadium(xAt,w){
     ctx.fillStyle=crowdColors[seed%crowdColors.length];ctx.fillRect(x-3,4,7,5);
     ctx.fillStyle='#e7e5d5';ctx.fillRect(x-3,9,2,2);ctx.fillRect(x+2,9,2,2);
   }
-  for(let yard=-5;yard<=105;yard+=10){
+  for(let yard=5,index=0;yard<=95;yard+=2.5,index++){
     const x=Math.round(xAt(yard));
     if(x<-10||x>w+10)continue;
-    const color=crowdColors[Math.abs(Math.round(yard/5))%crowdColors.length];
-    drawTinyPerson(x,16,color,true);
+    drawSidelinePlayer(x,LAT_MIN-3,index);
   }
   for(let yard=0;yard<=100;yard+=20){
     const x=Math.round(xAt(yard+4));
@@ -233,6 +233,11 @@ export function drawPixelStadium(xAt,w){
   ctx.fillStyle='#f3d53d';
   for(let x=-8;x<w;x+=18)ctx.fillRect(x,LAT_MAX+9,12,2);
   ctx.fillStyle='#a8d77c';ctx.fillRect(0,LAT_MAX+4,w,2);
+  for(let yard=5,index=0;yard<=95;yard+=2.5,index++){
+    const x=Math.round(xAt(yard));
+    if(x<-16||x>w+16)continue;
+    drawSidelinePlayer(x,canvas.height-1,index,true);
+  }
   for(let yard=-5;yard<=105;yard+=20){
     const x=Math.round(xAt(yard));
     if(x<-8||x>w+8)continue;
