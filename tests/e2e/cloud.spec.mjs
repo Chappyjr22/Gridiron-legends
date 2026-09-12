@@ -20,7 +20,9 @@ test('account conflict keeps both careers and syncs the merged bank',async({page
   const {createCareer}=await import('/src/career/career.js');const c=createCareer({name:'Conflict QB'});const bank={version:1,lastId:c.careerId,careers:{[c.careerId]:c},recovery:[]};const cloud={revision:2,payload:{gridironLegendsCareersV1:JSON.stringify(bank)}};
   c.xp=9;localStorage.setItem('gridironCloudOwnerV1','account-a');localStorage.setItem('gridironCloudCacheV1:account-a',JSON.stringify({values:{gridironLegendsCareersV1:JSON.stringify(bank)},revision:1,dirty:true,mutation:'device-newer'}));return cloud;
  });
- await page.reload();await page.getByRole('button',{name:'Account',exact:true}).click();await expect(page.locator('#cloud-conflict')).toBeVisible();await page.locator('#cloud-keep-both').click();
+ await page.reload();await page.getByRole('button',{name:'Account',exact:true}).click();await expect(page.locator('#cloud-conflict')).toBeVisible();
+ // Keeping both reloads after persistence. Wait for the new document before navigating.
+ await Promise.all([page.waitForEvent('load'),page.locator('#cloud-keep-both').click()]);
  await expect.poll(()=>Object.keys(JSON.parse(remote.payload.gridironLegendsCareersV1).careers).length).toBe(2);
  await page.locator('#btn-career').click();await page.locator('#career-my-careers').click();await expect(page.locator('#career-list button')).toHaveCount(2);
 });

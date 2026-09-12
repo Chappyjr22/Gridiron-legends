@@ -49,8 +49,9 @@ function setCareerTab(tab){
   button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;
   button.classList.toggle('gold',active);button.classList.toggle('blue',!active);
   const panel=el(`career-${button.dataset.careerTab}-panel`);
-  if(active&&panel.hidden)panel.scrollTop=0;
+  const opening=active&&panel.hidden;
   panel.hidden=!active;
+  if(opening)panel.scrollTop=0;
  }
 }
 function render(){
