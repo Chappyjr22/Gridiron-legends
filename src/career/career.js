@@ -24,7 +24,7 @@ export function createCareer({name,number=7,teamId='bos',archetype='precision',s
  const league=schoolId?createCollegeLeague(schoolId):League.createFranchise(teamId),team=League.findTeamState(league,teamId),player=team.roster.find(p=>p.slot==='QB');
  const used=new Set(team.roster.map(p=>p.number));
  for(const teammate of team.roster)if(teammate!==player&&teammate.number===number){for(let n=0;n<100;n++)if(!used.has(n)&&n!==number){teammate.number=n;used.add(n);break;}}
- const names=cleanName.split(' ');Object.assign(player,{firstName:names.shift(),lastName:names.join(' '),number,age:21,portrait:Number.isInteger(portrait)&&portrait>=0&&portrait<7?portrait:0,skin:Math.max(0,Math.min(3,Number(skin)||0)),archetype,attributes:{...ARCHETYPES[archetype].attributes}});
+ const names=cleanName.split(' ');Object.assign(player,{firstName:names.shift(),lastName:names.join(' '),number,age:21,portrait:Number.isInteger(portrait)&&portrait>=0&&portrait<12?portrait:0,skin:Math.max(0,Math.min(3,Number(skin)||0)),archetype,attributes:{...ARCHETYPES[archetype].attributes}});
  if(schoolId)for(const key of Object.keys(player.attributes))player.attributes[key]+=SCHOOL_TIERS[team.tier].attributeBonus;
  player.rating=Math.round(Object.values(player.attributes).reduce((a,b)=>a+b)/3);
  League.refreshRatings(league);

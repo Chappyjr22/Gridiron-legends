@@ -1,3 +1,4 @@
+import {playingRoster} from '../career/roster.js';
 // Stable portraits for both existing saves and newly generated rosters.
 export function identitySeed(id){let n=2166136261;for(const c of String(id)){n=Math.imul(n^c.charCodeAt(0),16777619);}return n>>>0;}
 function paintFallbackPortrait(canvas,team,player){
@@ -31,20 +32,37 @@ function paintFallbackPortrait(canvas,team,player){
  [...number].forEach((d,i)=>[...digits[Number(d)]].forEach((v,j)=>{if(v==='1')rect(x+i*4+j%3,26+Math.floor(j/3),1,1,'#fff5da');}));
 }
 
-const atlas=new Image();atlas.src='/assets/portraits/players-v1.webp';
+export const PORTRAITS_PER_TONE=12;
+export function portraitChoice(team,player){
+ const seed=identitySeed(player.id);
+ const tone=Number.isInteger(Number(player.skin))&&Number(player.skin)>=0&&Number(player.skin)<4?Number(player.skin):seed%4;
+ if(Number.isInteger(player.portrait)&&player.portrait>=0&&player.portrait<PORTRAITS_PER_TONE)return {tone,face:player.portrait};
+ // Allocate unused faces within each team, without altering saves or chosen faces.
+ const roster=team?.roster?playingRoster(team):[player],used=new Set();
+ for(const p of roster)if(Number.isInteger(p.portrait)&&p.portrait>=0&&p.portrait<PORTRAITS_PER_TONE){
+  const t=Number.isInteger(Number(p.skin))&&Number(p.skin)>=0&&Number(p.skin)<4?Number(p.skin):identitySeed(p.id)%4;used.add(t*12+p.portrait);
+ }
+ for(const p of [...roster].sort((a,b)=>a.id.localeCompare(b.id))){
+  if(Number.isInteger(p.portrait)&&p.portrait>=0&&p.portrait<12)continue;
+  const n=identitySeed(p.id),t=Number.isInteger(Number(p.skin))&&Number(p.skin)>=0&&Number(p.skin)<4?Number(p.skin):n%4;
+  let f=(n>>>4)%12;
+  for(let i=0;i<12;i++){const candidate=(f+i)%12;if(!used.has(t*12+candidate)){f=candidate;break;}}
+  used.add(t*12+f);if(p.id===player.id)return {tone:t,face:f};
+ }
+ return {tone,face:(seed>>>4)%12};
+}
+const atlases=['/assets/portraits/players-v1.webp','/assets/portraits/players-v2.webp'].map(src=>{const img=new Image();img.src=src;return img;});
 const pending=new WeakMap();
 export function paintPlayerPortrait(canvas,team,player){
  if(!canvas||!team)return;
+ const {tone,face}=portraitChoice(team,player),atlas=atlases[face<7?0:1],columns=face<7?7:5,column=face<7?face:face-7;
  const token={};pending.set(canvas,token);
  const draw=()=>{
   if(pending.get(canvas)!==token)return;
   if(!atlas.naturalWidth){paintFallbackPortrait(canvas,team,player);return;}
-  const seed=identitySeed(player.id);
-  const tone=Number.isInteger(Number(player.skin))&&Number(player.skin)>=0&&Number(player.skin)<4?Number(player.skin):seed%4;
-  const face=Number.isInteger(player.portrait)&&player.portrait>=0&&player.portrait<7?player.portrait:(seed>>>4)%7;
   const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);
-  const w=atlas.naturalWidth/7,h=atlas.naturalHeight/4;
-  ctx.drawImage(atlas,face*w,tone*h,w,h,0,0,canvas.width,canvas.height);
+  const w=atlas.naturalWidth/columns,h=atlas.naturalHeight/4;
+  ctx.drawImage(atlas,column*w,tone*h,w,h,0,0,canvas.width,canvas.height);
  };
- draw();if(!atlas.complete){atlas.addEventListener('load',draw,{once:true});}
+ draw();if(!atlas.complete)atlas.addEventListener('load',draw,{once:true});
 }

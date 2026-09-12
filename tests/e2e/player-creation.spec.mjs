@@ -12,9 +12,9 @@ for(const viewport of [{width:844,height:304},{width:390,height:740}]){
   await page.getByLabel('Jersey number',{exact:true}).fill('12');
   await page.getByRole('button',{name:'Choose face',exact:true}).tap();
   await page.locator('#portrait-tone').selectOption('3');
-  await expect(page.locator('#portrait-grid button')).toHaveCount(7);
-  await page.getByRole('button',{name:'Face 6',exact:true}).tap();
-  await expect(page.getByRole('button',{name:'Face 6',exact:true})).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('#portrait-grid button')).toHaveCount(12);
+  await page.getByRole('button',{name:'Face 12',exact:true}).tap();
+  await expect(page.getByRole('button',{name:'Face 12',exact:true})).toHaveAttribute('aria-pressed','true');
   await page.screenshot({path:`test-results/face-picker-${viewport.width}-${viewport.height}.png`});
   await page.getByRole('button',{name:'Use this face',exact:true}).tap();
   await page.screenshot({path:`test-results/create-player-${viewport.width}-${viewport.height}.png`});
@@ -37,7 +37,7 @@ for(const viewport of [{width:844,height:304},{width:390,height:740}]){
   await page.getByRole('tab',{name:'Player',exact:true}).tap();
   await page.getByRole('button',{name:'Change face',exact:true}).tap();
   await expect(page.locator('#portrait-tone')).toHaveValue('3');
-  await expect(page.getByRole('button',{name:'Face 6',exact:true})).toHaveAttribute('aria-pressed','true');
+  await expect(page.getByRole('button',{name:'Face 12',exact:true})).toHaveAttribute('aria-pressed','true');
   await page.locator('#portrait-tone').selectOption('1');
   await page.getByRole('button',{name:'Face 2',exact:true}).tap();
   await page.getByRole('button',{name:'Use this face',exact:true}).tap();

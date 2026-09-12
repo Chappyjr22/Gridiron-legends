@@ -803,3 +803,12 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
  #portrait-dialog header{flex-wrap:wrap;}
  #portrait-dialog header h2{width:100%;}
 }
+#portrait-grid{grid-template-columns:repeat(6,minmax(0,1fr));}
+@media(orientation:landscape) and (max-height:350px){
+ #portrait-grid{gap:5px;}
+ #portrait-grid button{flex-direction:row;justify-content:center;gap:6px;font-size:17px;}
+ #portrait-grid canvas{width:60px;height:60px;}
+}
+@media(orientation:portrait){
+ #portrait-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
+}
