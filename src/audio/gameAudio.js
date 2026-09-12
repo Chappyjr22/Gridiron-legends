@@ -19,7 +19,7 @@ async function unlock(){
   try{if(navigator.audioSession)navigator.audioSession.type='playback';}catch{}
   if(!context||context.state==='closed'){
    context=new Audio();master=context.createGain();master.connect(context.destination);
-   context.onstatechange=updateStatus;
+   context.onstatechange=()=>{if(context.state!=='running')updateStatus();};
    noiseBuffer=context.createBuffer(1,context.sampleRate,context.sampleRate);
    const data=noiseBuffer.getChannelData(0);let seed=1729;
    for(let i=0;i<data.length;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;data[i]=seed/2147483648-1;}
