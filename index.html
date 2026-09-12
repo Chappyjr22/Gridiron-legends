@@ -190,7 +190,7 @@
         <button id="btn-career" class="sports-button gold" aria-label="Career Mode"><span id="career-menu-label">Career</span><small id="career-menu-detail">Your player. Your season.</small><span class="menu-arrow" aria-hidden="true">▶</span></button>
         <button id="btn-new-game" class="sports-button">Quick Play <span aria-hidden="true">▶</span></button>
         <button id="btn-practice" class="sports-button">Practice <span aria-hidden="true">▶</span></button>
-        <div class="stadium-utilities"><button id="btn-menu-settings" class="sports-button blue">Settings</button><button id="btn-extras" class="sports-button blue">Extras</button></div>
+        <div class="stadium-utilities"><button id="btn-menu-settings" class="sports-button blue">Settings</button><button id="btn-extras" class="sports-button blue">Extras</button><button data-open-account class="sports-button blue cloud-menu-button">Account</button></div>
       </nav>
     </div>
   </div>
@@ -379,7 +379,7 @@
     <button id="career-league-tab" class="sports-button blue" role="tab" aria-selected="false" aria-controls="career-league-panel" data-career-tab="league" tabindex="-1">League</button>
    </nav>
   </div>
-  <div class="career-save-bar"><span id="career-quiet-save" role="status">Saved on this device</span><button id="career-open-backups">Save &amp; backup</button></div>
+  <div class="career-save-bar"><span data-cloud-status id="career-quiet-save" role="status">Saved on this device</span><button id="career-open-backups">Save &amp; backup</button></div>
   <dialog id="school-dialog" class="sports-dialog experience-dialog school-dialog" aria-labelledby="school-heading"><header><h2 id="school-heading">Choose your school</h2></header><nav id="school-conferences" aria-label="College conferences"></nav><div class="school-picker-body"><div id="school-grid"></div><section id="school-preview" aria-live="polite"></section></div><footer><button id="school-back" class="sports-button blue">Back</button><button id="school-confirm" class="sports-button gold">Choose this school</button></footer></dialog>
  <dialog id="draft-dialog" class="sports-dialog experience-dialog" aria-labelledby="draft-heading"><header><h2 id="draft-heading">Draft night</h2></header><div id="draft-selection" class="experience-body"></div><footer><button id="draft-back" class="sports-button blue">Back</button><button id="draft-continue" class="sports-button gold">Begin pro career</button></footer></dialog>
  <dialog id="team-player-dialog" class="sports-dialog experience-dialog" aria-labelledby="team-player-heading"><header><h2 id="team-player-heading">Player card</h2></header><div id="team-player-content" class="experience-body"></div><footer><button id="team-player-close" class="sports-button blue">Back to My Team</button></footer></dialog>
@@ -534,5 +534,25 @@
   </div>
 </div>
 <script type="module" src="./src/main.js"></script>
+<dialog id="cloud-account" aria-labelledby="cloud-title">
+ <header><h2 id="cloud-title">Your account</h2><button id="cloud-close" class="sports-button blue">Back</button></header>
+ <div class="cloud-body">
+ <p id="cloud-message" role="status" aria-live="polite">Guest careers are saved on this device.</p>
+ <form id="cloud-login">
+  <p>Sign in with an email code to save your careers across devices. Your guest careers stay on this device until you choose to upload them.</p>
+  <label for="cloud-email">Email</label><input id="cloud-email" type="email" autocomplete="email" required maxlength="254">
+  <button id="cloud-send" type="button" class="sports-button gold">Email me a code</button>
+  <div id="cloud-code-row" hidden><label for="cloud-code">Email code</label><input id="cloud-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required><button id="cloud-verify" class="sports-button gold">Sign in</button></div>
+ </form>
+ <button id="cloud-switch" class="sports-button gold" hidden>Open signed-in account</button>
+ <section id="cloud-signed-in" hidden><p id="cloud-email-label"></p>
+  <div class="cloud-actions"><button id="cloud-retry" class="sports-button gold">Sync now</button><button id="cloud-upload" class="sports-button blue">Upload device careers</button><button id="cloud-history" class="sports-button blue">Recovery backups</button><button id="cloud-signout" class="sports-button blue">Sign out</button></div>
+  <p>Uploads and restores keep separate copies when progress differs. Your device saves remain available if syncing fails.</p>
+  <section id="cloud-conflict" hidden><p>This career changed on two devices. Keep both versions so no progress is lost.</p><button id="cloud-keep-both" class="sports-button gold">Keep both versions</button></section>
+  <div id="cloud-history-list"></div>
+ </section>
+ <button id="cloud-guest" class="sports-button blue">Play as guest</button>
+ </div>
+</dialog>
 </body>
 </html>

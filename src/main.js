@@ -1,3 +1,4 @@
+import {initCloud} from './cloud/sync.js';
 import {initAudio} from './audio/gameAudio.js';
 import {initPracticeGuide} from './ui/practiceGuide.js';
 import {initOverlayFocus} from './ui/focus.js';
@@ -48,6 +49,7 @@ updateHUD();
 initRunnerControls();
 initMenuArt();
 initCareer();
+initCloud();
 initAudio();
 initPracticeGuide();
 initOverlayFocus();
