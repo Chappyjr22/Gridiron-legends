@@ -234,6 +234,7 @@ export function drawPixelStadium(xAt,w){
   for(let x=-8;x<w;x+=18)ctx.fillRect(x,LAT_MAX+9,12,2);
   ctx.fillStyle='#a8d77c';ctx.fillRect(0,LAT_MAX+4,w,2);
   for(let yard=5,index=0;yard<=95;yard+=2.5,index++){
+    if((yard+5)%20===0)continue; // Keep the orange sideline markers unobstructed.
     const x=Math.round(xAt(yard));
     if(x<-16||x>w+16)continue;
     drawSidelinePlayer(x,canvas.height-1,index,true);
