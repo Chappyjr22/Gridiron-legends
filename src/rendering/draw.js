@@ -48,12 +48,6 @@ export function draw(){
   ctx.imageSmoothingEnabled=false;
   drawPixelTurf(xAt,w);
   drawPixelStadium(xAt,w);
-  if(brandArt.shield){
-    const logo=brandArt.shield,width=196,height=width*logo.height/logo.width;
-    ctx.save();ctx.globalAlpha=.78;
-    ctx.drawImage(logo,Math.round(xAt(50)-width/2),Math.round((LAT_MIN+LAT_MAX-height)/2),width,height);
-    ctx.restore();
-  }
   for(let yard=0;yard<=100;yard+=5){
     const cx=Math.round(xAt(yard));
     if(cx<-10||cx>w+10)continue;
@@ -72,6 +66,13 @@ export function draw(){
     if(cx<-5||cx>w+5)continue;
     ctx.fillRect(cx-1,LAT_MIN+58,2,8);
     ctx.fillRect(cx-1,LAT_MAX-66,2,8);
+  }
+  // Paint the league shield over yard markings, below gameplay overlays.
+  if(brandArt.shield){
+    const logo=brandArt.shield,width=196,height=width*logo.height/logo.width;
+    ctx.save();ctx.globalAlpha=1;
+    ctx.drawImage(logo,Math.round(xAt(50)-width/2),Math.round((LAT_MIN+LAT_MAX-height)/2),width,height);
+    ctx.restore();
   }
   ctx.fillStyle='#f0f5e9';
   ctx.fillRect(0,LAT_MIN-2,w,3);
