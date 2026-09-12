@@ -812,3 +812,6 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
 @media(orientation:portrait){
  #portrait-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
 }
+
+/* Approved wordmark is tightly cropped; keep it inside its title column. */
+.title-art h1{width:100%;max-width:700px}
