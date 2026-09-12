@@ -755,3 +755,10 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
  #career-screen #career-upgrades{gap:0;}
 }
 #career-qb-stats .stat-tiles>div{flex-direction:row;}
+.stat-comparison p{color:#c6d7e4;}
+@media(orientation:landscape) and (max-height:350px){
+ .stat-comparison>section{padding:2px 10px;}
+ .stat-comparison h3{font:20px/1 var(--sports-face);margin-bottom:2px;}
+ #career-qb-stats .stat-tiles>div{padding:0;}
+ #career-qb-stats .stat-tiles dt,#career-qb-stats .stat-tiles dd{font:16px/.95 var(--sports-face);}
+}
