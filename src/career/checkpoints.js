@@ -17,6 +17,7 @@ export function validCheckpoint(saved,career){
  if(g.career!==true||g.practice!==false||typeof g.overtime!=='boolean'||typeof g.showRoutes!=='boolean')return false;
  if(!['possession','firstHalfReceiver','secondHalfReceiver'].every(k=>['player','cpu'].includes(g[k])))return false;
  if(!Array.isArray(s.plays)||!object(s.players)||!Object.values(s.players).every(validStats))return false;
+ if(s.opponentDrives!==undefined&&(!Array.isArray(s.opponentDrives)||!s.opponentDrives.every(d=>object(d)&&[0,3,6,7].includes(d.points)&&Number.isInteger(d.yards)&&number(d.yards,0,100)&&typeof d.turnover==='boolean')))return false;
  const team=career.league.teams.find(t=>t.id===career.teamId);
  const known=id=>team.roster.some(p=>p.id===id)||new RegExp('^'+team.id+'-generic-[0-9]{1,2}$').test(id);
  if(!Object.keys(s.players).every(known))return false;

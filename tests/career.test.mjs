@@ -102,3 +102,14 @@ await import('./college.test.mjs');
  const slot=seasonPlayerRows(c).rows.find(r=>r.player.id===`${team.id}-generic-15`);assert.equal(slot.stats.receivingYards,42);
  console.log('Simulated pass outcomes and legacy slot receiver statistics passed.');
 }
+{
+ const c=C.createCareer({name:'Recovery test'}),good=C.createCareer({name:'Unaffected'}),broken=structuredClone(c);broken.activeMatch=C.nextMatch(broken).id;broken.checkpoint={game:{},stats:{},resume:{type:'offense'}};
+ const raw=JSON.stringify({version:1,lastId:c.careerId,careers:{[c.careerId]:broken,[good.careerId]:good}}),data=new Map([[SLOTS_KEY,raw]]),store={getItem:k=>data.get(k)||null,setItem:(k,v)=>data.set(k,v)};
+ const bank=readSlots(store,C.parseCareer,C.CAREER_KEY);assert.equal(Object.keys(bank.careers).length,1);assert.equal(bank.lastId,good.careerId);assert.equal(bank.recovery.length,1);assert.equal(data.get(SLOTS_KEY),raw);
+ writeSlot(store,C.parseCareer,C.CAREER_KEY,good);assert.deepEqual(JSON.parse(readSlots(store,C.parseCareer,C.CAREER_KEY).recovery[0].raw),broken);
+ data.set(SLOTS_KEY,'broken-json');writeSlot(store,C.parseCareer,C.CAREER_KEY,good);assert.equal(readSlots(store,C.parseCareer,C.CAREER_KEY).recovery[0].raw,'broken-json');
+ const {opponentBoxScore}=await import('../src/career/leagueStats.js'),team=c.league.teams[1],drives=[{points:7,yards:80,turnover:false},{points:0,yards:22,turnover:true}],box=opponentBoxScore(team,drives,'fixed');
+ const qb=box[team.roster.find(p=>p.slot==='QB').id],values=Object.values(box);
+ assert.equal(qb.passingYards+values.reduce((n,s)=>n+s.rushingYards,0)-qb.sackYards,102);assert.equal(values.reduce((n,s)=>n+s.receivingTD+s.rushingTD,0),1);assert.equal(qb.interceptions,1);assert.ok(qb.attempts>=qb.completions+qb.interceptions);
+ console.log('Save quarantine and opponent drive allocation passed.');
+}

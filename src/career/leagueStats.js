@@ -32,3 +32,20 @@ export function seasonPlayerRows(c){
  const rows=c.league.teams.flatMap(team=>playingRoster(team).filter(p=>/^(QB|RB|WR|TE)/.test(p.slot)).map(player=>({team,player,stats:totals[player.id]||null})));
  return {rows,games,covered};
 }
+
+// Opponent possessions are simulated, so allocate their actual drive gain and
+// scoring result to a separate seeded box score without touching gameplay RNG.
+export function opponentBoxScore(team,drives,seed){
+ const totals={};
+ drives.forEach((drive,index)=>{
+  const players=simulatedBoxScore(team,[drive.points],`${seed}-${index}`),qb=players[team.roster.find(p=>p.slot==='QB').id],rb=players[team.roster.find(p=>p.slot==='RB').id];
+  const oldAttempts=qb.attempts;qb.interceptions=Number(drive.turnover);qb.attempts=Math.max(qb.attempts,qb.completions+qb.interceptions);rb.targets+=qb.attempts-oldAttempts;
+  const production=Object.values(players),original=production.reduce((n,s)=>n+s.receivingYards+s.rushingYards,0),yards=Math.max(0,Math.round(drive.yards))+qb.sackYards;
+  let used=0;
+  for(const stats of production){stats.receivingYards=Math.floor(stats.receivingYards/Math.max(1,original)*yards);stats.rushingYards=Math.floor(stats.rushingYards/Math.max(1,original)*yards);used+=stats.receivingYards+stats.rushingYards;}
+  rb.rushingYards+=yards-used;qb.passingYards=production.reduce((n,s)=>n+s.receivingYards,0);
+  for(const [id,stats] of Object.entries(players))addStats(totals[id]??=emptyStats(),stats);
+ });
+ for(const stats of Object.values(totals))stats.games=1;
+ return totals;
+}

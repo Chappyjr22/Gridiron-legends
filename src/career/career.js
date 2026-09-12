@@ -1,3 +1,4 @@
+import {opponentBoxScore} from './leagueStats.js';
 import {validCheckpoint} from './checkpoints.js';
 import {COLLEGE_TEAMS,SCHOOL_TIERS} from './collegeData.js';
 import {createCollegeLeague,seedCollegePostseason,collegeGameAssessment,draftProjection} from './college.js';
@@ -90,6 +91,10 @@ export function completeCareerGame(c,gameId,userScore,cpuScore,matchStats){
  const stats={...emptyStats(),...(matchStats.players[c.playerId]||{}),games:1};
  addStats(c.totals,stats);addStats(c.seasonStats,stats);
  const opponent=League.findTeamState(c.league,home?match.awayTeamId:match.homeTeamId);
+ if(matchStats.opponentDrives){
+  Object.assign(match.boxScore.players,opponentBoxScore(opponent,matchStats.opponentDrives,`${c.careerId}-${gameId}`));
+  match.boxScore.teamSources={[c.teamId]:'played',[opponent.id]:'simulated'};
+ }
  const assessment=c.stage==='college'?collegeGameAssessment(c,stats,userScore>cpuScore,opponent):null;
  const breakdown=xpBreakdown(stats,userScore>cpuScore);
  if(assessment)breakdown.push({label:'Weekly development goal',xp:assessment.goal.xp});

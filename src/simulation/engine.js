@@ -1,3 +1,5 @@
+import {feedback} from '../state/feedback.js';
+import {advanceSkillBlocks} from './blocking.js';
 import {playingRoster,uniqueLineupNumbers} from '../career/roster.js';
 import {controlPreferences} from '../state/preferences.js';
 import {advanceRoute,passingRead,throwProfile} from './passing.js';
@@ -140,6 +142,7 @@ export function initPlay(){
   entities.ball={inFlight:false};
   game.passFeedback='';
   entities.runExchange=null;
+  entities.playFake=null;
   entities.pendingTapThrow=null;
   game.phase='callsheet';
   game.message='';
@@ -301,6 +304,7 @@ function simulateExtraPoint(team){
   return good;
 }
 function handlePlayerTouchdown(){
+  feedback('score');
   game.playerScore+=6;
   const patGood=simulateExtraPoint('player');
   adjustMomentum(0.35);
@@ -308,7 +312,7 @@ function handlePlayerTouchdown(){
 }
 export function endPlay(yardGained,label,outOfBounds=false,exactSpot=game.los+yardGained){
   if(game.playResolved)return;
-  game.playResolved=true;
+  game.playResolved=true;feedback('whistle');
   const newLOS=clamp(exactSpot,0,100);
   if(!game.practice){
     const facts=game.playFacts||{};
@@ -409,6 +413,8 @@ function cpuStrength(){
   return clamp(difficultyStrength+matchup,0,2.5);
 }
 function simulateOpponentDrive(startField,reason){
+  const scoreBefore=game.cpuScore;
+  let driveTurnover=false;
   const strength=cpuStrength();
   let driveSeconds=Math.round(38+Math.random()*58+strength*5);
   if(!game.overtime&&game.quarter===4&&game.cpuScore>game.playerScore)driveSeconds+=20;
@@ -425,6 +431,7 @@ function simulateOpponentDrive(startField,reason){
   let playerStart=20;
   let outcome='';
   if(roll<turnoverChance){
+    driveTurnover=true;
     playerStart=clamp(100-endField,5,95);
     outcome='Turnover! You take over at '+formatFieldPosition(playerStart)+'.';
     adjustMomentum(-0.08);
@@ -455,6 +462,7 @@ function simulateOpponentDrive(startField,reason){
     playerStart=touchback?20:clamp(100-landing,5,95);
     outcome='Opponent punts '+puntNet+' yards.'+(touchback?' Touchback.':' You start at '+formatFieldPosition(playerStart)+'.');
   }
+  (matchState.stats.opponentDrives??=[]).push({points:game.cpuScore-scoreBefore,yards:Math.round(gain),turnover:driveTurnover});
   lines.push('The drive gains '+Math.round(gain)+(Math.round(gain)===1?' yard.':' yards.'));
   lines.push(outcome);
   lines.push('Drive time: '+Math.floor(consumedSeconds/60)+':'+String(consumedSeconds%60).padStart(2,'0'));
@@ -479,10 +487,11 @@ export function startOpponentPossession(startField,reason){
 }
 export function onSnap(){
   if(game.phase!=='presnap')return false;
-  game.phase='live';game.snapTime=simulationNow();
+  game.phase='live';game.snapTime=simulationNow();feedback('snap');
   document.getElementById('presnap-hint').style.display='none';
   const play=PLAYS[game.playCall];
-  game.blitzBlockedUntil=game.snapTime+Math.min(850,(play?.blocks?.length||0)*150);
+  game.blitzBlockedUntil=game.snapTime;
+  if(play?.type==='playaction')entities.playFake={start:game.snapTime,duration:380,from:{x:entities.players.rb.x,yfield:entities.players.rb.yfield}};
   if(Math.random()<currentDiff().blitzChance){
     game.blitzer=Math.random()<0.5?'lb1':'s1';
   }
@@ -492,6 +501,7 @@ export function startRunOption(){
   if(!onSnap())return;
   const now=simulationNow();
   const play=PLAYS[game.playCall];
+  entities.playFake=null;
   game.thrown=true;
   game.runActive=true;
   game.runType=play.runOption||'handoff';
@@ -503,7 +513,8 @@ export function startRunOption(){
 export function releaseThrow(t){
   if(game.paused||game.thrown||game.phase!=='live')return;
   game.thrown=true;
-  game.playFacts.threw=true;
+  entities.playFake=null;
+  game.playFacts.threw=true;feedback('throw');
   const qb=entities.players.qb;
   const throwStart=simulationNow();
   qb.action='throw';qb.actionStart=throwStart;
@@ -549,6 +560,7 @@ function resolveCatchAtTarget(){
   }
   entities.ballCarrier=best;
   game.playFacts.receiverId=best.playerId;
+  feedback('catch');
   best.action='catch';best.actionStart=simulationNow();
   game.carrierSince=simulationNow();
 }
@@ -560,7 +572,7 @@ function resolveTackle(tackler){
   else label='Catch';
   if(!tackler){endPlay(yardGained,label,false,entities.ballCarrier.yfield/XPX);return;}
   const now=simulationNow();
-  game.phase='tackle';
+  game.phase='tackle';feedback('tackle');
   game.tackle={startTime:now,carrier:entities.ballCarrier,tackler,yardGained,label,exactSpot:entities.ballCarrier.yfield/XPX};
   entities.ballCarrier.action='tackled';entities.ballCarrier.actionStart=now;
   if(Math.abs(entities.ballCarrier.yfield-tackler.yfield)>0.5)tackler.facing=entities.ballCarrier.yfield>tackler.yfield?'left':'right';
@@ -602,6 +614,15 @@ function updateSimulation(dt,now){
     const playDef=PLAYS[game.playCall];
     const screenMult=(playDef?.type==='screen'&&t<1.3)?0.25:1;
     entities.breakCooldown=Math.max(0,entities.breakCooldown-dt);
+    for(const p of Object.values(entities.players))p.isBlocking=false;
+    if(playDef&&(entities.ballCarrier===qb||game.runActive))advanceSkillBlocks({players:entities.players,defenders:[cb1,cb2,s1,lb1,...DL_KEYS.map(k=>entities.players[k]),...entities.decor.filter(p=>p.team===DEF)],play:playDef,los:game.los,elapsed:now-game.snapTime,now,dt,moveToward});
+    if(entities.playFake){
+      const fake=entities.playFake,progress=clamp((now-fake.start)/fake.duration,0,1),rb=entities.players.rb;
+      const reach=Math.sin(progress*Math.PI);
+      rb.x=fake.from.x+(qb.x-fake.from.x)*reach;
+      rb.yfield=fake.from.yfield+(qb.yfield-fake.from.yfield)*reach;
+      if(progress>=1)entities.playFake=null;
+    }
 
     if(entities.runExchange&&now-entities.runExchange.startTime>=entities.runExchange.duration){
       entities.runExchange=null;
@@ -620,6 +641,7 @@ function updateSimulation(dt,now){
     DL_KEYS.forEach(key=>{
       const dl=entities.players[key];
       if(entities.ballCarrier!==qb&&!game.runActive)return;
+      if(now<(dl.blockedUntil||0))return;
       if(dl.state==='approach'){
         if(t>diff.approachDelay){
           moveToward(dl,dl.blockerX,game.centerYfield,RUSH_SPEED*screenMult*ratingMultiplier(dl.rating,0.18),dt);
@@ -629,8 +651,7 @@ function updateSimulation(dt,now){
             const matchup=(dl.blockRating||68)-(dl.rating||68);
             const blockWinChance=clamp(diff.blockWinChance+matchup*0.006,0.02,0.82);
             const baseDuration=diff.engageMin+Math.random()*(diff.engageMax-diff.engageMin);
-            const extraProtection=1+Math.min(0.36,(playDef?.blocks?.length||0)*0.09);
-            dl.engageDur=Math.random()<blockWinChance?20000:baseDuration*clamp(1+matchup/55,0.55,1.55)*extraProtection;
+            dl.engageDur=Math.random()<blockWinChance?20000:baseDuration*clamp(1+matchup/55,0.55,1.55);
           }
         }
       } else if(dl.state==='engaged'){
@@ -656,11 +677,11 @@ function updateSimulation(dt,now){
         if(coverAssign[dk]&&dk!==game.blitzer){
           const recv=entities.players[coverAssign[dk]];
           const sMult=(playDef.type==='screen'&&dk==='cb1')?screenMult:1;
-          moveToward(entities.players[dk],recv.x,recv.yfield-4,COVER_YPS*XPX*SPEED_SCALE*sMult*ratingMultiplier(entities.players[dk].rating,0.18),dt);
+          moveToward(entities.players[dk],recv.x,recv.yfield-4,COVER_YPS*XPX*SPEED_SCALE*sMult*(now<(entities.players[dk].blockedUntil||0)?.25:1)*ratingMultiplier(entities.players[dk].rating,0.18),dt);
         }
       });
       if(game.blitzer&&t>0.25&&now>=(game.blitzBlockedUntil||0)){
-        moveToward(entities.players[game.blitzer],qb.x,qb.yfield,RUSH_SPEED_BLITZ*screenMult*ratingMultiplier(entities.players[game.blitzer].rating,0.18),dt);
+        moveToward(entities.players[game.blitzer],qb.x,qb.yfield,RUSH_SPEED_BLITZ*screenMult*(now<(entities.players[game.blitzer].blockedUntil||0)?.25:1)*ratingMultiplier(entities.players[game.blitzer].rating,0.18),dt);
       }
     }
 
@@ -744,7 +765,7 @@ function updateSimulation(dt,now){
         // Receivers and nearby linemen can escort the runner, one blocker per defender.
         const blocked=new Set();
         if(entities.ballCarrier!==qb){
-          const blockers=[...Object.keys(playDef.routes||{}).map(k=>entities.players[k]),...entities.decor.filter(d=>d.team===OFF)];
+          const blockers=[...new Set([...Object.keys(playDef.routes||{}),...(playDef.blocks||[])]).values()].map(k=>entities.players[k]).concat(entities.decor.filter(d=>d.team===OFF));
           for(const blocker of blockers){
             if(blocker===entities.ballCarrier||blocker===qb)continue;
             let target=null,distance=110;

@@ -1,3 +1,6 @@
+import {initAudio} from './audio/gameAudio.js';
+import {initPracticeGuide} from './ui/practiceGuide.js';
+import {initOverlayFocus} from './ui/focus.js';
 import {initFieldViewport} from './rendering/viewport.js';
 import {initRunnerControls} from './input/runnerControls.js';
 import {initMenuArt} from './ui/menuArt.js';
@@ -45,12 +48,14 @@ updateHUD();
 initRunnerControls();
 initMenuArt();
 initCareer();
+initAudio();
+initPracticeGuide();
+initOverlayFocus();
 
 // An interrupted mobile session stays paused until the player resumes it.
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden&&['presnap','live','tackle'].includes(game.phase)){
-    game.paused=true;
-    document.getElementById('pause-overlay').classList.add('show');
+    document.getElementById('btn-pause').click();
   }
 });
 

@@ -223,3 +223,11 @@ await test('supporting receiver keeps legacy identity and every lineup number is
   const numbers=[...keys.map(k=>h.entities.players[k].num),...h.entities.decor.filter(p=>p.team===side).map(p=>p.num)];assert.equal(new Set(numbers).size,numbers.length);
  }
 });
+await test('skill blocks require contact and delayed routes release after their chip',async h=>{
+ h.engine.startPractice();h.engine.choosePlay('ace_levels');h.engine.onSnap();
+ const chip=h.entities.players.wr3;h.step(100);assert.equal(chip.isBlocking,true);const start=chip.yfield;h.step(400);assert.equal(chip.isBlocking,false);assert.ok(chip.yfield>start);
+});
+await test('play-action fake keeps QB possession and cancels on an early throw',async h=>{
+ h.engine.startPractice();h.engine.choosePlay('ace_pa_cross');h.engine.onSnap();assert.ok(h.entities.playFake);const y=h.entities.players.rb.yfield;h.step(180);assert.notEqual(h.entities.players.rb.yfield,y);assert.equal(h.entities.ballCarrier,h.entities.players.qb);
+ h.engine.releaseThrow({x:100,y:39});assert.equal(h.entities.playFake,null);assert.equal(h.game.runActive,false);assert.ok(h.entities.ball.inFlight);
+});

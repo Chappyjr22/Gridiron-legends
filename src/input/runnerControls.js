@@ -1,3 +1,4 @@
+import {feedback} from '../state/feedback.js';
 import {game,entities} from '../state/gameState.js';
 import {simulationNow} from '../state/clock.js';
 export const STICK_RADIUS=38,STICK_TRAVEL=29,STICK_INPUT=70;
@@ -15,7 +16,7 @@ export function requestJuke(direction){
  if(!canJuke()||![-1,1].includes(direction))return false;
  const runner=entities.ballCarrier,now=simulationNow();
  if(now<(runner.jukeReadyAt||0))return false;
- runner.juke={direction,start:now,progress:0};runner.jukeReadyAt=now+JUKE_COOLDOWN;
+ runner.juke={direction,start:now,progress:0};runner.jukeReadyAt=now+JUKE_COOLDOWN;feedback('juke');
  return true;
 }
 export function jukeStep(runner,now){

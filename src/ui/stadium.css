@@ -316,3 +316,20 @@ canvas.menu-player{width:auto;max-width:100%;height:42%;background:none;image-re
 @media(max-height:400px){#result-overlay.compact-result #result-card{padding:7px 10px;}#result-overlay.compact-result .msg{font-size:14px;}}
 
 #result-overlay.compact-result .card-body{display:grid;grid-template-columns:minmax(0,1fr) 140px;align-items:center;gap:12px;}
+/* Compact feedback and accessible practice help. */
+.audio-settings{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 0;border-bottom:2px solid #9aab9e;margin-bottom:12px}
+.audio-settings h3{flex-basis:100%;margin:0;font:22px var(--sports-face)}
+.audio-settings label{display:flex;align-items:center;gap:6px;font:14px Arial,sans-serif}
+.audio-settings input{width:90px;min-height:32px;accent-color:#c08a0c}
+.audio-settings button{min-height:36px;font:18px var(--sports-face)}
+#checkpoint-help{max-width:320px;font:13px/1.4 Arial,sans-serif}
+.guide-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}.guide-grid p{font:16px/1.4 Arial,sans-serif}.guide-grid h3{font:28px var(--sports-face);margin:6px 0}
+.guide-actions{display:flex;gap:12px}.guide-actions button{flex:1}
+#practice-coach{position:absolute;z-index:9;top:6px;left:50%;transform:translateX(-50%);width:min(620px,80%);padding:7px 36px 7px 10px;background:#fff3d4f5;color:#102d4b;border:3px solid #153d63;box-shadow:3px 3px 0 #071a33;display:flex;align-items:center;flex-wrap:wrap;gap:5px 10px}
+#practice-coach[hidden]{display:none}#practice-coach strong{font:22px/1 var(--sports-face)}#practice-coach span{font:13px/1.3 Arial,sans-serif;flex:1;min-width:190px}
+#practice-coach button{font:17px var(--sports-face);padding:3px 8px;min-height:32px}#practice-coach-close{position:absolute;right:2px;top:2px;width:28px}
+#career-recovery-list section{border-top:2px solid #9aab9e;margin-top:12px;padding-top:8px}#career-recovery-list button{margin:4px 0;width:100%;font-size:22px}
+#career-gateway-backups{font:16px Arial,sans-serif;min-height:28px;background:none;border:0;box-shadow:none;text-decoration:underline;margin:0}
+button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visible{outline:3px solid #ecac0e;outline-offset:3px}
+@media(max-height:500px){.guide-grid p{font-size:14px}.guide-grid h3{font-size:24px}#practice-coach strong{font-size:18px}#practice-coach span{font-size:12px}.audio-settings{gap:6px}.guide-actions .sports-button{min-height:38px;font-size:22px}}
+@media(max-width:600px){.guide-grid{grid-template-columns:1fr;gap:8px}}

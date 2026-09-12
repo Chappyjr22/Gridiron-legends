@@ -109,6 +109,10 @@ export function draw(){
   drawPlayer(entities.players.te,OFF,entities.ballCarrier===entities.players.te);
   drawPlayer(entities.players.wr2,OFF,entities.ballCarrier===entities.players.wr2);
   drawPlayer(entities.players.qb,OFF,entities.ballCarrier===entities.players.qb);
+  if(entities.playFake){
+    const p=clamp((simulationNow()-entities.playFake.start)/entities.playFake.duration,0,1),qb=toCanvas(entities.players.qb),rb=toCanvas(entities.players.rb);
+    const reach=Math.sin(p*Math.PI);ctx.fillStyle='#9a582c';ctx.fillRect(qb.cx+(rb.cx-qb.cx)*reach-4,qb.cy+(rb.cy-qb.cy)*reach-2,8,4);
+  }
   if(entities.runExchange){
     const progress=clamp((simulationNow()-entities.runExchange.startTime)/entities.runExchange.duration,0,1);
     const from=toCanvas(entities.players.qb),to=toCanvas(entities.players.rb);

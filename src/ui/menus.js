@@ -190,6 +190,7 @@ function closeSettings(){
 }
 document.getElementById('btn-pause').addEventListener('click',()=>{
   syncSettingsUI();
+  document.getElementById('checkpoint-help').textContent=game.career&&['live','tackle'].includes(game.phase)?'Leaving now saves your career at the start of this play. Resume will restart this play.':'';
   game.paused=true;
   document.getElementById('pause-overlay').classList.add('show');
 });

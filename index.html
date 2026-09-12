@@ -199,6 +199,7 @@
     <button id="career-continue-last" class="sports-button gold">Continue last career</button>
     <button id="career-my-careers" class="sports-button">My careers</button>
     <button id="career-new" class="sports-button">Start new career</button>
+    <button id="career-gateway-backups" class="sports-button blue">Save &amp; recovery</button>
     <button id="career-gateway-back" class="sports-button blue">Back</button>
     <p id="career-gateway-error" role="alert"></p>
    </div>
@@ -287,6 +288,7 @@
           <p class="setting-help">Show receiver routes before the snap.</p>
         </div>
       </div>
+      <section class="audio-settings"><h3>Sound &amp; help</h3><button data-audio-mute aria-pressed="true">Sound on</button><label>Effects <input type="range" min="0" max="100" data-audio-volume="effects" aria-label="Effects volume"></label><label>Crowd <input type="range" min="0" max="100" data-audio-volume="crowd" aria-label="Crowd volume"></label><button data-open-guide>Practice guide</button></section>
       <div class="setup-actions">
         <button id="btn-setup-back">Back</button>
         <button id="btn-start-play" class="btn-primary">Start Game</button>
@@ -384,10 +386,12 @@
   <dialog id="postgame-dialog" class="sports-dialog experience-dialog" aria-labelledby="postgame-heading"><header><h2 id="postgame-heading">Final whistle</h2></header><div id="postgame-content" class="experience-body"></div><footer><button id="postgame-continue" class="sports-button gold">Continue to career</button></footer></dialog>
   <dialog id="career-backups" class="sports-dialog" aria-labelledby="backup-heading"><h2 id="backup-heading">Career save</h2>
   <footer class="career-footer"><p id="career-save-status" role="status">Career saves on this device. Quick games keep their existing save.</p><div class="career-backup-actions"><button id="career-export">Export backup</button><button id="career-import">Restore backup</button><input id="career-backup-file" type="file" accept=".json,application/json" hidden></div></footer>
+<button id="career-export-all" class="sports-button blue">Export all saved data</button><div id="career-recovery-list"></div>
 <button id="career-close-backups" class="sports-button blue">Back</button></dialog>
  </div>
 </section>
 <svg width="0" height="0" class="svg-definitions" aria-hidden="true"><defs><symbol id="helmet-icon" viewBox="0 0 32 28">
+  <dialog id="practice-guide" class="sports-dialog" aria-labelledby="practice-guide-heading"><h2 id="practice-guide-heading">Make the play</h2><div class="guide-grid"><section><h3>Passing</h3><p><b>Slingshot:</b> pull away from your target, then release. The ball flies in the opposite direction.</p><p><b>Direct drag:</b> drag toward the spot you want to throw to.</p><p><b>Tap receiver:</b> tap near a receiver to snap and throw. During a live play, tap your target spot.</p><p><b>Lob</b> gives the route more time. <b>Bullet</b> arrives faster.</p></section><section><h3>Read and react</h3><p>The small lead ring predicts where a receiver can arrive: <b>green</b> is on target, <b>gold</b> needs an adjustment, and <b>white</b> is out of reach. Coverage can still contest a pass.</p><p>Defenders crouch before a dive. Juke up or down as they commit. Jukes share a one-second cooldown.</p><p>Drag to steer after the catch. Keyboard: <b>↑ / ↓</b> to juke, <b>Esc</b> to pause.</p></section></div><p id="practice-guide-note"></p><div class="guide-actions"><button id="practice-guide-start" class="sports-button gold">Start guided practice</button><button id="practice-guide-close" class="sports-button blue">Back</button></div></dialog>
   <!-- Stepped shell, white crown stripe and bright cage echo the on-field sprites. -->
   <g shape-rendering="crispEdges">
     <path fill="#071321" d="M9 1h12v2h4v3h3v5h2v6h-3v7h-5v3H10v-2H6v-3H3V9h2V5h4Z"/>
@@ -427,8 +431,8 @@
     <button class="icon-btn" id="btn-pause" aria-label="Pause"><span aria-hidden="true">Ⅱ</span></button>
   </div>
   <div class="momentum-label" id="momentum-label"></div>
-  <div class="field-container">
-    <canvas id="field" width="800" height="380"></canvas>
+  <div class="field-container"><aside id="practice-coach" hidden aria-live="polite"><strong id="practice-coach-title"></strong><span id="practice-coach-text"></span><button id="practice-coach-next" hidden>Try a juke</button><button id="practice-coach-close" aria-label="End guided practice">×</button></aside>
+    <canvas id="field" width="800" height="380" tabindex="0" aria-label="Football field. Use the Practice guide for controls."></canvas>
     <div id="runner-controls" hidden aria-label="Ball carrier moves"><button id="btn-juke-up" aria-label="Juke up">▲ JUKE</button><button id="btn-juke-down" aria-label="Juke down">▼ JUKE</button></div>
     <div id="presnap-hint" class="presnap-hint" style="display:none">Drag from QB to pass <span>|</span> Tap RB to run</div>
     <div id="edit-panel" style="display:none;position:absolute;left:0;right:0;bottom:0;background:#1b2126;border-top:1px solid #333c43;padding:10px;border-radius:0 0 12px 12px;">
@@ -483,7 +487,7 @@
           <button class="card-close" id="btn-close-settings" aria-label="Close">&#10005;</button>
         </div>
         <div class="card-body">
-          <p class="settings-section">Gameplay</p>
+          <section class="audio-settings"><h3>Sound &amp; help</h3><button data-audio-mute aria-pressed="true">Sound on</button><label>Effects <input type="range" min="0" max="100" data-audio-volume="effects" aria-label="Effects volume"></label><label>Crowd <input type="range" min="0" max="100" data-audio-volume="crowd" aria-label="Crowd volume"></label><button data-open-guide>Practice guide</button></section><p class="settings-section">Gameplay</p>
           <div class="settings-row">
             <span class="label">Difficulty</span>
             <div class="toggle-group sync-difficulty" id="difficulty">
@@ -517,7 +521,8 @@
           </div>
           <div class="settings-row">
             <span class="label">Session</span>
-            <button id="btn-main-menu">Main menu</button>
+            <p id="checkpoint-help" class="experience-note" role="status"></p>
+          <button id="btn-main-menu">Main menu</button>
           </div>
           <button class="btn-primary" id="btn-resume">Resume</button>
         </div>
