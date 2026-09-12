@@ -4,7 +4,10 @@ for(const viewport of [{width:844,height:304},{width:932,height:430}]){
   test(`daytime field art and touch alignment ${viewport.width}x${viewport.height}`,async({browser})=>{
     const context=await browser.newContext({viewport,hasTouch:true});
     const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
-    await page.goto('/');await page.locator('#btn-practice').tap();
+    await page.goto('/');
+    await expect.poll(()=>page.evaluate(async()=>!!(await import('/src/rendering/brand.js')).brandArt.wordmark)).toBe(true);
+    await page.screenshot({path:`test-results/brand-title-${viewport.width}.png`});
+    await page.locator('#btn-practice').tap();
     await page.locator('[data-play="trips_slants"]').tap();
     await expect.poll(()=>page.evaluate(async()=>{
       const {stadiumArt}=await import('/src/rendering/stadiumArt.js');
@@ -12,6 +15,8 @@ for(const viewport of [{width:844,height:304},{width:932,height:430}]){
       return !!stadiumArt.turf&&!!stadiumArt.crowd&&stadiumArt.equipment.length===4&&staffFrames.length===6;
     })).toBe(true);
     await page.screenshot({path:`test-results/daytime-field-${viewport.width}.png`});
+    await page.evaluate(async()=>{const {game}=await import('/src/state/gameState.js');game.cameraYard=50;(await import('/src/rendering/draw.js')).draw();});
+    await page.screenshot({path:`test-results/brand-midfield-${viewport.width}.png`});
     const rb=await page.evaluate(async()=>{
       const {entities}=await import('/src/state/gameState.js');
       const {toCanvas}=await import('/src/rendering/players.js');

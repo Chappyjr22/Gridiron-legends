@@ -1,4 +1,5 @@
 import {passingRead} from '../simulation/passing.js';
+import {brandArt} from './brand.js';
 import {stickVector,STICK_TRAVEL} from '../input/runnerControls.js';
 import {catchTolerance} from '../simulation/receiving.js';
 import { simulationNow } from '../state/clock.js';
@@ -47,6 +48,12 @@ export function draw(){
   ctx.imageSmoothingEnabled=false;
   drawPixelTurf(xAt,w);
   drawPixelStadium(xAt,w);
+  if(brandArt.shield){
+    const logo=brandArt.shield,width=196,height=width*logo.height/logo.width;
+    ctx.save();ctx.globalAlpha=.78;
+    ctx.drawImage(logo,Math.round(xAt(50)-width/2),Math.round((LAT_MIN+LAT_MAX-height)/2),width,height);
+    ctx.restore();
+  }
   for(let yard=0;yard<=100;yard+=5){
     const cx=Math.round(xAt(yard));
     if(cx<-10||cx>w+10)continue;
