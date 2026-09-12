@@ -751,3 +751,6 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
  .enrollment-preview strong{font-size:22px;}
  .enrollment-preview span{font-size:17px;}
 }
+@media(orientation:landscape) and (max-height:350px){
+ #career-screen #career-upgrades{gap:0;}
+}
