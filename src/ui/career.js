@@ -1,3 +1,4 @@
+import {careerStorage} from '../cloud/storage.js';
 import {readSlots,SLOTS_KEY,importSlotArchive} from '../career/slots.js';
 import {playingRoster} from '../career/roster.js';
 import {collegeStandings} from '../career/college.js';
@@ -128,7 +129,7 @@ export function initCareer(){
  const openBackups=()=>{
   const list=el('career-recovery-list');list.replaceChildren();
   try{
-   const bank=readSlots(localStorage,Career.parseCareer,Career.CAREER_KEY);
+   const bank=readSlots(careerStorage(),Career.parseCareer,Career.CAREER_KEY);
    for(const entry of bank.recovery||[]){
     const row=document.createElement('section'),label=document.createElement('p'),save=document.createElement('button');
     label.textContent=`${entry.id}: original data retained.`;save.textContent='Export this original';save.className='sports-button blue';save.onclick=()=>download(entry.raw,'gridiron-recovery.json');row.append(label,save);
@@ -145,13 +146,13 @@ export function initCareer(){
  };
  el('career-open-backups').addEventListener('click',openBackups);
  el('career-gateway-backups').addEventListener('click',openBackups);
- el('career-export-all').onclick=()=>download(JSON.stringify({format:'gridiron-all-saved-data-v1',careers:localStorage.getItem(SLOTS_KEY),legacy:localStorage.getItem(Career.CAREER_KEY)},null,2),'gridiron-all-saved-data.json');
+ el('career-export-all').onclick=()=>download(JSON.stringify({format:'gridiron-all-saved-data-v1',careers:careerStorage().getItem(SLOTS_KEY),legacy:careerStorage().getItem(Career.CAREER_KEY)},null,2),'gridiron-all-saved-data.json');
  el('career-close-backups').addEventListener('click',()=>el('career-backups').close());
  updateTitle();
  el('career-team').innerHTML=League.TEAMS.map(t=>`<option value="${t.id}">${escape(League.fullName(t))}</option>`).join('');
  const openGateway=()=>{
   creating=false;el('start-screen').classList.remove('show');el('career-screen').classList.remove('show');el('career-list-screen').classList.remove('show');el('career-gateway').classList.add('show');
-  try{Career.listCareers();career=Career.loadCareer();el('career-continue-last').disabled=!career;const count=readSlots(localStorage,Career.parseCareer,Career.CAREER_KEY).recovery.length;el('career-gateway-error').textContent=count?`${count} saved item(s) need recovery. Your other careers are ready to play.`:'';}
+  try{Career.listCareers();career=Career.loadCareer();el('career-continue-last').disabled=!career;const count=readSlots(careerStorage(),Career.parseCareer,Career.CAREER_KEY).recovery.length;el('career-gateway-error').textContent=count?`${count} saved item(s) need recovery. Your other careers are ready to play.`:'';}
   catch(error){el('career-gateway-error').textContent=error.message;el('career-continue-last').disabled=true;}
  };
  el('btn-career').addEventListener('click',openGateway);
@@ -188,7 +189,7 @@ export function initCareer(){
    if(file.size>5000000)throw Error('That backup is too large.');
    const raw=await file.text();let restored=Career.parseCareer(raw);
    if(!restored){
-    const imported=importSlotArchive(localStorage,Career.parseCareer,Career.CAREER_KEY,raw);
+    const imported=importSlotArchive(careerStorage(),Career.parseCareer,Career.CAREER_KEY,raw);
     el('career-save-status').textContent=`Restored ${imported.count} careers. ${imported.recovery} items retained for recovery.`;
     if(!imported.career)return;
     career=imported.career;creating=false;el('career-backups').close();showCareer();return;
@@ -200,7 +201,7 @@ export function initCareer(){
  });
  el('career-next-season').addEventListener('click',()=>{if(Career.startNextSeason(career)){persist();render();}});
  el('career-export').addEventListener('click',()=>{
-  const raw=career?JSON.stringify(career,null,2):localStorage.getItem(Career.CAREER_KEY);if(!raw)return;
+  const raw=career?JSON.stringify(career,null,2):careerStorage().getItem(Career.CAREER_KEY);if(!raw)return;
   const url=URL.createObjectURL(new Blob([raw],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='gridiron-career-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
  });
  uiHooks.checkpoint=saved=>{if(career?.activeMatch){career.checkpoint=saved;persist();}};

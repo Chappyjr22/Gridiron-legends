@@ -20,6 +20,7 @@ jobs:
       - run: node tests/data.test.mjs
       - run: node tests/save-compatibility.test.mjs
       - run: node tests/audio.test.mjs
+      - run: node tests/cloud.test.mjs
       - run: npm run test:gameplay
       - run: npm run test:career
       - run: npm run build
