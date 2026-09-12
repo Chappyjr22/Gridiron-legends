@@ -113,3 +113,11 @@ await import('./college.test.mjs');
  assert.equal(qb.passingYards+values.reduce((n,s)=>n+s.rushingYards,0)-qb.sackYards,102);assert.equal(values.reduce((n,s)=>n+s.receivingTD+s.rushingTD,0),1);assert.equal(qb.interceptions,1);assert.ok(qb.attempts>=qb.completions+qb.interceptions);
  console.log('Save quarantine and opponent drive allocation passed.');
 }
+{
+ const {importSlotArchive}=await import('../src/career/slots.js'),original=C.createCareer({name:'Archive original'}),data=new Map(),store={getItem:k=>data.get(k)||null,setItem:(k,v)=>data.set(k,v)};
+ writeSlot(store,C.parseCareer,C.CAREER_KEY,original);
+ const archive=JSON.stringify({format:'gridiron-all-saved-data-v1',careers:data.get(SLOTS_KEY),legacy:null});
+ const result=importSlotArchive(store,C.parseCareer,C.CAREER_KEY,archive);assert.equal(result.count,1);assert.notEqual(result.career.careerId,original.careerId);assert.equal(Object.keys(readSlots(store,C.parseCareer,C.CAREER_KEY).careers).length,2);
+ const before=data.get(SLOTS_KEY);assert.throws(()=>importSlotArchive({...store,setItem(){throw Error('Quota');}},C.parseCareer,C.CAREER_KEY,archive));assert.equal(data.get(SLOTS_KEY),before);
+ console.log('Full saved-data archives restore as separate careers with atomic writes.');
+}

@@ -7,7 +7,7 @@ import {stickVector,jukeStep,syncRunnerControls} from '../input/runnerControls.j
 import {catchTolerance,catchOutcome} from './receiving.js';
 import {separation, touching, pursuitTarget, startDive, advanceDive} from './contact.js';
 import { emptyMatch, recordPlay } from '../career/stats.js';
-import { simulationNow, advanceSimulation } from '../state/clock.js';
+import { simulationNow, advanceSimulation, resetFrameClock } from '../state/clock.js';
 import * as League from '../state/league.js';
 import { game, entities, teamState } from '../state/gameState.js';
 import {
@@ -599,7 +599,7 @@ function finishTackle(){
 
 let loopStarted=false;
 export function ensureLoopStarted(){
-  if(!loopStarted){loopStarted=true;requestAnimationFrame(tick);}
+  if(!loopStarted){resetFrameClock();loopStarted=true;requestAnimationFrame(tick);}
 }
 function updateSimulation(dt,now){
   if(editState.editMode)return;

@@ -4,7 +4,8 @@ let excluded = 0;
 let frameTime = null;
 let lastFrame = performance.now();
 const wallTime = () => (pausedAt ?? performance.now()) - excluded;
-export function simulationNow(){ return frameTime ?? wallTime(); }
+export function simulationNow(){ return frameTime ?? Math.min(wallTime(),lastFrame+1000); }
+export function resetFrameClock(){lastFrame=wallTime();}
 export function isClockPaused(){ return pausedAt !== null; }
 export function pauseClock(paused){
   if(paused && pausedAt === null) pausedAt = performance.now();

@@ -1,4 +1,4 @@
-import {readSlots,SLOTS_KEY} from '../career/slots.js';
+import {readSlots,SLOTS_KEY,importSlotArchive} from '../career/slots.js';
 import {playingRoster} from '../career/roster.js';
 import {collegeStandings} from '../career/college.js';
 import {initCollegeUI,syncCollegeEnrollment,renderCollegeCareer} from './college.js';
@@ -145,7 +145,7 @@ export function initCareer(){
  };
  el('career-open-backups').addEventListener('click',openBackups);
  el('career-gateway-backups').addEventListener('click',openBackups);
- el('career-export-all').onclick=()=>download(JSON.stringify({careers:localStorage.getItem(SLOTS_KEY),legacy:localStorage.getItem(Career.CAREER_KEY)},null,2),'gridiron-all-saved-data.json');
+ el('career-export-all').onclick=()=>download(JSON.stringify({format:'gridiron-all-saved-data-v1',careers:localStorage.getItem(SLOTS_KEY),legacy:localStorage.getItem(Career.CAREER_KEY)},null,2),'gridiron-all-saved-data.json');
  el('career-close-backups').addEventListener('click',()=>el('career-backups').close());
  updateTitle();
  el('career-team').innerHTML=League.TEAMS.map(t=>`<option value="${t.id}">${escape(League.fullName(t))}</option>`).join('');
@@ -186,7 +186,13 @@ export function initCareer(){
   const file=event.target.files[0];if(!file)return;
   try{
    if(file.size>5000000)throw Error('That backup is too large.');
-   const restored=Career.parseCareer(await file.text());if(!restored)throw Error('This file is not a supported career backup.');
+   const raw=await file.text();let restored=Career.parseCareer(raw);
+   if(!restored){
+    const imported=importSlotArchive(localStorage,Career.parseCareer,Career.CAREER_KEY,raw);
+    el('career-save-status').textContent=`Restored ${imported.count} careers. ${imported.recovery} items retained for recovery.`;
+    if(!imported.career)return;
+    career=imported.career;creating=false;el('career-backups').close();showCareer();return;
+   }
    restored.careerId=`career-${Date.now()}-${Math.random().toString(36).slice(2,10)}`;
    if(!Career.saveCareer(restored))throw Error('Could not save the imported career. Existing careers are unchanged.');
    career=restored;creating=false;persist();el('career-backups').close();showCareer();

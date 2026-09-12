@@ -28,3 +28,18 @@ export function writeSlot(storage,parse,legacyKey,c){
  try{storage.setItem(legacyKey,JSON.stringify(c));}catch{}
  return true;
 }
+
+export function importSlotArchive(storage,parse,legacyKey,raw){
+ const archive=JSON.parse(raw);
+ if(archive?.format!=='gridiron-all-saved-data-v1'||![archive.careers,archive.legacy].every(v=>v===null||typeof v==='string'))throw Error('This is not a supported saved-data archive.');
+ const incoming=readSlots({getItem:k=>k===SLOTS_KEY?archive.careers:archive.legacy,setItem(){}},parse,legacyKey),bank=readSlots(storage,parse,legacyKey);
+ const imported=[];
+ for(const saved of Object.values(incoming.careers)){
+  const id=`imported-${Date.now()}-${Math.random().toString(36).slice(2,10)}`;saved.careerId=id;bank.careers[id]=saved;imported.push(saved);
+ }
+ bank.recovery.push(...incoming.recovery);
+ if(!imported.length&&!incoming.recovery.length)throw Error('This archive contains no saved careers.');
+ if(imported.length)bank.lastId=imported.at(-1).careerId;
+ storage.setItem(SLOTS_KEY,JSON.stringify(bank));
+ return {career:imported.at(-1)||null,count:imported.length,recovery:incoming.recovery.length};
+}
