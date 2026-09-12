@@ -447,159 +447,112 @@
       </div>
     </div>
 
-    <div class="…16704 tokens truncated…ts-ink)}
-.topbar #btn-pause{width:44px;height:44px;min-height:44px;margin:0;align-self:center;padding:0;border:2px solid #7e9dbb;background:linear-gradient(#245c8d,#123b62);color:#fff3d4;font:700 24px/1 sans-serif;box-shadow:inset 0 0 0 1px #0a2038}
-@media(max-width:900px){#game-view .topbar{grid-template-columns:minmax(105px,1fr) minmax(105px,1fr) minmax(210px,1.5fr) 44px;min-height:50px;padding:2px;gap:2px}.topbar .team-score,.topbar .team-score.cpu{gap:5px;padding-right:7px}.topbar .period-block{gap:6px;padding:2px 6px}.topbar .period-block b{font-size:17px}.topbar .period-block span{font-size:27px}.topbar .situation strong{font-size:22px}}
-@media(max-width:580px){#game-view .topbar{grid-template-columns:1fr 1fr 44px}.topbar .game-clock{grid-row:2;grid-column:1/-1;min-height:32px;grid-template-columns:1fr 1fr}.topbar #btn-pause{grid-column:3;grid-row:1}.topbar .period-block b{max-width:none}.topbar .situation{flex-direction:row;align-items:center;gap:8px}.topbar .team-score,.topbar .team-score.cpu{grid-template-columns:24px auto 7px 1fr}.topbar .score-helmet{width:24px;height:25px}}
+    <div class="overlay" id="callsheet-overlay">
+      <div class="card wide">
+        <div class="card-header"><div><p class="card-title">Offensive Playbook</p><p class="card-subtitle" id="playbook-situation">Choose the call</p></div></div>
+        <div class="card-body">
+          <div class="callsheet-toolbar"><div id="formation-tabs" role="group" aria-label="Formation"></div><span class="formation-label" id="playbook-formation"></span></div><div class="playbook-pages"><button id="play-page-prev" aria-label="Previous plays">◀</button><span id="play-page-label"></span><button id="play-page-next" aria-label="Next plays">▶</button></div>
+          <div class="callsheet-grid" id="callsheet-grid"></div>
+        </div>
+      </div>
+    </div>
 
-#runner-controls{position:absolute;right:max(10px,env(safe-area-inset-right));bottom:12px;display:flex;flex-direction:column;gap:8px;z-index:3}
-#runner-controls[hidden]{display:none}
-#runner-controls button{min-width:90px;min-height:44px;padding:6px 12px;border:2px solid #fff0aa;background:#123e67e8;color:#fff3d4;font:24px/1 var(--sports-face);touch-action:none;box-shadow:0 3px 0 #071629}
-#runner-controls button:active{background:#ffcf39;color:#091e3c}
-#runner-controls button:disabled{opacity:.45}
-@media(max-height:350px){#runner-controls{bottom:7px;gap:5px}#runner-controls button{min-width:78px;font-size:20px;padding:4px 8px}}
+    <div class="overlay" id="result-overlay">
+      <div class="card result-card" id="result-card">
+        <div class="card-body">
+          <div class="result-kicker" id="result-kicker">Play Result</div>
+          <p class="msg" id="overlay-msg"></p>
+          <button class="btn-primary" id="btn-continue">Continue</button>
+        </div>
+      </div>
+    </div>
 
-/* Career cards and postgame use bounded scrolling on short landscape screens. */
-.career-nav{width:min(780px,88%);}
-.career-nav .sports-button{min-width:0;white-space:nowrap;}
-#my-team-roster{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
-.roster-card{padding:12px;text-align:left;background:var(--sports-paper,#fff3d4);color:#091e3c;border:3px solid #537585;cursor:pointer;display:flex;flex-direction:column;gap:6px;min-width:0;}
-.roster-card strong{font:25px/1.1 var(--sports-face);overflow-wrap:anywhere;}
-.roster-card span{font:14px/1.2 system-ui,sans-serif;}
-.roster-card:hover,.roster-card:focus-visible{background:#ffda49;border-color:#091e3c;}
-.recap-link{font:20px/1 var(--sports-face);background:none;border:0;border-bottom:2px solid #12487a;color:#12487a;cursor:pointer;padding:3px;}
-.sports-dialog.experience-dialog{width:min(850px,94vw);max-width:94vw;max-height:94dvh;padding:0;overflow:hidden;color:#091e3c;}
-.experience-dialog[open]{display:flex;flex-direction:column;}
-.experience-dialog header{flex:none;padding:12px 18px;background:#12487a;color:#fff3d4;border-bottom:4px solid #ffcf39;}
-.experience-dialog header h2{margin:0;font:32px/1 var(--sports-face);}
-.experience-body{min-height:0;overflow:auto;overscroll-behavior:contain;padding:16px 20px;font:16px/1.4 system-ui,sans-serif;}
-.experience-body h3{font:25px/1.1 var(--sports-face);margin:16px 0 8px;}
-.experience-body p{margin:8px 0;}
-.experience-dialog footer{flex:none;padding:10px 18px;background:#fff3d4;border-top:3px solid #537585;}
-.experience-dialog footer .sports-button{width:100%;font:26px/1 var(--sports-face);min-height:44px;padding:7px;}
-.player-passport{display:flex;align-items:center;gap:20px;}
-.player-passport canvas{width:112px;height:112px;image-rendering:pixelated;flex:none;background:#12487a;border:3px solid #537585;}
-.player-overall{font:38px/1.1 var(--sports-face);}
-.player-game-log article{border-top:1px solid #537585;padding:8px 0;}
-.experience-note{font-size:13px;color:#475569;}
-.recap-score{display:flex;justify-content:space-between;align-items:center;gap:12px;font:30px/1 var(--sports-face);border-bottom:3px solid #537585;padding-bottom:12px;}
-.recap-score b{font-size:44px;}
-.recap-score .sports-kicker{font-size:16px;text-align:center;line-height:1.4;}
-.recap-columns{display:grid;grid-template-columns:1.3fr 1fr;gap:24px;}
-.recap-rewards{background:#ffdf78;padding:0 14px 14px;align-self:start;}
-.recap-statline{font-weight:700;}
-@media (orientation:landscape) and (max-height:500px){
- .career-nav{width:82%;gap:6px;}
- .career-nav .sports-button{font-size:21px;padding:5px 8px;}
- .experience-dialog header{padding:7px 14px;}
- .experience-dialog header h2{font-size:27px;}
- .experience-body{padding:10px 14px;font-size:14px;}
- .experience-dialog footer{padding:6px 12px;}
- .experience-dialog footer .sports-button{min-height:38px;font-size:24px;padding:5px;}
- .roster-card{padding:8px;}
- .roster-card strong{font-size:22px;}
-}
-@media(max-width:550px){
- #my-team-roster,.recap-columns{grid-template-columns:1fr;}
- .career-nav{width:98%;gap:4px;}
- .career-nav .sports-button{font-size:20px;padding:5px;}
- .recap-score{font-size:23px;}
- .recap-score b{font-size:32px;}
-}
+    <div class="overlay" id="fourth-down-overlay">
+      <div class="card wide">
+        <div class="card-body">
+          <div class="result-kicker">Coach's Decision</div>
+          <p class="msg">FOURTH DOWN</p>
+          <p class="decision-detail" id="fourth-down-detail"></p>
+          <div class="decision-grid">
+            <button class="decision-card" id="btn-go-for-it"><strong>Go For It</strong><span id="go-detail">Keep the offense on the field</span></button>
+            <button class="decision-card" id="btn-field-goal"><strong>Field Goal</strong><span id="fg-detail">Attempt 3 points</span></button>
+            <button class="decision-card" id="btn-punt"><strong>Punt</strong><span id="punt-detail">Flip field position</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-#career-college-choice{padding:12px;margin-top:12px;border:3px solid #537585;background:#fff0bd;}
-#career-college-choice strong{font:24px/1 var(--sports-face);}
-#career-college-choice .sports-button{font-size:24px;min-height:40px;padding:6px 12px;}
-.school-helmet{width:76px;height:66px;fill:var(--team-primary,#174a7e);flex:none;}
-#school-conferences{display:flex;gap:6px;padding:8px 12px;background:#fff3d4;flex:none;}
-#school-conferences button{flex:1;min-width:0;font:22px/1 var(--sports-face);min-height:36px;padding:5px;}
-.school-picker-body{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;padding:0 12px 12px;min-height:0;overflow:hidden;}
-#school-grid,#school-preview{min-height:0;overflow:auto;overscroll-behavior:contain;}
-#school-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;}
-.school-card{display:flex;align-items:center;gap:7px;min-width:0;padding:8px;background:#fff3d4;border:3px solid #537585;color:#091e3c;text-align:left;cursor:pointer;}
-.school-card[aria-pressed=true]{background:#ffda49;border-color:#091e3c;}
-.school-card .school-helmet{width:40px;height:35px;}
-.school-card b{font:21px/1 var(--sports-face);}
-.school-card small{display:block;font:12px/1.2 system-ui,sans-serif;margin-top:4px;}
-#school-preview{padding:10px;background:#f6e6bd;font:14px/1.35 system-ui,sans-serif;}
-#school-preview h3{font:27px/1 var(--sports-face);margin:6px 0;}
-#school-preview p{margin:8px 0;}
-#school-dialog footer,#draft-dialog footer{display:flex;gap:10px;}
-#school-dialog footer button,#draft-dialog footer button{flex:1;}
-#draft-selection{text-align:center;}
-#draft-selection h3{font:36px/1 var(--sports-face);}
-#college-progress{border-bottom:3px solid #ae9971;padding-bottom:10px;margin-bottom:12px;}
-@media(orientation:landscape) and (max-height:500px){
- #school-conferences{padding:5px 10px;gap:4px;}
- #school-conferences button{font-size:20px;min-height:32px;}
- .school-card{padding:6px;}
- .school-card b{font-size:19px;}
- .school-card .school-helmet{width:28px;height:25px;}
- #school-preview>.school-helmet{float:right;width:48px;height:42px;}
- .school-picker-body{gap:8px;padding:0 10px 8px;}
-}
-@media(max-width:550px){
- #school-grid{grid-template-columns:1fr;}
- #school-conferences button{font-size:17px;padding:5px 2px;}
- .school-picker-body{grid-template-columns:1fr 1fr;}
- .school-card{display:block;}
-}
-
-.school-helmet{color:var(--team-primary,#174a7e);}
-
-/* School labels size their rows instead of overflowing compressed cards. */
-#school-grid{grid-auto-rows:max-content;align-content:start;gap:10px;padding:4px 4px 8px;overflow-x:hidden;}
-#school-grid .school-card{display:grid;grid-template-columns:32px minmax(0,1fr);align-items:center;gap:9px;height:auto;min-height:96px;padding:10px 9px;margin:0;box-sizing:border-box;white-space:normal;text-transform:none;letter-spacing:normal;line-height:1.25;}
-#school-grid .school-card>.school-helmet{width:32px;height:28px;}
-#school-grid .school-card>.school-copy{display:flex;flex-direction:column;gap:4px;min-width:0;}
-#school-grid .school-card b{display:block;margin:0;font:400 20px/1.2 var(--sports-face);white-space:normal;overflow-wrap:anywhere;letter-spacing:normal;}
-#school-grid .school-card small{display:block;margin:0;font:400 12px/1.3 system-ui,sans-serif;white-space:normal;text-transform:none;overflow-wrap:anywhere;letter-spacing:normal;}
-#school-grid .school-card .school-tier{font-weight:700;color:#43556c;}
-#school-grid .school-card:focus-visible{outline-offset:-3px;}
-@media(orientation:landscape) and (max-height:500px){
- #school-grid .school-card{min-height:90px;padding:8px;grid-template-columns:28px minmax(0,1fr);gap:7px;}
- #school-grid .school-card>.school-helmet{width:28px;height:25px;}
- #school-grid .school-card b{font-size:19px;}
-}
-@media(max-width:550px){
- #school-grid .school-card{grid-template-columns:1fr;justify-items:start;min-height:110px;}
-}
-
-/* Routine downs keep the outcome and the field visible together. */
-#result-overlay.compact-result{background:transparent;backdrop-filter:none;align-items:flex-end;padding:10px 14px;}
-#result-overlay.compact-result #result-card{max-width:720px;max-height:45%;display:block;padding:10px 14px;text-align:left;}
-#result-overlay.compact-result .result-kicker{display:none;}
-#result-overlay.compact-result .msg{font-size:17px;margin:0;line-height:1.3;}
-#result-overlay.compact-result #btn-continue{margin:0;min-height:44px;padding:6px;font-size:24px;}
-@media(max-height:400px){#result-overlay.compact-result #result-card{padding:7px 10px;}#result-overlay.compact-result .msg{font-size:14px;}}
-
-#result-overlay.compact-result .card-body{display:grid;grid-template-columns:minmax(0,1fr) 140px;align-items:center;gap:12px;}
-/* Compact feedback and accessible practice help. */
-.audio-settings{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 0;border-bottom:2px solid #9aab9e;margin-bottom:12px}
-.audio-settings h3{flex-basis:100%;margin:0;font:22px var(--sports-face)}
-.audio-settings label{display:flex;align-items:center;gap:6px;font:14px Arial,sans-serif}
-.audio-settings input{width:90px;min-height:32px;accent-color:#c08a0c}
-.audio-settings button{min-height:36px;font:18px var(--sports-face)}
-#checkpoint-help{max-width:320px;font:13px/1.4 Arial,sans-serif}
-.guide-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}.guide-grid p{font:16px/1.4 Arial,sans-serif}.guide-grid h3{font:28px var(--sports-face);margin:6px 0}
-.guide-actions{display:flex;gap:12px}.guide-actions button{flex:1}
-#practice-coach{position:absolute;z-index:9;top:6px;left:50%;transform:translateX(-50%);width:min(620px,80%);padding:7px 36px 7px 10px;background:#fff3d4f5;color:#102d4b;border:3px solid #153d63;box-shadow:3px 3px 0 #071a33;display:flex;align-items:center;flex-wrap:wrap;gap:5px 10px}
-#practice-coach[hidden]{display:none}#practice-coach strong{font:22px/1 var(--sports-face)}#practice-coach span{font:13px/1.3 Arial,sans-serif;flex:1;min-width:190px}
-#practice-coach button{font:17px var(--sports-face);padding:3px 8px;min-height:32px}#practice-coach-close{position:absolute;right:2px;top:2px;width:28px}
-#career-recovery-list section{border-top:2px solid #9aab9e;margin-top:12px;padding-top:8px}#career-recovery-list button{margin:4px 0;width:100%;font-size:22px}
-#career-gateway-backups{font:16px Arial,sans-serif;min-height:28px;background:none;border:0;box-shadow:none;text-decoration:underline;margin:0}
-button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visible{outline:3px solid #ecac0e;outline-offset:3px}
-@media(max-height:500px){.guide-grid p{font-size:14px}.guide-grid h3{font-size:24px}#practice-coach strong{font-size:18px}#practice-coach span{font-size:12px}.audio-settings{gap:6px}.guide-actions .sports-button{min-height:38px;font-size:22px}}
-@media(max-width:600px){.guide-grid{grid-template-columns:1fr;gap:8px}}
-#practice-guide{width:min(820px,94vw);max-width:94vw;max-height:92dvh}
-
-.audio-settings [data-audio-status]{flex-basis:100%;font:14px/1.35 Arial,sans-serif;}
-
-.cloud-menu-button{font-size:clamp(16px,2.4vw,26px)!important;min-height:36px!important;padding:6px 12px!important}
-#cloud-account{width:min(740px,94vw);max-height:92dvh;padding:0;background:#fff3d4;color:#102d4b;border:5px solid #153d63;box-shadow:7px 7px 0 #071a33}
-#cloud-account::backdrop{background:#071a33b8}#cloud-account header{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#153d63;color:#fff3d4;border-bottom:4px solid #ffd43c}
-#cloud-account h2{margin:0;font:30px var(--sports-face)}#cloud-account header button{font-size:20px;min-height:36px}
-.cloud-body{padding:12px 18px;overflow-y:auto;max-height:calc(92dvh - 80px);font:16px/1.4 Arial,sans-serif}
-.cloud-body p{margin:8px 0 12px}.cloud-body label{display:block;margin:8px 0 4px}.cloud-body input{box-sizing:border-box;width:100%;font:18px Arial,sans-serif;padding:9px;border:2px solid #153d63;background:white;color:#102d4b;border-radius:0}
-.cloud-body button{font-size:22px;min-height:42px;margin:6px 0;padding:8px 12px}.cloud-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cloud-body [hidden]{display:none!important}#cloud-history-list button{display:block;width:100%;font-size:18px}#cloud-message{font-weight:bold}#cloud-conflict{padding:10px;border:3px solid #c99413}
-@media(max-height:500px){#cloud-account header{padding:5px 12px}.cloud-body{font-size:14px;padding:8px 12px}.cloud-body button{font-size:19px;min-height:36px}.cloud-menu-button{font-size:18px!important;min-height:30px!important}}
+    <div class="overlay" id="pause-overlay">
+      <div class="card">
+        <div class="card-header">
+          <div><p class="card-title">Game Paused</p><p class="card-subtitle">Gridiron Legends</p></div>
+          <button class="card-close" id="btn-close-settings" aria-label="Close">&#10005;</button>
+        </div>
+        <div class="card-body">
+          <section class="audio-settings"><h3>Sound &amp; help</h3><button data-audio-mute aria-pressed="true">Sound on</button><label>Effects <input type="range" min="0" max="100" data-audio-volume="effects" aria-label="Effects volume"></label><label>Crowd <input type="range" min="0" max="100" data-audio-volume="crowd" aria-label="Crowd volume"></label><button data-audio-test>Test sound</button><button data-open-guide>Practice guide</button><small data-audio-status role="status" aria-live="polite">Tap Test sound to enable audio.</small></section><p class="settings-section">Gameplay</p>
+          <div class="settings-row">
+            <span class="label">Difficulty</span>
+            <div class="toggle-group sync-difficulty" id="difficulty">
+              <button data-diff="easy">Easy</button>
+              <button data-diff="medium" class="active">Medium</button>
+              <button data-diff="hard">Hard</button>
+              <button data-diff="gridiron">Gridiron</button>
+            </div>
+          </div>
+          <div class="settings-row">
+            <span class="label">Pass control</span>
+            <div class="toggle-group sync-passmode" id="passmode">
+              <button data-mode="drag" class="active">Slingshot</button>
+              <button data-mode="direct">Direct drag</button>
+              <button data-mode="tap">Tap receiver</button>
+            </div>
+          </div>
+          <div class="settings-row">
+            <span class="label">Throw type</span>
+            <div class="toggle-group sync-throwtype" id="throwtype">
+              <button data-type="lob" class="active">Lob</button>
+              <button data-type="bullet">Bullet</button>
+            </div>
+          </div>
+          <div class="settings-row">
+            <span class="label">Route preview</span>
+            <div class="toggle-group sync-routes">
+              <button data-routes="on" class="active">On</button>
+              <button data-routes="off">Off</button>
+            </div>
+          </div>
+          <div class="settings-row">
+            <span class="label">Session</span>
+            <p id="checkpoint-help" class="experience-note" role="status"></p>
+          <button id="btn-main-menu">Main menu</button>
+          </div>
+          <button class="btn-primary" id="btn-resume">Resume</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+<script type="module" src="./src/main.js"></script>
+<dialog id="cloud-account" aria-labelledby="cloud-title">
+ <header><h2 id="cloud-title">Your account</h2><button id="cloud-close" class="sports-button blue">Back</button></header>
+ <div class="cloud-body">
+ <p id="cloud-message" role="status" aria-live="polite">Guest careers are saved on this device.</p>
+ <form id="cloud-login">
+  <p>Sign in with an email code to save your careers across devices. Your guest careers stay on this device until you choose to upload them.</p>
+  <label for="cloud-email">Email</label><input id="cloud-email" type="email" autocomplete="email" required maxlength="254">
+  <button id="cloud-send" type="button" class="sports-button gold">Email me a code</button>
+  <div id="cloud-code-row" hidden><label for="cloud-code">Email code</label><input id="cloud-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required><button id="cloud-verify" class="sports-button gold">Sign in</button></div>
+ </form>
+ <button id="cloud-switch" class="sports-button gold" hidden>Open signed-in account</button>
+ <section id="cloud-signed-in" hidden><p id="cloud-email-label"></p>
+  <div class="cloud-actions"><button id="cloud-retry" class="sports-button gold">Sync now</button><button id="cloud-upload" class="sports-button blue">Upload device careers</button><button id="cloud-history" class="sports-button blue">Recovery backups</button><button id="cloud-signout" class="sports-button blue">Sign out</button></div>
+  <p>Uploads and restores keep separate copies when progress differs. Your device saves remain available if syncing fails.</p>
+  <section id="cloud-conflict" hidden><p>This career changed on two devices. Keep both versions so no progress is lost.</p><button id="cloud-keep-both" class="sports-button gold">Keep both versions</button></section>
+  <div id="cloud-history-list"></div>
+ </section>
+ <button id="cloud-guest" class="sports-button blue">Play as guest</button>
+ </div>
+</dialog>
+</body>
+</html>
