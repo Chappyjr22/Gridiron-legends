@@ -473,3 +473,21 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
  #career-upgrades strong{font-size:25px;margin:2px 0;}
  #career-upgrades small{font-size:11px;}
 }
+/* Matchup content keeps its own height instead of compressing helmet labels. */
+#career-hub[data-view=home] .match-board{display:grid;grid-template-rows:auto minmax(min-content,1fr) auto auto auto;gap:6px;}
+#career-hub[data-view=home] .helmet-matchup{min-height:min-content;}
+@media(orientation:landscape) and (max-height:550px){
+ #career-hub[data-view=home] .helmet{height:clamp(36px,12dvh,52px);}
+ #career-hub[data-view=home] .match-board{gap:3px;}
+}
+@media(orientation:portrait){
+ #career-hub[data-view=home] .match-board{min-height:340px;grid-template-rows:auto auto auto auto auto;}
+ #career-hub[data-view=home] .helmet-matchup{min-height:130px;}
+ #career-hub[data-view=home] .home-boards{grid-auto-rows:max-content;}
+ #career-home-motto{display:none;}
+}
+@media(orientation:landscape) and (max-height:350px){
+ #career-upgrades button{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;text-align:left;gap:2px 8px;padding:5px 8px;}
+ #career-upgrades strong{margin:0;}
+ #career-upgrades small{grid-column:1/-1;}
+}

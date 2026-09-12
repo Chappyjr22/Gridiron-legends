@@ -42,9 +42,30 @@ for(const viewport of [{width:844,height:304},{width:844,height:390},{width:932,
   await page.screenshot({path:`test-results/mobile-leaders-${viewport.width}-${viewport.height}.png`});
   await page.getByRole('tab',{name:'Home',exact:true}).tap();
   await expect(page.locator('#career-player-sprite')).toBeVisible();
+  const helmets=await page.locator('.helmet-matchup').boundingBox(),opponent=await page.locator('#career-next-opponent').boundingBox();
+  expect(helmets.y+helmets.height).toBeLessThanOrEqual(opponent.y);
   await page.screenshot({path:`test-results/mobile-home-${viewport.width}-${viewport.height}.png`});
   await page.getByRole('button',{name:'Save & backup',exact:true}).tap();
   await expect(page.locator('#career-quiet-save')).toBeVisible();
   await context.close();
  });
 }
+
+test('leaderboard ranking uses the selected metric and preserves untracked stats',async({page})=>{
+ await page.goto('/');
+ await page.evaluate(async()=>{
+  const C=await import('/src/career/career.js');const {renderCareerStats}=await import('/src/ui/careerStats.js');const {emptyStats}=await import('/src/career/stats.js');
+  const c=C.createCareer({name:'Ranking QB'}),[a,b]=c.league.teams;
+  const qa=a.roster.find(p=>p.slot==='QB'),qb=b.roster.find(p=>p.slot==='QB');
+  c.league.schedule[0].status='completed';c.league.schedule[0].boxScore={players:{[qa.id]:{...emptyStats(),games:1,passingYards:300,passingTD:1,completions:10,attempts:20},[qb.id]:{...emptyStats(),games:1,passingYards:150,passingTD:3,completions:9,attempts:10}}};
+  document.getElementById('league-stat-team').innerHTML='<option value="">All teams</option>';
+  renderCareerStats(c);
+  window.__rankingFixture=c;
+ });
+ const values=()=>page.locator('.leaderboard li>strong').allTextContents();
+ expect((await values()).slice(0,3)).toEqual(['300','150','—']);
+ await page.evaluate(async()=>{document.getElementById('league-stat-metric').value='passingTD';(await import('/src/ui/careerStats.js')).renderCareerStats(window.__rankingFixture);});
+ expect((await values()).slice(0,3)).toEqual(['3','1','—']);
+ await page.evaluate(async()=>{document.getElementById('league-stat-metric').value='completionPct';(await import('/src/ui/careerStats.js')).renderCareerStats(window.__rankingFixture);});
+ expect((await values()).slice(0,3)).toEqual(['90.0%','50.0%','—']);
+});
