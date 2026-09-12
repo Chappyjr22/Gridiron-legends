@@ -223,16 +223,16 @@ export function drawPixelStadium(xAt,w){
   ctx.fillStyle='#f0d43f';
   const stripeStart=((Math.round(xAt(0))%18)+18)%18-18;
   for(let x=stripeStart;x<w;x+=18)ctx.fillRect(x,LAT_MIN-4,11,1);
-  const chains=chainPositions(game),markerXs=[...(chains.showChains?[chains.start,chains.target]:[]),chains.down].map(xAt);
+  const chains=chainPositions(game);
   TEAM_GROUPS.forEach((yard,group)=>{
     drawStadiumEquipment(xAt(yard-2.2),4,group%3);
     GROUP_POSES.forEach(([offset,feet],index)=>{
       const x=xAt(yard+offset);
-      if(x<-24||x>w+24||markerXs.some(marker=>Math.abs(marker-x)<20))return;
+      if(x<-24||x>w+24)return;
       drawSidelinePlayer(x,feet,group*6+index,false,index<3?27:30);
     });
     const coachX=xAt(yard+2.6);
-    if(!markerXs.some(marker=>Math.abs(marker-coachX)<22))drawStadiumStaff(coachX,18,group%2,28);
+    drawStadiumStaff(coachX,13,group%2,27);
   });
   for(const yard of [5,95])drawStadiumStaff(xAt(yard),20,2,28);
   for(const yard of chains.showChains?[chains.start,chains.target]:[]){
