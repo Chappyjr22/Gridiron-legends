@@ -596,3 +596,41 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
 @media(orientation:portrait){
  #career-season{order:0;}
 }
+
+/* Player creation shares the career shell, with a scrollable form and anchored action. */
+#career-screen #career-create{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;width:calc(100% - 24px);max-width:1000px;margin:8px auto;border:1px solid #b8a177;padding:0;box-shadow:0 2px 0 #3a230f66;}
+#career-create .enrollment-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 14px;border-bottom:1px solid #c6b795;flex:none;}
+#career-create .enrollment-heading h3{font:26px/1 var(--sports-face);margin:0;}
+.enrollment-position{font:22px/1 var(--sports-face);color:#6b572c;background:#ffdf84;padding:4px 8px;}
+#career-create .enrollment-fields{min-height:0;flex:1;overflow-y:auto;overscroll-behavior:contain;padding:10px 14px;scroll-padding:10px;}
+#career-create .career-form-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 14px;}
+#career-create .career-form-grid>div{min-width:0;}
+#career-create label{display:block;font:18px/1.1 var(--sports-face);margin-bottom:4px;color:#365366;}
+#career-create input,#career-create select{display:block;min-height:44px;height:44px;border:1px solid #8fa2ac;border-radius:2px;font:16px Arial,sans-serif;padding:8px 10px;background:#fffdf3;}
+#career-create input:focus-visible,#career-create select:focus-visible{outline:2px solid #b3841e;outline-offset:1px;}
+#career-college-choice{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 14px;align-items:center;border-top:1px solid #c6b795;margin-top:12px;padding-top:10px;}
+#chosen-school{font:22px/1.1 var(--sports-face);}
+#career-create #chosen-school-attributes{font:12px/1.3 Arial,sans-serif;margin:0;color:#456077;}
+#career-create #choose-school{grid-column:2;grid-row:1/3;min-height:44px;font-size:21px;padding:6px 12px;border:1px solid #698397;box-shadow:none;}
+#career-create .career-muted{font:12px/1.35 Arial,sans-serif;margin:10px 0 0;}
+#career-create .enrollment-actions{display:flex;align-items:center;flex-wrap:wrap;flex:none;gap:6px 12px;padding:6px 14px max(6px,env(safe-area-inset-bottom));border-top:1px solid #c6b795;background:#f9edce;}
+#career-create-error:empty{display:none;}
+#career-create #career-create-error{flex-basis:100%;margin:0;color:#922e24;font:13px/1.2 Arial,sans-serif;max-height:42px;overflow:auto;}
+.enrollment-hint{flex:1;font:17px/1.1 var(--sports-face);color:#506475;}
+#career-create #career-begin{width:auto;min-height:44px;margin:0;padding:7px 16px;font:24px/1 var(--sports-face);border:1px solid #527146;box-shadow:inset 0 0 0 2px #88b260;background:linear-gradient(#229728,#12721c);color:#fff5d7;}
+@media(orientation:landscape) and (max-height:350px){
+ #career-screen #career-create{margin-block:5px;}
+ #career-create .enrollment-heading{padding-block:5px;}
+ #career-create .enrollment-heading h3{font-size:23px;}
+ #career-create .enrollment-fields{padding-block:8px;}
+}
+@media(orientation:portrait){
+ #career-screen .career-panel:has(#career-create:not([hidden])){overflow:hidden;}
+ #career-create .career-form-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+ #career-create .enrollment-heading h3{font-size:24px;}
+ #career-create .career-form-grid>div:first-child{grid-column:1/-1;}
+ #career-college-choice{grid-template-columns:1fr;}
+ #career-create #choose-school{grid-column:1;grid-row:auto;width:100%;margin-top:5px;}
+ #career-create .enrollment-hint{display:none;}
+ #career-create #career-begin{width:100%;}
+}
