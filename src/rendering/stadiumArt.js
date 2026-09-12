@@ -11,10 +11,10 @@ load('turf-day-v1',image=>{
   context.drawImage(image,0,0,128,128);stadiumArt.turf=tile;
 });
 load('crowd-day-v1',image=>{
-  const strip=document.createElement('canvas');strip.width=280;strip.height=26;
+  const strip=document.createElement('canvas');strip.width=420;strip.height=26;
   const context=strip.getContext('2d');context.imageSmoothingEnabled=false;
   // The generated atlas has white padding above and below the seating.
-  context.drawImage(image,0,Math.round(image.height*.24),image.width,Math.round(image.height*.537),0,0,280,26);
+  context.drawImage(image,0,Math.round(image.height*.39),image.width,Math.round(image.height*.387),0,0,420,26);
   stadiumArt.crowd=strip;
 });
 load('equipment-v1',image=>{

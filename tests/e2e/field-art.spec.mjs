@@ -8,7 +8,8 @@ for(const viewport of [{width:844,height:304},{width:932,height:430}]){
     await page.locator('[data-play="trips_slants"]').tap();
     await expect.poll(()=>page.evaluate(async()=>{
       const {stadiumArt}=await import('/src/rendering/stadiumArt.js');
-      return !!stadiumArt.turf&&!!stadiumArt.crowd&&stadiumArt.equipment.length===4;
+      const {staffFrames}=await import('/src/rendering/stadiumStaff.js');
+      return !!stadiumArt.turf&&!!stadiumArt.crowd&&stadiumArt.equipment.length===4&&staffFrames.length===6;
     })).toBe(true);
     await page.screenshot({path:`test-results/daytime-field-${viewport.width}.png`});
     const rb=await page.evaluate(async()=>{
@@ -25,6 +26,14 @@ for(const viewport of [{width:844,height:304},{width:932,height:430}]){
       (await import('/src/rendering/draw.js')).draw();
     });
     await page.screenshot({path:`test-results/daytime-endzone-${viewport.width}.png`});
+    const chains=await page.evaluate(async()=>{
+      const {chainPositions}=await import('/src/rendering/stadiumLayout.js');
+      return [chainPositions({los:26,firstDownYard:30,down:2}),chainPositions({los:97,firstDownYard:107,down:1})];
+    });
+    expect(chains[0]).toEqual({showChains:true,start:20,target:30,down:26,number:2});
+    expect(chains[1].showChains).toBe(false);
+    await page.evaluate(async()=>{const {game}=await import('/src/state/gameState.js');game.cameraYard=0;(await import('/src/rendering/draw.js')).draw();});
+    await page.screenshot({path:`test-results/daytime-home-endzone-${viewport.width}.png`});
     expect(errors).toEqual([]);await context.close();
   });
 }

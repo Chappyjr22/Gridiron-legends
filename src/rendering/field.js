@@ -1,6 +1,9 @@
 import { canvas, ctx } from './canvas.js';
 import { LAT_MIN, LAT_MAX } from '../state/constants.js';
 import { goalPostImage, spriteState } from './spriteSheets.js';
+import {game} from '../state/gameState.js';
+import {drawStadiumStaff} from './stadiumStaff.js';
+import {TEAM_GROUPS,GROUP_POSES,chainPositions} from './stadiumLayout.js';
 import { drawSidelinePlayer } from './sidelinePlayers.js';
 import { SCENE_TOP, FIELD_HEIGHT } from './sceneLayout.js';
 import { stadiumArt, drawGeneratedTurf, drawStadiumEquipment } from './stadiumArt.js';
@@ -136,11 +139,20 @@ export function drawEndZoneApron(backX,outward,xAt){
   ctx.fillStyle='#efd12f';
   for(let py=LAT_MIN+3;py<LAT_MAX-3;py+=15)ctx.fillRect(restrictedX-1,py,3,9);
 
-  const staffX=Math.round(backX+outward*78);
-  const staffColors=['#243f76','#9c2930','#25292a','#e8e4d0'];
-  if(staffX>-12&&staffX<canvas.width+12){
-    for(let y=LAT_MIN+28,i=0;y<LAT_MAX-18;y+=48,i++)drawBackLinePerson(staffX,y,outward,staffColors[i%staffColors.length]);
+  const mediaX=Math.round(backX+outward*94);
+  const barrierX=Math.round(backX+outward*160);
+  const outerLo=outward<0?0:barrierX,outerHi=outward<0?barrierX:canvas.width;
+  ctx.fillStyle='#34404b';ctx.fillRect(outerLo,LAT_MIN,Math.max(0,outerHi-outerLo),LAT_MAX-LAT_MIN);
+  ctx.fillStyle='#87949b';ctx.fillRect(barrierX-3,LAT_MIN,6,LAT_MAX-LAT_MIN);
+  ctx.fillStyle='#162c43';
+  for(let y=LAT_MIN+4;y<LAT_MAX-4;y+=40)ctx.fillRect(barrierX-5,y,10,32);
+  for(const [i,y] of [76,110,286,327].entries()){
+    drawStadiumStaff(mediaX+(i%2?outward*18:0),y,i%2?5:4,i%2?25:31,outward>0);
   }
+  drawStadiumEquipment(barrierX-outward*30,150,3);
+  drawStadiumEquipment(barrierX-outward*30,300,2);
+  drawStadiumStaff(backX+outward*32,LAT_MIN+30,2,29,outward>0);
+
 }
 export function drawEndZoneBackLine(backX){
   ctx.fillStyle='#f2f3e6';ctx.fillRect(backX-3,LAT_MIN,7,LAT_MAX-LAT_MIN);
@@ -202,8 +214,8 @@ export function drawTinyPerson(x,y,shirt,facesDown){
 export function drawPixelStadium(xAt,w){
   ctx.fillStyle='#172638';ctx.fillRect(0,-SCENE_TOP,w,26);
   if(stadiumArt.crowd){
-    const anchor=Math.round(xAt(0)),start=((anchor%280)+280)%280-280;
-    for(let x=start;x<w;x+=280)ctx.drawImage(stadiumArt.crowd,x,-SCENE_TOP);
+    const anchor=Math.round(xAt(0)),start=((anchor%420)+420)%420-420;
+    for(let x=start;x<w;x+=420)ctx.drawImage(stadiumArt.crowd,x,-SCENE_TOP);
   }
   ctx.fillStyle='#4c8434';ctx.fillRect(0,-14,w,LAT_MIN+14);
   ctx.fillStyle='#718164';ctx.fillRect(0,-14,w,3);
@@ -211,26 +223,42 @@ export function drawPixelStadium(xAt,w){
   ctx.fillStyle='#f0d43f';
   const stripeStart=((Math.round(xAt(0))%18)+18)%18-18;
   for(let x=stripeStart;x<w;x+=18)ctx.fillRect(x,LAT_MIN-4,11,1);
-  for(let yard=6.25,index=0;yard<=96.25;yard+=10,index++){
+  const chains=chainPositions(game),markerXs=[...(chains.showChains?[chains.start,chains.target]:[]),chains.down].map(xAt);
+  TEAM_GROUPS.forEach((yard,group)=>{
+    drawStadiumEquipment(xAt(yard-2.2),4,group%3);
+    GROUP_POSES.forEach(([offset,feet],index)=>{
+      const x=xAt(yard+offset);
+      if(x<-24||x>w+24||markerXs.some(marker=>Math.abs(marker-x)<20))return;
+      drawSidelinePlayer(x,feet,group*6+index,false,index<3?27:30);
+    });
+    const coachX=xAt(yard+2.6);
+    if(!markerXs.some(marker=>Math.abs(marker-coachX)<22))drawStadiumStaff(coachX,18,group%2,28);
+  });
+  for(const yard of [5,95])drawStadiumStaff(xAt(yard),20,2,28);
+  for(const yard of chains.showChains?[chains.start,chains.target]:[]){
     const x=Math.round(xAt(yard));
-    if(x<-50||x>w+50)continue;
-    drawStadiumEquipment(x,12,index);
+    drawStadiumStaff(x+12,23,3,28);
+    ctx.fillStyle='#121619';ctx.fillRect(x-2,-15,4,39);
+    ctx.fillStyle='#fa8b19';ctx.fillRect(x-1,-12,2,34);
+    ctx.fillRect(x-5,-17,10,10);ctx.fillStyle='#171b1f';ctx.fillRect(x-3,-15,6,6);
   }
-  for(let yard=5,index=0;yard<=95;yard+=2.5,index++){
-    const x=Math.round(xAt(yard));
-    if(x<-20||x>w+20)continue;
-    drawSidelinePlayer(x,LAT_MIN-5,index,false,30);
-  }
+  const downX=Math.round(xAt(chains.down));
+  if(!chains.showChains||[chains.start,chains.target].map(xAt).every(x=>Math.abs(x-downX)>22))drawStadiumStaff(downX+12,23,3,28);
+  ctx.fillStyle='#11181d';ctx.fillRect(downX-2,-3,4,27);
+  ctx.fillStyle='#f58c22';ctx.fillRect(downX-7,-8,14,16);
+  ctx.fillStyle='#11181d';ctx.fillRect(downX-5,-6,10,12);
+  drawPixelNumber(chains.number,downX,0,2,false);
   ctx.fillStyle='#3d7730';ctx.fillRect(0,LAT_MAX,w,FIELD_HEIGHT-LAT_MAX);
   ctx.fillStyle='#a8d77c';ctx.fillRect(0,LAT_MAX+4,w,2);
   ctx.fillStyle='#f3d53d';
   for(let x=stripeStart;x<w;x+=18)ctx.fillRect(x,LAT_MAX+9,12,2);
-  for(let yard=5,index=0;yard<=95;yard+=2.5,index++){
-    if((yard+5)%20===0)continue;
-    const x=Math.round(xAt(yard));
-    if(x<-16||x>w+16)continue;
-    drawSidelinePlayer(x,FIELD_HEIGHT-1,index,true);
-  }
+  TEAM_GROUPS.forEach((yard,group)=>{
+    for(let index=0;index<5;index++){
+      const x=xAt(yard+(index-2)*.75);
+      if(x<-16||x>w+16)continue;
+      drawSidelinePlayer(x,FIELD_HEIGHT-1-(index%2)*2,group*5+index,true,21);
+    }
+  });
   for(let yard=-5;yard<=105;yard+=20){
     const x=Math.round(xAt(yard));
     if(x<-8||x>w+8)continue;
