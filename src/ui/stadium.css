@@ -589,3 +589,10 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
  #career-upgrades{grid-template-columns:1fr;}
  #career-upgrades button{min-height:94px;}
 }
+@media(orientation:landscape) and (max-height:350px){
+ #career-season-summary{font-size:11px;gap:8px;}
+ #career-season-summary b{display:inline;font-size:20px;}
+}
+@media(orientation:portrait){
+ #career-season{order:0;}
+}
