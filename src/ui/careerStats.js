@@ -10,8 +10,7 @@ const metrics={
 };
 const score=(s,key)=>!s?null:key==='completionPct'?(s.attempts?s.completions*100/s.attempts:null):s[key];
 export function renderCareerStats(c){
- const scope=el('career-stat-scope').value,s=scope==='last'?c.lastResult?.stats:scope==='career'?c.totals:c.seasonStats;
- el('career-qb-stats').innerHTML=s?tiles([['Passing yards',s.passingYards],['Touchdowns',s.passingTD],['Completion %',rate(s.completions*100,s.attempts,'%')],['CMP / ATT',`${s.completions}/${s.attempts}`],['Interceptions',s.interceptions],['Yards / attempt',rate(s.passingYards,s.attempts)],['Sacks',s.sacks],['Rushing yards',s.rushingYards],['Rushing TD',s.rushingTD]]):'<p>No completed game yet.</p>';
+ el('career-qb-stats').innerHTML='<div class="stat-comparison">'+[['Game',c.lastResult?.stats],['Season',c.seasonStats],['Career',c.totals]].map(([title,s])=>`<section><h3>${title}</h3>${s?tiles([['YDS',s.passingYards],['TD',s.passingTD],['CMP',rate(s.completions*100,s.attempts,'%')],['ATT',s.attempts],['INT',s.interceptions],['SACK',s.sacks],['RUSH',s.rushingYards]]):'<p>No completed game yet.</p>'}</section>`).join('')+'</div>';
  const teamId=el('league-stat-team').value,category=el('league-stat-category').value,select=el('league-stat-metric');
  if(select.dataset.category!==category){select.innerHTML=metrics[category].map(([key,label])=>`<option value="${key}">${label}</option>`).join('');select.dataset.category=category;}
  const key=select.value,data=seasonPlayerRows(c);

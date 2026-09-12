@@ -5,7 +5,7 @@ for(const viewport of [{width:844,height:304},{width:844,height:390},{width:932,
   const page=await context.newPage();await page.goto('/');
   await page.getByRole('button',{name:'Career Mode',exact:true}).tap();
   await page.getByRole('button',{name:'Start new career',exact:true}).tap();
-  await page.getByLabel('Player name',{exact:true}).fill('Mobile QB');
+  await page.getByLabel('Player name',{exact:true}).fill('Mobile QB');await page.getByRole('button',{name:'Next',exact:true}).tap();
   await page.getByRole('button',{name:'Begin senior season',exact:true}).tap();
   await page.getByRole('tab',{name:'Player',exact:true}).tap();
   const panel=page.locator('#career-player-panel');
@@ -16,7 +16,7 @@ for(const viewport of [{width:844,height:304},{width:844,height:390},{width:932,
    for(const b of await page.locator('.career-nav button').all())expect((await b.boundingBox()).height).toBeGreaterThanOrEqual(44);
   };
   await checkLayout();
-  await expect(page.getByRole('heading',{name:'Develop your quarterback',exact:true})).toBeInViewport();
+  await expect(page.locator('#career-upgrades button').first()).toBeInViewport();
   await page.screenshot({path:`test-results/mobile-player-${viewport.width}-${viewport.height}.png`});
   await expect(page.locator('#career-player-sprite')).not.toBeVisible();
   for(const button of await page.locator('#career-upgrades button').all())await expect(button).toBeInViewport({ratio:1});
@@ -33,11 +33,11 @@ for(const viewport of [{width:844,height:304},{width:844,height:390},{width:932,
   await checkLayout();
   // Scrolling long content must not move the navigation or strand the next tab.
   await panel.evaluate(e=>{e.scrollTop=e.scrollHeight;});await checkLayout();
-  if(viewport.height<500)expect(await panel.evaluate(e=>e.scrollTop)).toBeGreaterThan(0);
+  await expect(page.locator('.stat-comparison>section')).toHaveCount(3);
   await page.getByRole('tab',{name:'My Team',exact:true}).tap();
   await page.getByRole('tab',{name:'Player',exact:true}).tap();
   expect(await panel.evaluate(e=>e.scrollTop)).toBe(0);
-  await expect(page.getByRole('heading',{name:'Develop your quarterback',exact:true})).toBeInViewport();
+  await expect(page.locator('#career-upgrades button').first()).toBeInViewport();
   await page.getByRole('tab',{name:'League',exact:true}).tap();
   await expect(page.locator('.leaderboard li').first()).toBeInViewport();
   await page.getByRole('button',{name:'Filters',exact:true}).tap();

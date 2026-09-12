@@ -1,3 +1,4 @@
+import {initEnrollment,resetEnrollment} from './enrollment.js';
 import {careerStorage} from '../cloud/storage.js';
 import {readSlots,SLOTS_KEY,importSlotArchive} from '../career/slots.js';
 import {playingRoster} from '../career/roster.js';
@@ -74,6 +75,7 @@ function render(){
  el('career-screen').style.setProperty('--career-color',team.colors.primary);
  el('career-jersey-number').textContent=player.number;
  paintMenuPlayer(el('career-player-sprite'),team,player.skin);
+ paintMenuPlayer(el('qb-profile-sprite'),team,player.skin);el('qb-profile-name').textContent=rosterName(player);el('qb-profile-detail').textContent=`#${player.number} · QB · LV ${career.level}`;el('qb-profile-xp').value=career.xp;
  el('career-user-abbr').textContent=team.abbr;el('career-user-record').textContent=recordLabel(team);
  el('career-open-player').textContent=career.points?`${career.points} upgrade ${career.points===1?'point':'points'}`:'View your player';
  el('career-season').textContent=`Season ${career.league.season} · ${career.postseason?'Playoffs':`Week ${career.league.week}`} · ${recordLabel(team)}`;
@@ -86,7 +88,7 @@ function render(){
  el('career-completions').textContent=`${s.completions}/${s.attempts} completed · ${s.sacks} sacks · ${s.games} games`;
  const t=career.totals;el('career-lifetime').textContent=`Career: ${t.passingYards} passing yards · ${t.passingTD} TD · ${t.games} games`;
  const descriptions={accuracy:'Tighter placement',arm:'Faster throws',release:'Less windup time'};
- el('career-upgrades').innerHTML=Object.entries(player.attributes).map(([key,value])=>`<button data-upgrade="${key}" ${career.points<1||career.activeMatch||value>=95?'disabled':''}><span>${key==='arm'?'Arm strength':key}</span><strong>${value}</strong><span class="rating-track" aria-hidden="true"><span style="width:${value/95*100}%"></span></span><small>${descriptions[key]}</small><span class="upgrade-cost">${value>=95?'MAX RATING':career.activeMatch?'Finish game to upgrade':career.points<1?'Earn a point to upgrade':'+2 rating · 1 point'}</span></button>`).join('');
+ el('career-upgrades').innerHTML=Object.entries(player.attributes).map(([key,value])=>`<button data-upgrade="${key}" ${career.points<1||career.activeMatch||value>=95?'disabled':''}><span>${key==='arm'?'Arm strength':key}</span><strong>${value}</strong><span class="rating-track" aria-hidden="true"><span style="width:${value/95*100}%"></span></span><span class="upgrade-cost">${value>=95?'MAX RATING':career.activeMatch?'Finish game to upgrade':career.points<1?'LOCKED':'+2 · 1 PT'}</span></button>`).join('');
  for(const button of el('career-upgrades').querySelectorAll('button'))button.addEventListener('click',()=>{if(Career.upgrade(career,button.dataset.upgrade)){persist();render();}});
  el('career-play').hidden=!match;el('career-next-season').hidden=!career.postseason?.champion;
  if(match){
@@ -129,7 +131,7 @@ function launch(){
  persist();ensureLoopStarted();
 }
 export function initCareer(){
- initCareerExperience(()=>career,persist);
+ initCareerExperience(()=>career,persist);initEnrollment();
  for(const [open,dialog,close] of [['career-menu-open','career-options','career-options-close'],['league-filters-open','league-filters','league-filters-close'],['scouting-info-open','scouting-info','scouting-info-close']]){
   el(open).onclick=()=>el(dialog).showModal();el(close).onclick=()=>el(dialog).close();
  }
@@ -196,7 +198,7 @@ export function initCareer(){
  el('career-gateway-back').addEventListener('click',()=>{el('career-gateway').classList.remove('show');el('start-screen').classList.add('show');});
  el('career-list-back').addEventListener('click',openGateway);
  el('career-continue-last').addEventListener('click',()=>{career=Career.loadCareer();creating=false;if(career)showCareer();});
- el('career-new').addEventListener('click',()=>{try{Career.listCareers();creating=true;el('career-create').reset();syncCollegeEnrollment();el('career-create-error').textContent='';showCareer();}catch(error){el('career-gateway-error').textContent=error.message;}});
+ el('career-new').addEventListener('click',()=>{try{Career.listCareers();creating=true;el('career-create').reset();syncCollegeEnrollment();resetEnrollment();el('career-create-error').textContent='';showCareer();}catch(error){el('career-gateway-error').textContent=error.message;}});
  el('career-my-careers').addEventListener('click',()=>{
   try{
    const saves=Career.listCareers();el('career-list').replaceChildren();
