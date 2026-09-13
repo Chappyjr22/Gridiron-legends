@@ -50,51 +50,54 @@ export function rebuildSpriteSheets(){
   }
 }
 
-function uprightChannel(localX,localY,row){
-  // Helmet is deliberately broad in X but shallow in Y. Only source uniform
-  // pixels are eligible, so face/skin pixels inside the box are never touched.
-  const helmetBottom=row===3?25:24;
-  if(localY>=6&&localY<=helmetBottom&&localX>=13&&localX<=51){
-    // A narrow crown stripe gives the stripe control a real, isolated channel.
-    if(localX>=30&&localX<=34&&localY<=21)return 'stripe';
+function inBox(x,y,left,top,right,bottom){return x>=left&&x<=right&&y>=top&&y<=bottom;}
+function uprightChannel(localX,localY,row,col){
+  // Throw/aim frames lean the torso right, so shift the helmet/stripe slightly.
+  const shift=(row===3||row===0&&col>=2)?3:0;
+  const helmetLeft=15+shift,helmetRight=49+shift,helmetBottom=row===3?26:24;
+  if(inBox(localX,localY,helmetLeft,6,helmetRight,helmetBottom)){
+    // Only recolor a tiny crown stripe. This is intentionally narrower than
+    // the previous pass to avoid turning the whole helmet into the stripe.
+    if(inBox(localX,localY,31+shift,8,33+shift,19))return 'stripe';
     return 'helmet';
   }
-  // Torso stripe. Keep it narrow so shoulder/arm pixels remain jersey colored.
-  if(localY>=24&&localY<=39&&localX>=30&&localX<=34)return 'stripe';
-  if(localY>=37&&localY<=54&&localX>=11&&localX<=53)return 'pants';
+  // Jersey stripe exists only through the torso, never below the waist.
+  if(inBox(localX,localY,31+shift,25,33+shift,36))return 'stripe';
+  // Pants start below the torso. Running frames get a slightly wider leg box.
+  const pantsLeft=row===2?9:12,pantsRight=row===2?55:52;
+  if(inBox(localX,localY,pantsLeft,39,pantsRight,55))return 'pants';
   return 'jersey';
 }
 function groundedChannel(localX,localY,col){
-  // Row 4 contains catch/drop/tackle/down/dive poses. The last three frames
-  // compress or rotate the body, so use pose-specific horizontal separation.
-  if(col>=3){
-    // Source faces left in these frames: head/helmet stays toward the left,
-    // lower body extends toward the right. Keep the middle as jersey.
-    if(localX>=7&&localX<=27&&localY>=19&&localY<=46){
-      if(localY>=28&&localY<=32)return 'stripe';
+  // Catch/deflect/drop frames remain mostly upright or crouched.
+  if(col<=2){
+    if(inBox(localX,localY,14,8,50,26)){
+      if(inBox(localX,localY,31,9,33,20))return 'stripe';
       return 'helmet';
     }
-    if(localX>=38&&localX<=58&&localY>=22&&localY<=51)return 'pants';
-    if(localX>=27&&localX<=38&&localY>=30&&localY<=34)return 'stripe';
+    if(inBox(localX,localY,31,26,33,37))return 'stripe';
+    if(inBox(localX,localY,10,39,54,56))return 'pants';
     return 'jersey';
   }
-  // Catch/deflect/drop are still mostly upright/crouched.
-  if(localY>=7&&localY<=25&&localX>=12&&localX<=52){
-    if(localX>=30&&localX<=34&&localY<=22)return 'stripe';
+  // Tackle/down/dive frames rotate the body. Source-facing is left, so the
+  // helmet is on the left side and the legs/pants extend to the right.
+  if(inBox(localX,localY,6,18,26,46)){
+    // Keep stripe out of most grounded frames; a short helmet stripe is enough
+    // to prove the channel without painting the face/shoulder region.
+    if(inBox(localX,localY,16,20,18,30))return 'stripe';
     return 'helmet';
   }
-  if(localY>=25&&localY<=40&&localX>=30&&localX<=34)return 'stripe';
-  if(localY>=38&&localY<=55&&localX>=10&&localX<=54)return 'pants';
+  if(inBox(localX,localY,39,22,60,52))return 'pants';
   return 'jersey';
 }
 
-// Returns the intended recolor channel for one source-uniform pixel. The
-// source sheet itself still uses one blue palette, so geometry is the safest
-// reversible split until/if the PNG artwork receives authored mask layers.
+// The source artwork has one blue uniform palette. This frame-aware geometry
+// splits those source-uniform pixels into reversible channels. Skin/ball/etc.
+// are untouched because only blue source-palette pixels ever reach this step.
 export function uniformChannelForPixel(x,y){
   const localX=x%64,localY=y%64;
   const row=Math.floor(y/64),col=Math.floor(x/64);
-  return row===4?groundedChannel(localX,localY,col):uprightChannel(localX,localY,row);
+  return row===4?groundedChannel(localX,localY,col):uprightChannel(localX,localY,row,col);
 }
 
 export function makeTeamSpriteSheet(team,skinIndex,sourceImage=spriteImage,expandedSkin=false){
