@@ -10,6 +10,7 @@ import { initCareer } from './ui/career.js';
 import { initPWA } from './pwa.js';
 import { initMobileSelects } from './ui/mobileSelects.js';
 import { initMainTeamEditor } from './ui/teamEditor.js';
+import { initMobileGameUI } from './ui/mobileGameUI.js';
 import * as League from './state/league.js';
 import { updateHUD, continueResult } from './ui/hud.js';
 import { uiHooks, initPlay, attemptFieldGoal, simulatePunt } from './simulation/engine.js';
@@ -47,6 +48,7 @@ updateHUD();
 initRunnerControls();
 initMenuArt();
 initCareer();
+initMobileGameUI();
 initMainTeamEditor(
   ()=>teamState.franchise,
   ()=>game.userTeamId,
