@@ -14,6 +14,53 @@ export const goalPostImage=new Image();
 goalPostImage.onload=function(){spriteState.goalPostReady=true;};
 goalPostImage.src='assets/goal-post.png';
 
+const MASK_STORAGE_KEY='gridironLegendsUniformMaskOverridesV1';
+const MASK_CHANNELS=new Set(['helmet','jersey','pants','stripe']);
+let maskOverrides=null;
+function loadMaskOverrides(){
+  if(maskOverrides)return maskOverrides;
+  try{
+    const parsed=JSON.parse(localStorage.getItem(MASK_STORAGE_KEY)||'{}');
+    maskOverrides=parsed&&typeof parsed==='object'?parsed:{};
+  }catch(e){maskOverrides={};}
+  return maskOverrides;
+}
+function saveMaskOverrides(){try{localStorage.setItem(MASK_STORAGE_KEY,JSON.stringify(maskOverrides||{}));}catch(e){}}
+export function uniformMaskSourceId(sourceImage){
+  if(sourceImage===presnapSpriteImage)return 'presnap-offense';
+  if(sourceImage===defensePresnapSpriteImage)return 'presnap-defense';
+  return 'gameplay';
+}
+export function getUniformMaskOverrides(){return JSON.parse(JSON.stringify(loadMaskOverrides()));}
+export function exportUniformMaskOverrides(){return JSON.stringify(loadMaskOverrides(),null,2);}
+export function importUniformMaskOverrides(value){
+  const parsed=typeof value==='string'?JSON.parse(value):value;
+  if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error('Mask JSON must be an object.');
+  maskOverrides=parsed;saveMaskOverrides();rebuildSpriteSheets();return true;
+}
+export function applyUniformMaskEdits(source,row,col,edits=[]){
+  const masks=loadMaskOverrides(),frameKey=`${row},${col}`;
+  masks[source]??={};masks[source][frameKey]??={};
+  const frame=masks[source][frameKey];
+  for(const edit of edits){
+    const x=Math.max(0,Math.min(63,Number(edit.x)|0)),y=Math.max(0,Math.min(63,Number(edit.y)|0));
+    const key=String(y*64+x),channel=edit.channel;
+    if(channel==='auto'||channel==null)delete frame[key];
+    else if(MASK_CHANNELS.has(channel))frame[key]=channel;
+  }
+  if(!Object.keys(frame).length)delete masks[source][frameKey];
+  if(!Object.keys(masks[source]).length)delete masks[source];
+  saveMaskOverrides();rebuildSpriteSheets();
+}
+export function clearUniformMaskFrame(source,row,col){
+  const masks=loadMaskOverrides(),frameKey=`${row},${col}`;
+  if(masks[source]){delete masks[source][frameKey];if(!Object.keys(masks[source]).length)delete masks[source];}
+  saveMaskOverrides();rebuildSpriteSheets();
+}
+export function uniformMaskOverride(source,row,col,localX,localY){
+  return loadMaskOverrides()?.[source]?.[`${row},${col}`]?.[String(localY*64+localX)]||null;
+}
+
 export function hexToRGB(hex){
   const clean=hex.replace('#','');
   const value=parseInt(clean.length===3?clean.split('').map(c=>c+c).join(''):clean,16);
@@ -52,24 +99,18 @@ export function rebuildSpriteSheets(){
 
 function inBox(x,y,left,top,right,bottom){return x>=left&&x<=right&&y>=top&&y<=bottom;}
 function uprightChannel(localX,localY,row,col){
-  // Throw/aim frames lean the torso right, so shift the helmet/stripe slightly.
   const shift=(row===3||row===0&&col>=2)?3:0;
   const helmetLeft=15+shift,helmetRight=49+shift,helmetBottom=row===3?26:24;
   if(inBox(localX,localY,helmetLeft,6,helmetRight,helmetBottom)){
-    // Only recolor a tiny crown stripe. This is intentionally narrower than
-    // the previous pass to avoid turning the whole helmet into the stripe.
     if(inBox(localX,localY,31+shift,8,33+shift,19))return 'stripe';
     return 'helmet';
   }
-  // Jersey stripe exists only through the torso, never below the waist.
   if(inBox(localX,localY,31+shift,25,33+shift,36))return 'stripe';
-  // Pants start below the torso. Running frames get a slightly wider leg box.
   const pantsLeft=row===2?9:12,pantsRight=row===2?55:52;
   if(inBox(localX,localY,pantsLeft,39,pantsRight,55))return 'pants';
   return 'jersey';
 }
 function groundedChannel(localX,localY,col){
-  // Catch/deflect/drop frames remain mostly upright or crouched.
   if(col<=2){
     if(inBox(localX,localY,14,8,50,26)){
       if(inBox(localX,localY,31,9,33,20))return 'stripe';
@@ -79,11 +120,7 @@ function groundedChannel(localX,localY,col){
     if(inBox(localX,localY,10,39,54,56))return 'pants';
     return 'jersey';
   }
-  // Tackle/down/dive frames rotate the body. Source-facing is left, so the
-  // helmet is on the left side and the legs/pants extend to the right.
   if(inBox(localX,localY,6,18,26,46)){
-    // Keep stripe out of most grounded frames; a short helmet stripe is enough
-    // to prove the channel without painting the face/shoulder region.
     if(inBox(localX,localY,16,20,18,30))return 'stripe';
     return 'helmet';
   }
@@ -91,12 +128,11 @@ function groundedChannel(localX,localY,col){
   return 'jersey';
 }
 
-// The source artwork has one blue uniform palette. This frame-aware geometry
-// splits those source-uniform pixels into reversible channels. Skin/ball/etc.
-// are untouched because only blue source-palette pixels ever reach this step.
-export function uniformChannelForPixel(x,y){
-  const localX=x%64,localY=y%64;
-  const row=Math.floor(y/64),col=Math.floor(x/64);
+export function uniformChannelForPixel(x,y,source='gameplay'){
+  const localX=x%64,localY=y%64,row=Math.floor(y/64),col=Math.floor(x/64);
+  const override=uniformMaskOverride(source,row,col,localX,localY);
+  if(override)return override;
+  if(source!=='gameplay')return uprightChannel(localX,localY,0,col);
   return row===4?groundedChannel(localX,localY,col):uprightChannel(localX,localY,row,col);
 }
 
@@ -113,6 +149,7 @@ export function makeTeamSpriteSheet(team,skinIndex,sourceImage=spriteImage,expan
   const helmetRamp=team.helmetRamp||colorRamp(team.helmet||team.jersey);
   const stripeRamp=team.stripeRamp||colorRamp(team.stripe||team.jersey);
   const ramps={jersey:uniformRamp,pants:pantsRamp,helmet:helmetRamp,stripe:stripeRamp};
+  const source=uniformMaskSourceId(sourceImage);
   for(let i=0;i<data.length;i+=4){
     if(data[i+3]===0)continue;
     const pixel=i/4,x=pixel%out.width,y=Math.floor(pixel/out.width);
@@ -127,7 +164,7 @@ export function makeTeamSpriteSheet(team,skinIndex,sourceImage=spriteImage,expan
       data[i]=color[0];data[i+1]=color[1];data[i+2]=color[2];
     } else if(b>r*1.22&&b>g*1.08){
       const light=(r+g+b)/3;
-      const ramp=ramps[uniformChannelForPixel(x,y)]||uniformRamp;
+      const ramp=ramps[uniformChannelForPixel(x,y,source)]||uniformRamp;
       const color=ramp[light<45?0:light<80?1:light<135?2:3];
       data[i]=color[0];data[i+1]=color[1];data[i+2]=color[2];
     }
