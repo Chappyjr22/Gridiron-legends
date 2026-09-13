@@ -24,14 +24,13 @@ export function colorRamp(hex){
   return [0.38,0.62,0.9,1.2].map(mult=>rgb.map(channel=>Math.max(0,Math.min(255,Math.round(channel*mult)))));
 }
 export function applyUniform(team,target){
-  // OFF is the user's side and DEF the opponent side. Auto therefore uses the
-  // traditional home look for the user and away look for the opponent; a
-  // team's explicit Home/Away/Alternate preference overrides this.
   const uniform=resolvedUniform(team,target===OFF);
   target.jersey=uniform.jersey;
+  target.pants=uniform.pants||uniform.jersey;
   target.helmet=uniform.helmet;
   target.stripe=uniform.stripe;
   target.ramp=colorRamp(target.jersey);
+  target.pantsRamp=colorRamp(target.pants);
 }
 export function rebuildSpriteSheets(){
   if(!spriteImage.complete||!spriteImage.naturalWidth)return;
@@ -48,6 +47,20 @@ export function rebuildSpriteSheets(){
     spriteState.defensePresnapSpritesReady=true;
   }
 }
+
+// The source sprites use one blue palette for both jersey and pants. Rather
+// than permanently modifying the PNGs, this conservative mask splits only the
+// lower-body portion of each 64x64 frame into a second recolor channel. Pixels
+// outside the mask remain on the jersey channel. Keeping this coordinate-based
+// and reversible is intentional while the feature is evaluated on its branch.
+export function isPantsPixel(x,y){
+  const localX=x%64,localY=y%64;
+  if(localY<37||localY>53)return false;
+  // Exclude the extreme sides where arms, gloves and loose animation pixels
+  // can enter the lower half during running/tackle frames.
+  return localX>=12&&localX<=52;
+}
+
 export function makeTeamSpriteSheet(team,skinIndex,sourceImage=spriteImage,expandedSkin=false){
   const out=document.createElement('canvas');
   out.width=sourceImage.width;out.height=sourceImage.height;
@@ -57,8 +70,10 @@ export function makeTeamSpriteSheet(team,skinIndex,sourceImage=spriteImage,expan
   const image=outCtx.getImageData(0,0,out.width,out.height);
   const data=image.data;
   const uniformRamp=team.ramp||colorRamp(team.jersey);
+  const pantsRamp=team.pantsRamp||colorRamp(team.pants||team.jersey);
   for(let i=0;i<data.length;i+=4){
     if(data[i+3]===0)continue;
+    const pixel=i/4,x=pixel%out.width,y=Math.floor(pixel/out.width);
     const r=data[i],g=data[i+1],b=data[i+2];
     let skinSlot=SKIN_SOURCE.indexOf(r+','+g+','+b);
     if(skinSlot<0&&expandedSkin&&r>95&&r>g*1.08&&g>b*1.05&&r-b>40){
@@ -70,7 +85,8 @@ export function makeTeamSpriteSheet(team,skinIndex,sourceImage=spriteImage,expan
       data[i]=color[0];data[i+1]=color[1];data[i+2]=color[2];
     } else if(b>r*1.22&&b>g*1.08){
       const light=(r+g+b)/3;
-      const color=uniformRamp[light<45?0:light<80?1:light<135?2:3];
+      const ramp=isPantsPixel(x,y)?pantsRamp:uniformRamp;
+      const color=ramp[light<45?0:light<80?1:light<135?2:3];
       data[i]=color[0];data[i+1]=color[1];data[i+2]=color[2];
     }
   }
