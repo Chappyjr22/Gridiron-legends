@@ -39,6 +39,7 @@ export function parseCareer(raw){
   if(c.stage&&!['college','pro'].includes(c.stage))return null;
   if(new Set(c.league.teams.map(t=>t.id)).size!==32)return null;
   if(!c.league.teams.every(t=>(c.stage==='college'?COLLEGE_TEAMS:League.TEAMS).some(base=>base.id===t.id)&&Array.isArray(t.roster)&&t.record&&t.coaches?.oc&&t.coaches?.dc&&t.ratings))return null;
+  League.ensureLeagueState(c.league);
   const p=careerPlayer(c);if(!p||!ARCHETYPES[p.archetype]||!['accuracy','arm','release'].every(k=>Number.isFinite(p.attributes?.[k])&&p.attributes[k]>=0&&p.attributes[k]<=100))return null;
   if(!['xp','level','points'].every(k=>Number.isFinite(c[k])&&c[k]>=0)||!c.settings)return null;
   if(c.activeMatch&&![...c.league.schedule,...(c.postseason?.games||[])].some(g=>g.id===c.activeMatch&&g.status==='scheduled'))return null;
