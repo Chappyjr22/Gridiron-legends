@@ -15,6 +15,20 @@ function line(s,position){
  if(['WR','TE'].includes(position))return `${s.receptions}/${s.targets} REC/TGT · ${s.receivingYards} YDS · ${s.receivingTD} TD`;
  return 'Individual blocking and defensive stats are not tracked yet.';
 }
+function renderNameEditor(c,p){
+ const area=el('teammate-customize-body');
+ if(!area)return;
+ area.innerHTML=`<div class="teammate-name-editor"><label for="teammate-name-input">Player name</label><div class="teammate-name-row"><input id="teammate-name-input" maxlength="28" value="${esc(name(p))}" autocomplete="off"><button type="button" id="teammate-save-name" class="sports-button gold">Save</button><button type="button" id="teammate-cancel-name" class="sports-button blue">Cancel</button></div><p id="teammate-edit-status" class="experience-note"></p></div>`;
+ const input=el('teammate-name-input');
+ el('teammate-save-name').onclick=()=>{
+  const clean=input.value.trim().replace(/\s+/g,' ').slice(0,28);
+  if(!clean){el('teammate-edit-status').textContent='Enter a player name.';return;}
+  const parts=clean.split(' ');p.firstName=parts.shift();p.lastName=parts.join(' ');
+  saveCareer();renderMyTeam(c);openPlayer(c,p);
+ };
+ el('teammate-cancel-name').onclick=()=>openPlayer(c,p);
+ setTimeout(()=>{input.focus();input.select();},60);
+}
 function openPlayer(c,p){
  const team=League.findTeamState(c.league,c.teamId),season=playerSeasonStats(c,p.id),log=playerGameLog(c,p.id);
  const editable=!p.generic&&p.id!==c.playerId;
@@ -23,15 +37,10 @@ function openPlayer(c,p){
  <h3>Attributes</h3><div class="teammate-attributes">${Object.entries(p.attributes||{}).map(([k,v])=>`<div><span>${esc(attributeLabel(k))}</span><b>${v}</b><span class="teammate-meter"><i style="width:${Math.min(100,v)}%"></i></span></div>`).join('')}</div>
  <h3>Season production</h3><p>${esc(line(season.tracked?season.stats:null,p.position))}</p><p class="experience-note">${season.tracked} tracked games this season</p>
  <h3>Game log</h3><div class="player-game-log">${log.map(r=>`<article><b>S${r.season} · Week ${r.week} · ${r.userScore>r.cpuScore?'WIN':'LOSS'} ${r.userScore}–${r.cpuScore}</b><p>${esc(line(r.stats,p.position))}</p></article>`).join('')||'<p>Your first game is waiting.</p>'}</div>
- ${editable?`<section class="teammate-customize"><h3>Customize teammate</h3><label for="teammate-name-input">Player name</label><div class="teammate-name-row"><input id="teammate-name-input" maxlength="28" value="${esc(name(p))}" autocomplete="off"><button type="button" id="teammate-save-name" class="sports-button blue">Save name</button></div><button type="button" id="teammate-edit-face" class="sports-button blue">Edit appearance</button><p id="teammate-edit-status" class="experience-note"></p></section>`:''}`;
+ ${editable?`<section class="teammate-customize"><h3>Customize teammate</h3><div class="teammate-profile-actions"><button type="button" id="teammate-edit-name" class="sports-button blue">Edit name</button><button type="button" id="teammate-edit-face" class="sports-button blue">Edit appearance</button></div><div id="teammate-customize-body"></div></section>`:''}`;
  paintPlayerPortrait(el('team-card-sprite'),team,p);
  if(editable){
-  el('teammate-save-name').onclick=()=>{
-   const clean=el('teammate-name-input').value.trim().replace(/\s+/g,' ').slice(0,28);
-   if(!clean){el('teammate-edit-status').textContent='Enter a player name.';return;}
-   const parts=clean.split(' ');p.firstName=parts.shift();p.lastName=parts.join(' ');
-   saveCareer();renderMyTeam(c);openPlayer(c,p);el('teammate-edit-status').textContent='Name saved.';
-  };
+  el('teammate-edit-name').onclick=()=>renderNameEditor(c,p);
   el('teammate-edit-face').onclick=()=>{
    el('team-player-dialog').close();
    openPortraitPicker(p,team,choice=>{Object.assign(p,choice);saveCareer();renderMyTeam(c);openPlayer(c,p);});
