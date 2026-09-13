@@ -68,7 +68,7 @@ export function hexToRGB(hex){
 }
 export function colorRamp(hex){
   const rgb=hexToRGB(hex);
-  return [0.38,0.62,0.9,1.2].map(mult=>rgb.map(channel=>Math.max(0,Math.min(255,Math.round(channel*mult)))));
+  return [0.40,0.68,1.00,1.22].map(mult=>rgb.map(channel=>Math.max(0,Math.min(255,Math.round(channel*mult)))));
 }
 export function applyUniform(team,target){
   const uniform=resolvedUniform(team,target===OFF);
