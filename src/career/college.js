@@ -43,12 +43,40 @@ function collegeDevelopment(player,schoolTier,index,schoolId){
  if(roll<impactCut)return 'Impact';
  return 'Normal';
 }
+export function ensureCollegeTalent(league){
+ if(!league||league.kind!=='college')return league;
+ for(const [i,team] of league.teams.entries()){
+  if(team.talentModelVersion>=1)continue;
+  const school=COLLEGE_TEAMS.find(s=>s.id===team.id)||COLLEGE_TEAMS[i];
+  if(!school)continue;
+  const talentTier=COLLEGE_TALENT[school.tier]||'average';
+  const generated=League.createRosterForTier(school,league.season||1,talentTier);
+  for(const [j,player] of team.roster.entries()){
+   if(player.archetype)continue;
+   const template=generated.find(p=>p.slot===player.slot)||generated[j];
+   if(!template)continue;
+   const old=Number(player.rating)||74;
+   let rating=template.rating;
+   if(school.scheme==='spread'&&['WR','TE'].includes(player.position)||school.scheme==='run'&&['RB','OL'].includes(player.position))rating=clamp(rating+3,55,97);
+   const delta=rating-old;
+   player.rating=rating;
+   player.development=collegeDevelopment(player,school.tier,j,school.id);
+   if(player.attributes&&typeof player.attributes==='object')for(const key of Object.keys(player.attributes)){
+    const value=Number(player.attributes[key]);if(Number.isFinite(value))player.attributes[key]=clamp(Math.round(value+delta),45,97);
+   }
+  }
+  const coachTemplate={oc:League.createCoachForTier(school,'OC',league.season||1,talentTier),dc:League.createCoachForTier(school,'DC',league.season||1,talentTier)};
+  for(const side of ['oc','dc'])if(team.coaches?.[side])team.coaches[side].rating=coachTemplate[side].rating;
+  team.talentTier=talentTier;team.programTier=school.tier;team.talentModelVersion=1;
+ }
+ League.refreshRatings(league);return league;
+}
 export function createCollegeLeague(schoolId){
  if(!COLLEGE_TEAMS.some(t=>t.id===schoolId))throw Error('Choose a college.');
  const league=League.createFranchise('bos');
  league.kind='college';league.leagueName='Gridiron College League';league.userTeamId=schoolId;
  league.teams=league.teams.map((template,i)=>{
-  const school=COLLEGE_TEAMS[i],tier=SCHOOL_TIERS[school.tier],talentTier=COLLEGE_TALENT[school.tier]||'average';
+  const school=COLLEGE_TEAMS[i],talentTier=COLLEGE_TALENT[school.tier]||'average';
   const team={...template,...school,talentTier,programTier:school.tier,talentModelVersion:1};
   team.roster=League.createRosterForTier(school,1,talentTier).map((p,j)=>({...p,id:school.id+'-'+p.slot.toLowerCase(),age:19+j%4}));
   // Scheme affects the supporting cast, not the user's available playbook.
