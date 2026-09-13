@@ -18,9 +18,9 @@ export function ensureUniformVariants(team){
  for(const key of UNIFORM_VARIANTS){
   const base=key==='home'?{...defaults[key],...legacy}:defaults[key];
   team.uniforms[key]={...base,...(team.uniforms[key]||{})};
-  // Existing saves predate a separate pants channel. Preserve their exact look
-  // by matching pants to the jersey until the player explicitly customizes it.
   if(!team.uniforms[key].pants)team.uniforms[key].pants=team.uniforms[key].jersey;
+  if(!team.uniforms[key].helmet)team.uniforms[key].helmet=defaults[key].helmet;
+  if(!team.uniforms[key].stripe)team.uniforms[key].stripe=defaults[key].stripe;
  }
  if(!['auto',...UNIFORM_VARIANTS].includes(team.uniformPreference))team.uniformPreference='auto';
  return team.uniforms;
