@@ -7,6 +7,7 @@ import {initRunnerControls} from './input/runnerControls.js';
 import {initMenuArt} from './ui/menuArt.js';
 import { game } from './state/gameState.js';
 import { initCareer } from './ui/career.js';
+import { initPWA } from './pwa.js';
 // Application entry point: wires the pieces that would otherwise need a
 // circular import between modules, registers the handful of top-level
 // "start screen" button routes, and kicks off the initial render.
@@ -18,6 +19,8 @@ import { syncMatchupUI, returnToMainMenu, populateTeamSelect, populateOpponentSe
 import { openLeagueHub } from './ui/leagueHub.js';
 import { enterFormationLab } from './ui/formationLab.js';
 import './input/pointer.js';
+
+initPWA();
 
 document.addEventListener('touchmove',function(e){
   if(e.target.closest('dialog')||e.target.closest('.stadium-home')||e.target.closest('.card')||e.target.closest('.setup-panel')||e.target.closest('#edit-panel'))return;
