@@ -12,6 +12,23 @@ function optionItems(select){
   return out;
 }
 
+function detachNativeLabel(select,replacement){
+  const label=select.id?document.querySelector(`label[for="${select.id}"]`):null;
+  if(!label)return;
+  label.removeAttribute('for');
+  if(replacement?.id)label.setAttribute('aria-controls',replacement.id);
+  if(replacement&&replacement.tagName==='BUTTON'){
+    label.style.cursor='pointer';
+    label.onclick=()=>replacement.click();
+  }
+}
+
+function hideNativeSelect(select){
+  select.classList.add('app-select-native-hidden');
+  select.tabIndex=-1;
+  select.setAttribute('aria-hidden','true');
+}
+
 function syncButton(select,button){
   const option=select.options[select.selectedIndex];
   button.textContent=option?.textContent||labelFor(select);
@@ -83,6 +100,7 @@ function enhanceSegmented(select){
   if(select.dataset.appEnhanced)return;
   const wrap=document.createElement('div');
   wrap.className='app-segmented';
+  wrap.id=select.id+'-app-control';
   wrap.setAttribute('role','radiogroup');
   wrap.setAttribute('aria-label',labelFor(select));
   const sync=()=>{
@@ -105,7 +123,8 @@ function enhanceSegmented(select){
     wrap.appendChild(button);
   }
   select.insertAdjacentElement('afterend',wrap);
-  select.classList.add('app-select-native-hidden');
+  hideNativeSelect(select);
+  detachNativeLabel(select,wrap);
   select.dataset.appEnhanced='segmented';
   select.addEventListener('change',sync);
   new MutationObserver(sync).observe(select,{childList:true,subtree:true,attributes:true});
@@ -117,11 +136,13 @@ function enhanceSheet(select){
   const button=document.createElement('button');
   button.type='button';
   button.className='app-select-trigger';
+  button.id=select.id+'-app-control';
   button.setAttribute('aria-haspopup','dialog');
   button.setAttribute('aria-label',labelFor(select));
   button.onclick=()=>openSheet(select,button);
   select.insertAdjacentElement('afterend',button);
-  select.classList.add('app-select-native-hidden');
+  hideNativeSelect(select);
+  detachNativeLabel(select,button);
   select.dataset.appEnhanced='sheet';
   select.addEventListener('change',()=>syncButton(select,button));
   new MutationObserver(()=>syncButton(select,button)).observe(select,{childList:true,subtree:true,attributes:true});
