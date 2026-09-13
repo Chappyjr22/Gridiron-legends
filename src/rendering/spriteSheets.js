@@ -1,4 +1,5 @@
 import { SKIN_SOURCE, SKIN_PALETTES, OFF, DEF } from '../state/constants.js';
+import {resolvedUniform} from './uniformVariants.js';
 
 export const spriteImage=new Image();
 export const spriteSheets={off:[],def:[]};
@@ -23,10 +24,13 @@ export function colorRamp(hex){
   return [0.38,0.62,0.9,1.2].map(mult=>rgb.map(channel=>Math.max(0,Math.min(255,Math.round(channel*mult)))));
 }
 export function applyUniform(team,target){
-  const uniform=team.uniform||{};
-  target.jersey=uniform.jersey||team.colors.primary;
-  target.helmet=uniform.helmet||team.colors.secondary;
-  target.stripe=uniform.stripe||team.colors.accent;
+  // OFF is the user's side and DEF the opponent side. Auto therefore uses the
+  // traditional home look for the user and away look for the opponent; a
+  // team's explicit Home/Away/Alternate preference overrides this.
+  const uniform=resolvedUniform(team,target===OFF);
+  target.jersey=uniform.jersey;
+  target.helmet=uniform.helmet;
+  target.stripe=uniform.stripe;
   target.ramp=colorRamp(target.jersey);
 }
 export function rebuildSpriteSheets(){
