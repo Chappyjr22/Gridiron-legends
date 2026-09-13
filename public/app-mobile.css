@@ -1,0 +1,161 @@
+html[data-installed-app="true"] {
+  background: #080b0c;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+html[data-installed-app="true"] body {
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+}
+
+html[data-installed-app="true"] .app {
+  min-height: 100dvh;
+  height: 100dvh;
+  padding-top: max(7px, env(safe-area-inset-top));
+  padding-right: max(7px, env(safe-area-inset-right));
+  padding-bottom: max(7px, env(safe-area-inset-bottom));
+  padding-left: max(7px, env(safe-area-inset-left));
+}
+
+html[data-installed-app="true"] button,
+html[data-installed-app="true"] select,
+html[data-installed-app="true"] input {
+  min-height: 44px;
+  touch-action: manipulation;
+}
+
+html[data-installed-app="true"] button {
+  transition: transform 90ms ease, filter 120ms ease, border-color 120ms ease, background-color 120ms ease;
+}
+
+html[data-installed-app="true"] button:active {
+  transform: scale(.975);
+  filter: brightness(1.08);
+}
+
+html[data-installed-app="true"] .screen.show {
+  animation: appScreenIn 160ms ease-out both;
+}
+
+html[data-installed-app="true"] .overlay.show {
+  animation: appOverlayIn 130ms ease-out both;
+}
+
+html[data-installed-app="true"] .overlay.show .card,
+html[data-installed-app="true"] .overlay.show .setup-panel,
+html[data-installed-app="true"] .screen.show .setup-panel,
+html[data-installed-app="true"] .screen.show .league-panel {
+  animation: appPanelIn 170ms ease-out both;
+}
+
+html[data-installed-app="true"] .setup-panel,
+html[data-installed-app="true"] .league-panel,
+html[data-installed-app="true"] .card {
+  border-radius: 6px;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+html[data-installed-app="true"] .setup-scroll,
+html[data-installed-app="true"] .setup-panel,
+html[data-installed-app="true"] .league-panel,
+html[data-installed-app="true"] .card,
+html[data-installed-app="true"] .screen {
+  scrollbar-width: none;
+}
+
+html[data-installed-app="true"] .setup-scroll::-webkit-scrollbar,
+html[data-installed-app="true"] .setup-panel::-webkit-scrollbar,
+html[data-installed-app="true"] .league-panel::-webkit-scrollbar,
+html[data-installed-app="true"] .card::-webkit-scrollbar,
+html[data-installed-app="true"] .screen::-webkit-scrollbar {
+  display: none;
+}
+
+html[data-installed-app="true"] .panel-heading,
+html[data-installed-app="true"] .card-header {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: inherit;
+}
+
+html[data-installed-app="true"] .icon-btn {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+html[data-installed-app="true"] .menu-stack button,
+html[data-installed-app="true"] .setup-actions button,
+html[data-installed-app="true"] .toggle-group button {
+  min-height: 46px;
+}
+
+html[data-installed-app="true"] .team-select {
+  min-height: 46px;
+  border-radius: 4px;
+}
+
+html[data-installed-app="true"] .matchup-row,
+html[data-installed-app="true"] .standing-row,
+html[data-installed-app="true"] .roster-player,
+html[data-installed-app="true"] .setting-block {
+  border-radius: 4px;
+}
+
+html[data-installed-app="true"] .presnap-hint {
+  bottom: max(13px, env(safe-area-inset-bottom));
+}
+
+html[data-installed-app="true"] #pause-overlay .card {
+  width: min(560px, calc(100vw - 28px));
+  max-height: calc(100dvh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  html[data-installed-app="true"] .screen {
+    padding: 10px 14px;
+  }
+
+  html[data-installed-app="true"] .setup-panel,
+  html[data-installed-app="true"] .league-panel {
+    max-height: calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+
+  html[data-installed-app="true"] .panel-heading {
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+  }
+
+  html[data-installed-app="true"] .setup-grid {
+    gap: 8px 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-installed-app="true"] *,
+  html[data-installed-app="true"] *::before,
+  html[data-installed-app="true"] *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+@keyframes appScreenIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes appOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes appPanelIn {
+  from { opacity: 0; transform: scale(.985) translateY(4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}

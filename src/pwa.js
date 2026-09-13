@@ -18,9 +18,20 @@ function ensureLink(rel,href){
   link.href=href;
 }
 
+function ensureStylesheet(href){
+  let link=[...document.head.querySelectorAll('link[rel="stylesheet"]')].find(node=>node.getAttribute('href')===href);
+  if(!link){
+    link=document.createElement('link');
+    link.rel='stylesheet';
+    link.href=href;
+    document.head.appendChild(link);
+  }
+}
+
 export function initPWA(){
   ensureLink('manifest','/manifest.webmanifest');
   ensureLink('apple-touch-icon','/assets/brand/shield-v1.webp');
+  ensureStylesheet('/app-mobile.css');
   ensureMeta('theme-color','#080b0c');
   ensureMeta('mobile-web-app-capable','yes');
   ensureMeta('apple-mobile-web-app-capable','yes');
