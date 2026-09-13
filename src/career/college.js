@@ -2,6 +2,7 @@ import * as League from '../state/league.js';
 import {COLLEGE_TEAMS,SCHOOL_TIERS} from './collegeData.js';
 import {emptyStats} from './stats.js';
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+const COLLEGE_TALENT={powerhouse:'elite',competitive:'average',rebuilding:'rebuilding'};
 export function collegeSchedule(teams){
  const games=[],groups=[...new Set(teams.map(t=>t.conference))].map(c=>teams.filter(t=>t.conference===c).map(t=>t.id));
  const add=(a,b,week,swap)=>games.push({id:`college-w${week}-${a}-${b}`,week,homeTeamId:swap?b:a,awayTeamId:swap?a:b,status:'scheduled',homeScore:null,awayScore:null});
@@ -31,17 +32,31 @@ function balanceCrossConferenceVenues(games,teams){
  }
  cross.forEach((g,i)=>{g.homeTeamId=choices[i].find(c=>c.edge.capacity===0).id;g.awayTeamId=choices[i].find(c=>c.id!==g.homeTeamId).id;});
 }
+function collegeDevelopment(player,schoolTier,index,schoolId){
+ const rating=player.rating;
+ const roll=(rating*7+index*13+schoolId.length*11)%100;
+ const baseElite={powerhouse:17,competitive:8,rebuilding:3}[schoolTier]||8;
+ const baseImpact={powerhouse:39,competitive:27,rebuilding:17}[schoolTier]||27;
+ const eliteCut=clamp(baseElite+Math.max(0,rating-84)*2,2,48);
+ const impactCut=clamp(eliteCut+baseImpact+Math.max(0,rating-76),eliteCut+10,88);
+ if(roll<eliteCut)return 'Elite';
+ if(roll<impactCut)return 'Impact';
+ return 'Normal';
+}
 export function createCollegeLeague(schoolId){
  if(!COLLEGE_TEAMS.some(t=>t.id===schoolId))throw Error('Choose a college.');
  const league=League.createFranchise('bos');
  league.kind='college';league.leagueName='Gridiron College League';league.userTeamId=schoolId;
  league.teams=league.teams.map((template,i)=>{
-  const school=COLLEGE_TEAMS[i],tier=SCHOOL_TIERS[school.tier];
-  const team={...template,...school};
-  team.roster=template.roster.map((p,j)=>({...p,id:school.id+'-'+p.slot.toLowerCase(),age:19+j%4,rating:clamp(p.rating+tier.rosterBonus,55,94)}));
+  const school=COLLEGE_TEAMS[i],tier=SCHOOL_TIERS[school.tier],talentTier=COLLEGE_TALENT[school.tier]||'average';
+  const team={...template,...school,talentTier,programTier:school.tier,talentModelVersion:1};
+  team.roster=League.createRosterForTier(school,1,talentTier).map((p,j)=>({...p,id:school.id+'-'+p.slot.toLowerCase(),age:19+j%4}));
   // Scheme affects the supporting cast, not the user's available playbook.
-  for(const p of team.roster)if(school.scheme==='spread'&&['WR','TE'].includes(p.position)||school.scheme==='run'&&['RB','OL'].includes(p.position))p.rating=clamp(p.rating+3,55,94);
-  team.coaches={oc:{...template.coaches.oc,rating:clamp(template.coaches.oc.rating+tier.rosterBonus,50,95)},dc:{...template.coaches.dc,rating:clamp(template.coaches.dc.rating+tier.rosterBonus,50,95)}};
+  for(const [j,p] of team.roster.entries()){
+   if(school.scheme==='spread'&&['WR','TE'].includes(p.position)||school.scheme==='run'&&['RB','OL'].includes(p.position))p.rating=clamp(p.rating+3,55,97);
+   p.development=collegeDevelopment(p,school.tier,j,school.id);
+  }
+  team.coaches={oc:League.createCoachForTier(school,'OC',1,talentTier),dc:League.createCoachForTier(school,'DC',1,talentTier)};
   return team;
  });
  league.schedule=collegeSchedule(league.teams);League.refreshRatings(league);return league;
