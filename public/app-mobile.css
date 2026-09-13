@@ -106,8 +106,8 @@ html[data-installed-app="true"] .setting-block {
   border-radius: 4px;
 }
 
-html[data-installed-app="true"] .presnap-hint {
-  bottom: max(13px, env(safe-area-inset-bottom));
+html[data-installed-app="true"] #presnap-hint {
+  display: none !important;
 }
 
 html[data-installed-app="true"] #pause-overlay .card {
