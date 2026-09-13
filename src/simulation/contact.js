@@ -14,12 +14,13 @@ export function pursuitTarget(def,carrier,velocity){
 // A lunge commits to a direction; it cannot home in after the runner cuts.
 export function startDive(def,carrier,now,timing={}){
  const distance=separation(def,carrier);
- // Offense advances toward increasing yfield. A defender directly trailing the
- // runner should keep pursuing until he is close enough to make a realistic
- // shoestring tackle instead of launching from the full side/front dive range.
+ // Offense advances toward increasing yfield. Apply the shorter trailing range
+ // only to a runner who is actually moving upfield; static contact fixtures and
+ // side/front approaches keep the normal dive geometry.
  const longitudinalGap=carrier.yfield-def.yfield;
  const lateralGap=Math.abs(carrier.x-def.x);
- const trailing=longitudinalGap>CONTACT_RADIUS*0.45&&longitudinalGap>lateralGap*0.7;
+ const movingUpfield=(carrier.velocity?.yfield||0)>1;
+ const trailing=movingUpfield&&longitudinalGap>CONTACT_RADIUS*0.45&&longitudinalGap>lateralGap*0.7;
  const reach=trailing?TRAILING_DIVE_REACH:DIVE_REACH;
  if(distance<=CONTACT_RADIUS||distance>reach||now<(def.nextDiveAt||0))return false;
  const duration=timing.diveDuration??DIVE_DURATION,windup=timing.diveWindup??0,speed=45/(duration/1000);
