@@ -1,5 +1,7 @@
 export const UNIFORM_VARIANTS=['home','away','alternate'];
 
+// Each variant carries four independent editable channels. The defaults mirror
+// the previous look so older saves do not change until a user customizes them.
 export function defaultUniforms(team){
  const primary=team?.colors?.primary||'#2458a6';
  const secondary=team?.colors?.secondary||'#eef1f4';
