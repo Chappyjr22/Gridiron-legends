@@ -1,10 +1,11 @@
+import {playingRoster} from '../career/roster.js';
 import {passingRead} from '../simulation/passing.js';
 import {brandArt} from './brand.js';
 import {stickVector,STICK_TRAVEL} from '../input/runnerControls.js';
 import {catchTolerance} from '../simulation/receiving.js';
 import { simulationNow } from '../state/clock.js';
 import { canvas, ctx } from './canvas.js';
-import { game, entities } from '../state/gameState.js';
+import { game, entities, teamState } from '../state/gameState.js';
 import { XPX, BASE_X, LAT_MIN, LAT_MAX, DL_KEYS, OFF, DEF,  MIN_PULL, clamp, ratingMultiplier } from '../state/constants.js';
 import { currentDiff } from '../state/difficulty.js';
 import { PLAYS } from '../data/plays.js';
@@ -39,6 +40,38 @@ function drawTackleImpact(){
     ctx.fillStyle=i%2===0?'#fff4a8':'#f6b72c';
     ctx.fillRect(cx+p[0]*spread-2,cy+p[1]*spread-2,4,4);
   });
+}
+function drawPresnapLineupTags(){
+  if(game.phase!=='presnap')return;
+  const roster=playingRoster(teamState.userTeam);
+  const keys=['wr1','wr2','wr3','te','rb'];
+  ctx.save();
+  ctx.textBaseline='middle';
+  ctx.textAlign='center';
+  ctx.font='700 9px "Courier New", monospace';
+  for(const key of keys){
+    const entity=entities.players[key];
+    if(!entity)continue;
+    const player=roster.find(p=>p.id===entity.playerId);
+    const slot=String(entity.slot||key).toUpperCase();
+    const identity=player&&!player.generic
+      ?`${String(player.firstName||'').charAt(0)}.${String(player.lastName||'').slice(0,8).toUpperCase()}`
+      :`#${entity.num}`;
+    const text=`${slot} ${identity}`;
+    const pos=toCanvas(entity);
+    const width=Math.ceil(ctx.measureText(text).width)+10;
+    const height=17;
+    const x=clamp(Math.round(pos.cx),Math.ceil(width/2)+4,canvas.width-Math.ceil(width/2)-4);
+    const y=clamp(Math.round(pos.cy-32),LAT_MIN+10,LAT_MAX-12);
+    ctx.fillStyle='rgba(5,12,18,.88)';
+    ctx.fillRect(Math.round(x-width/2),Math.round(y-height/2),width,height);
+    ctx.strokeStyle=player&&!player.generic?'#f4c542':'rgba(245,237,207,.7)';
+    ctx.lineWidth=1.5;
+    ctx.strokeRect(Math.round(x-width/2)+.5,Math.round(y-height/2)+.5,width-1,height-1);
+    ctx.fillStyle='#f8f1d8';
+    ctx.fillText(text,x,y+.5);
+  }
+  ctx.restore();
 }
 export function draw(){
   const w=canvas.width;
@@ -119,6 +152,7 @@ export function draw(){
   drawPlayer(entities.players.te,OFF,entities.ballCarrier===entities.players.te);
   drawPlayer(entities.players.wr2,OFF,entities.ballCarrier===entities.players.wr2);
   drawPlayer(entities.players.qb,OFF,entities.ballCarrier===entities.players.qb);
+  drawPresnapLineupTags();
   if(entities.playFake){
     const p=clamp((simulationNow()-entities.playFake.start)/entities.playFake.duration,0,1),qb=toCanvas(entities.players.qb),rb=toCanvas(entities.players.rb);
     const reach=Math.sin(p*Math.PI);ctx.fillStyle='#9a582c';ctx.fillRect(qb.cx+(rb.cx-qb.cx)*reach-4,qb.cy+(rb.cy-qb.cy)*reach-2,8,4);
