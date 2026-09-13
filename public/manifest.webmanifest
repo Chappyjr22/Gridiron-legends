@@ -1,0 +1,19 @@
+{
+  "name": "Gridiron Legends",
+  "short_name": "Gridiron",
+  "description": "A mobile-first retro football career game.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#080b0c",
+  "theme_color": "#080b0c",
+  "icons": [
+    {
+      "src": "/assets/brand/shield-v1.webp",
+      "sizes": "any",
+      "type": "image/webp",
+      "purpose": "any"
+    }
+  ]
+}
