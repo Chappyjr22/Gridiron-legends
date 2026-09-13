@@ -8,8 +8,6 @@ export const PRESNAP_COLUMNS={qb:0,rb:1,wr:2,ol:3};
 export const defensePresnapSpriteImage=new Image();
 export const defensePresnapSpriteSheets=[];
 export const DEFENSE_PRESNAP_COLUMNS={dl:0,cb:1,s:2};
-// Readiness flags: reassigned (not just mutated) as each sheet loads, so callers
-// in other modules read the current value off this shared object.
 export const spriteState={spritesReady:false,presnapSpritesReady:false,defensePresnapSpritesReady:false,goalPostReady:false};
 export const goalPostImage=new Image();
 goalPostImage.onload=function(){spriteState.goalPostReady=true;};
@@ -25,10 +23,11 @@ export function colorRamp(hex){
   return [0.38,0.62,0.9,1.2].map(mult=>rgb.map(channel=>Math.max(0,Math.min(255,Math.round(channel*mult)))));
 }
 export function applyUniform(team,target){
-  target.jersey=team.colors.primary;
-  target.helmet=team.colors.secondary;
-  target.stripe=team.colors.accent;
-  target.ramp=colorRamp(team.colors.primary);
+  const uniform=team.uniform||{};
+  target.jersey=uniform.jersey||team.colors.primary;
+  target.helmet=uniform.helmet||team.colors.secondary;
+  target.stripe=uniform.stripe||team.colors.accent;
+  target.ramp=colorRamp(target.jersey);
 }
 export function rebuildSpriteSheets(){
   if(!spriteImage.complete||!spriteImage.naturalWidth)return;
@@ -74,15 +73,9 @@ export function makeTeamSpriteSheet(team,skinIndex,sourceImage=spriteImage,expan
   outCtx.putImageData(image,0,0);
   return out;
 }
-presnapSpriteImage.onload=function(){
-  rebuildSpriteSheets();
-};
+presnapSpriteImage.onload=function(){rebuildSpriteSheets();};
 presnapSpriteImage.src='assets/presnap-offense.png';
-defensePresnapSpriteImage.onload=function(){
-  rebuildSpriteSheets();
-};
+defensePresnapSpriteImage.onload=function(){rebuildSpriteSheets();};
 defensePresnapSpriteImage.src='assets/presnap-defense.png';
-spriteImage.onload=function(){
-  rebuildSpriteSheets();
-};
+spriteImage.onload=function(){rebuildSpriteSheets();};
 spriteImage.src='assets/sprites.png';
