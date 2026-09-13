@@ -31,6 +31,8 @@ export function applyUniform(team,target){
   target.stripe=uniform.stripe;
   target.ramp=colorRamp(target.jersey);
   target.pantsRamp=colorRamp(target.pants);
+  target.helmetRamp=colorRamp(target.helmet);
+  target.stripeRamp=colorRamp(target.stripe);
 }
 export function rebuildSpriteSheets(){
   if(!spriteImage.complete||!spriteImage.naturalWidth)return;
@@ -48,17 +50,51 @@ export function rebuildSpriteSheets(){
   }
 }
 
-// The source sprites use one blue palette for both jersey and pants. Rather
-// than permanently modifying the PNGs, this conservative mask splits only the
-// lower-body portion of each 64x64 frame into a second recolor channel. Pixels
-// outside the mask remain on the jersey channel. Keeping this coordinate-based
-// and reversible is intentional while the feature is evaluated on its branch.
-export function isPantsPixel(x,y){
+function uprightChannel(localX,localY,row){
+  // Helmet is deliberately broad in X but shallow in Y. Only source uniform
+  // pixels are eligible, so face/skin pixels inside the box are never touched.
+  const helmetBottom=row===3?25:24;
+  if(localY>=6&&localY<=helmetBottom&&localX>=13&&localX<=51){
+    // A narrow crown stripe gives the stripe control a real, isolated channel.
+    if(localX>=30&&localX<=34&&localY<=21)return 'stripe';
+    return 'helmet';
+  }
+  // Torso stripe. Keep it narrow so shoulder/arm pixels remain jersey colored.
+  if(localY>=24&&localY<=39&&localX>=30&&localX<=34)return 'stripe';
+  if(localY>=37&&localY<=54&&localX>=11&&localX<=53)return 'pants';
+  return 'jersey';
+}
+function groundedChannel(localX,localY,col){
+  // Row 4 contains catch/drop/tackle/down/dive poses. The last three frames
+  // compress or rotate the body, so use pose-specific horizontal separation.
+  if(col>=3){
+    // Source faces left in these frames: head/helmet stays toward the left,
+    // lower body extends toward the right. Keep the middle as jersey.
+    if(localX>=7&&localX<=27&&localY>=19&&localY<=46){
+      if(localY>=28&&localY<=32)return 'stripe';
+      return 'helmet';
+    }
+    if(localX>=38&&localX<=58&&localY>=22&&localY<=51)return 'pants';
+    if(localX>=27&&localX<=38&&localY>=30&&localY<=34)return 'stripe';
+    return 'jersey';
+  }
+  // Catch/deflect/drop are still mostly upright/crouched.
+  if(localY>=7&&localY<=25&&localX>=12&&localX<=52){
+    if(localX>=30&&localX<=34&&localY<=22)return 'stripe';
+    return 'helmet';
+  }
+  if(localY>=25&&localY<=40&&localX>=30&&localX<=34)return 'stripe';
+  if(localY>=38&&localY<=55&&localX>=10&&localX<=54)return 'pants';
+  return 'jersey';
+}
+
+// Returns the intended recolor channel for one source-uniform pixel. The
+// source sheet itself still uses one blue palette, so geometry is the safest
+// reversible split until/if the PNG artwork receives authored mask layers.
+export function uniformChannelForPixel(x,y){
   const localX=x%64,localY=y%64;
-  if(localY<37||localY>53)return false;
-  // Exclude the extreme sides where arms, gloves and loose animation pixels
-  // can enter the lower half during running/tackle frames.
-  return localX>=12&&localX<=52;
+  const row=Math.floor(y/64),col=Math.floor(x/64);
+  return row===4?groundedChannel(localX,localY,col):uprightChannel(localX,localY,row);
 }
 
 export function makeTeamSpriteSheet(team,skinIndex,sourceImage=spriteImage,expandedSkin=false){
@@ -71,6 +107,9 @@ export function makeTeamSpriteSheet(team,skinIndex,sourceImage=spriteImage,expan
   const data=image.data;
   const uniformRamp=team.ramp||colorRamp(team.jersey);
   const pantsRamp=team.pantsRamp||colorRamp(team.pants||team.jersey);
+  const helmetRamp=team.helmetRamp||colorRamp(team.helmet||team.jersey);
+  const stripeRamp=team.stripeRamp||colorRamp(team.stripe||team.jersey);
+  const ramps={jersey:uniformRamp,pants:pantsRamp,helmet:helmetRamp,stripe:stripeRamp};
   for(let i=0;i<data.length;i+=4){
     if(data[i+3]===0)continue;
     const pixel=i/4,x=pixel%out.width,y=Math.floor(pixel/out.width);
@@ -85,7 +124,7 @@ export function makeTeamSpriteSheet(team,skinIndex,sourceImage=spriteImage,expan
       data[i]=color[0];data[i+1]=color[1];data[i+2]=color[2];
     } else if(b>r*1.22&&b>g*1.08){
       const light=(r+g+b)/3;
-      const ramp=isPantsPixel(x,y)?pantsRamp:uniformRamp;
+      const ramp=ramps[uniformChannelForPixel(x,y)]||uniformRamp;
       const color=ramp[light<45?0:light<80?1:light<135?2:3];
       data[i]=color[0];data[i+1]=color[1];data[i+2]=color[2];
     }
