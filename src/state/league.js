@@ -46,12 +46,27 @@ export const TEAMS=[
   {id:'sea',city:'Seattle',name:'Orcas',abbr:'SEA',conference:'frontier',division:'west',colors:{primary:'#164b66',secondary:'#e1edf0',accent:'#59a848'}}
 ];
 
+export const TALENT_TIERS={
+  elite:{name:'Elite',target:84,spread:10,min:69,max:97,starChance:0.16,weakChance:0.05,coachTarget:84,eliteDev:0.16,impactDev:0.38},
+  contender:{name:'Contender',target:79,spread:11,min:64,max:95,starChance:0.11,weakChance:0.07,coachTarget:79,eliteDev:0.11,impactDev:0.32},
+  average:{name:'Average',target:74,spread:12,min:59,max:93,starChance:0.08,weakChance:0.09,coachTarget:74,eliteDev:0.07,impactDev:0.25},
+  rebuilding:{name:'Rebuilding',target:68,spread:13,min:55,max:91,starChance:0.055,weakChance:0.12,coachTarget:69,eliteDev:0.04,impactDev:0.18}
+};
+
+export const PRO_TEAM_TIER={
+  buf:'elite',bal:'elite',hou:'elite',kc:'elite',phi:'elite',det:'elite',gb:'elite',sf:'elite',
+  mia:'contender',cin:'contender',pit:'contender',den:'contender',dal:'contender',min:'contender',tb:'contender',la2:'contender',
+  bos:'average',ind:'average',jax:'average',la1:'average',sea:'average',atl:'average',cha:'average',was:'average',
+  ny1:'rebuilding',cle:'rebuilding',nas:'rebuilding',lv:'rebuilding',ny2:'rebuilding',no:'rebuilding',phx:'rebuilding',chi:'rebuilding'
+};
+
 const FIRST_NAMES=['Marcus','Andre','Devin','Malik','Darius','Jalen','Isaiah','Cameron','Trey','Jordan','Caleb','Xavier','Miles','Dante','Tyler','Evan','Cole','Nolan','Grant','Luke','Jayden','Micah','Roman','Bryce','Kai','Desmond','Terrance','Elijah','Noah','Julian','Damien','Rashad'];
 const LAST_NAMES=['Carter','Brooks','Hayes','Bennett','Reed','Foster','Mitchell','Price','Warren','Coleman','Turner','Ward','Simmons','Porter','Griffin','Marshall','Parker','Ellis','Stone','Cross','Freeman','Banks','Morris','Holland','Lawson','Grant','Wells','Harris','Owens','Bryant','Dawson','Webb'];
 const COACH_FIRST=['Arthur','Calvin','Derek','Franklin','Graham','Harold','Isaac','Leon','Martin','Quentin','Russell','Victor','Wesley','Avery','Bryan','Cliff'];
 const COACH_LAST=['Maddox','Mercer','Holt','Keene','Rhodes','Sutton','Vaughn','Pierce','Dalton','Morrow','Barrett','Callahan','Hawkins','Boone','Fletcher','Cobb'];
 export const ROSTER_SLOTS=['QB','RB','WR1','WR2','TE','OL1','OL2','DL1','DL2','LB','DB1','DB2'];
 const NUMBER_RANGES={QB:[1,19],RB:[20,49],WR1:[0,19],WR2:[0,19],TE:[80,89],OL1:[60,79],OL2:[60,79],DL1:[90,99],DL2:[50,99],LB:[40,59],DB1:[20,39],DB2:[20,39]};
+const SLOT_BIAS={QB:2,RB:1,WR1:2,WR2:0,TE:0,OL1:0,OL2:-1,DL1:2,DL2:0,LB:0,DB1:2,DB2:0};
 export const REGULAR_SEASON_WEEKS=17;
 
 function hashString(value){
@@ -88,13 +103,30 @@ function playerNumber(slot,random,used){
 }
 
 function basePosition(slot){return slot.replace(/[12]$/,'');}
+function talentTierFor(team,tierOverride=null){return tierOverride||team.talentTier||PRO_TEAM_TIER[team.id]||'average';}
 
-function createRoster(team,season){
-  const random=rng(hashString(team.id+':'+season+':roster'));
+function developmentFor(rating,age,cfg,random){
+  const youthBoost=Math.max(0,26-age)*0.008;
+  const eliteChance=clamp(cfg.eliteDev+Math.max(0,rating-82)*0.011+youthBoost,0.02,0.42);
+  const impactChance=clamp(cfg.impactDev+Math.max(0,rating-75)*0.007+Math.max(0,28-age)*0.005,0.12,0.62);
+  const roll=random();
+  if(roll<eliteChance)return 'Elite';
+  if(roll<eliteChance+impactChance)return 'Impact';
+  return 'Normal';
+}
+
+export function createRosterForTier(team,season,tierOverride=null){
+  const tierKey=talentTierFor(team,tierOverride),cfg=TALENT_TIERS[tierKey]||TALENT_TIERS.average;
+  const random=rng(hashString(team.id+':'+season+':roster:'+tierKey));
   const usedNumbers=new Set();
-  return ROSTER_SLOTS.map((slot,index)=>{
-    const rating=clamp(Math.round(64+random()*25+(index<5?2:0)),60,94);
-    const potentialRoll=random();
+  return ROSTER_SLOTS.map(slot=>{
+    const noise=(random()+random()-1)*cfg.spread;
+    let special=0;
+    const specialRoll=random();
+    if(specialRoll<cfg.starChance)special=8+random()*5;
+    else if(specialRoll>1-cfg.weakChance)special=-(6+random()*5);
+    const rating=clamp(Math.round(cfg.target+(SLOT_BIAS[slot]||0)+noise+special),cfg.min,cfg.max);
+    const age=Math.floor(21+random()*13);
     return {
       id:team.id+'-'+season+'-'+slot.toLowerCase(),
       slot,
@@ -102,27 +134,40 @@ function createRoster(team,season){
       firstName:pick(FIRST_NAMES,random),
       lastName:pick(LAST_NAMES,random),
       number:playerNumber(slot,random,usedNumbers),
-      age:Math.floor(21+random()*13),
+      age,
       rating,
-      development:potentialRoll>0.92?'Elite':potentialRoll>0.7?'Impact':'Normal',
+      development:developmentFor(rating,age,cfg,random),
       contractYears:Math.floor(1+random()*4)
     };
   });
 }
 
-function createCoach(team,side,season){
-  const random=rng(hashString(team.id+':'+side+':'+season));
+function createRoster(team,season){return createRosterForTier(team,season);}
+
+export function createCoachForTier(team,side,season,tierOverride=null){
+  const tierKey=talentTierFor(team,tierOverride),cfg=TALENT_TIERS[tierKey]||TALENT_TIERS.average;
+  const random=rng(hashString(team.id+':'+side+':'+season+':'+tierKey));
   return {
     id:team.id+'-'+side.toLowerCase(),
     role:side,
     firstName:pick(COACH_FIRST,random),
     lastName:pick(COACH_LAST,random),
-    rating:Math.round(55+random()*36),
+    rating:clamp(Math.round(cfg.coachTarget+(random()+random()-1)*11),55,95),
     contractYears:Math.floor(1+random()*4)
   };
 }
 
+function createCoach(team,side,season){return createCoachForTier(team,side,season);}
 function average(values){return values.length?values.reduce((sum,value)=>sum+value,0)/values.length:0;}
+function weightedAverage(players){
+  let total=0,weight=0;
+  for(const player of players){
+    const slot=player.slot||'';
+    const w=slot==='QB'?1.35:['RB','WR1','DB1','DL1'].includes(slot)?1.12:1;
+    total+=(player.rating||70)*w;weight+=w;
+  }
+  return weight?total/weight:70;
+}
 
 function emptyRecord(){
   return {wins:0,losses:0,ties:0,pointsFor:0,pointsAgainst:0,conferenceWins:0,conferenceLosses:0,conferenceTies:0,divisionWins:0,divisionLosses:0,divisionTies:0};
@@ -131,10 +176,11 @@ function emptyRecord(){
 function calculateRatings(roster,coaches){
   const offense=roster.filter(player=>['QB','RB','WR','TE','OL'].includes(player.position));
   const defense=roster.filter(player=>['DL','LB','DB'].includes(player.position));
-  const genericOffense=Math.round(44+coaches.oc.rating*0.43);
-  const genericDefense=Math.round(44+coaches.dc.rating*0.43);
-  const offenseRating=Math.round(average([...offense.map(player=>player.rating),genericOffense,genericOffense]));
-  const defenseRating=Math.round(average([...defense.map(player=>player.rating),genericDefense,genericDefense,genericDefense]));
+  const offenseTalent=weightedAverage(offense),defenseTalent=weightedAverage(defense);
+  const genericOffense=Math.round(clamp(offenseTalent*0.78+coaches.oc.rating*0.22,55,95));
+  const genericDefense=Math.round(clamp(defenseTalent*0.78+coaches.dc.rating*0.22,55,95));
+  const offenseRating=Math.round(offenseTalent*0.90+genericOffense*0.10);
+  const defenseRating=Math.round(defenseTalent*0.90+genericDefense*0.10);
   return {
     offense:offenseRating,
     defense:defenseRating,
@@ -145,9 +191,37 @@ function calculateRatings(roster,coaches){
 }
 
 function createTeamState(team,season){
-  const roster=createRoster(team,season);
-  const coaches={oc:createCoach(team,'OC',season),dc:createCoach(team,'DC',season)};
-  return {...team,roster,coaches,ratings:calculateRatings(roster,coaches),record:emptyRecord()};
+  const talentTier=talentTierFor(team),source={...team,talentTier};
+  const roster=createRoster(source,season);
+  const coaches={oc:createCoach(source,'OC',season),dc:createCoach(source,'DC',season)};
+  return {...source,roster,coaches,ratings:calculateRatings(roster,coaches),talentModelVersion:1,record:emptyRecord()};
+}
+
+function rebalanceExistingTeam(team,season){
+  if(team.talentModelVersion>=1)return;
+  const tierKey=talentTierFor(team),cfg=TALENT_TIERS[tierKey]||TALENT_TIERS.average;
+  const random=rng(hashString(team.id+':'+season+':talent-migration'));
+  team.talentTier=tierKey;
+  for(const player of team.roster||[]){
+    if(player.archetype)continue;
+    const old=Number(player.rating)||74;
+    const delta=(cfg.target-77)+Math.round((random()+random()-1)*3);
+    const rating=clamp(old+delta,cfg.min,cfg.max);
+    const ratingDelta=rating-old;
+    player.rating=rating;
+    player.development=developmentFor(rating,Number(player.age)||25,cfg,random);
+    if(player.attributes&&typeof player.attributes==='object'){
+      for(const key of Object.keys(player.attributes)){
+        const value=Number(player.attributes[key]);
+        if(Number.isFinite(value))player.attributes[key]=clamp(Math.round(value+ratingDelta),45,97);
+      }
+    }
+  }
+  if(team.coaches){
+    for(const side of ['oc','dc'])if(team.coaches[side])team.coaches[side].rating=clamp(Math.round((team.coaches[side].rating||74)*0.35+cfg.coachTarget*0.65),55,95);
+  }
+  team.talentModelVersion=1;
+  team.ratings=calculateRatings(team.roster||[],team.coaches||{oc:{rating:74},dc:{rating:74}});
 }
 
 function shuffledTeamIds(teams,season){
@@ -187,7 +261,10 @@ export function ensureLeagueState(franchise){
   franchise.schemaVersion=2;
   franchise.season=Math.max(1,Number(franchise.season)||1);
   franchise.week=Math.max(1,Math.min(REGULAR_SEASON_WEEKS,Number(franchise.week)||1));
-  franchise.teams.forEach(team=>{team.record=normalizeRecord(team.record);});
+  franchise.teams.forEach(team=>{
+    team.record=normalizeRecord(team.record);
+    if(franchise.kind!=='college')rebalanceExistingTeam(team,franchise.season);
+  });
   if(!Array.isArray(franchise.schedule)||franchise.schedule.length!==REGULAR_SEASON_WEEKS*16){
     franchise.schedule=createSchedule(franchise.teams,franchise.season);
   }
