@@ -5,18 +5,16 @@ import {initOverlayFocus} from './ui/focus.js';
 import {initFieldViewport} from './rendering/viewport.js';
 import {initRunnerControls} from './input/runnerControls.js';
 import {initMenuArt} from './ui/menuArt.js';
-import { game } from './state/gameState.js';
+import { game, teamState } from './state/gameState.js';
 import { initCareer } from './ui/career.js';
 import { initPWA } from './pwa.js';
 import { initMobileSelects } from './ui/mobileSelects.js';
-// Application entry point: wires the pieces that would otherwise need a
-// circular import between modules, registers the handful of top-level
-// "start screen" button routes, and kicks off the initial render.
-import './state/league.js';
+import { initMainTeamEditor } from './ui/teamEditor.js';
+import * as League from './state/league.js';
 import { updateHUD, continueResult } from './ui/hud.js';
 import { uiHooks, initPlay, attemptFieldGoal, simulatePunt } from './simulation/engine.js';
 import { renderFormationMenu } from './ui/playbook.js';
-import { syncMatchupUI, returnToMainMenu, populateTeamSelect, populateOpponentSelect } from './ui/menus.js';
+import { syncMatchupUI, returnToMainMenu, populateTeamSelect, populateOpponentSelect, updateTeamPreview, updateOpponentPreview } from './ui/menus.js';
 import { openLeagueHub } from './ui/leagueHub.js';
 import { enterFormationLab } from './ui/formationLab.js';
 import './input/pointer.js';
@@ -29,10 +27,6 @@ document.addEventListener('touchmove',function(e){
 },{passive:false});
 document.addEventListener('gesturestart',function(e){e.preventDefault();});
 
-// Resolve the circular-import points identified during the module split:
-// the simulation engine calls back into UI rendering at these three spots,
-// but the UI modules that own them import the engine themselves, so the
-// engine reaches them through this hook object instead of a direct import.
 uiHooks.renderCallsheet=renderFormationMenu;
 uiHooks.syncMatchup=syncMatchupUI;
 uiHooks.returnToMainMenu=returnToMainMenu;
@@ -53,13 +47,24 @@ updateHUD();
 initRunnerControls();
 initMenuArt();
 initCareer();
+initMainTeamEditor(
+  ()=>teamState.franchise,
+  ()=>game.userTeamId,
+  franchise=>League.saveFranchise(franchise),
+  team=>{
+    if(team.id===game.userTeamId)teamState.userTeam=team;
+    if(teamState.cpuTeam?.id===team.id)teamState.cpuTeam=team;
+    updateTeamPreview(game.userTeamId);
+    updateOpponentPreview();
+    syncMatchupUI();
+  }
+);
 initMobileSelects();
 initCloud();
 initAudio();
 initPracticeGuide();
 initOverlayFocus();
 
-// An interrupted mobile session stays paused until the player resumes it.
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden&&['presnap','live','tackle'].includes(game.phase)){
     document.getElementById('btn-pause').click();
