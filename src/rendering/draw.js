@@ -1,4 +1,5 @@
 import {passingRead} from '../simulation/passing.js';
+import {brandArt} from './brand.js';
 import {stickVector,STICK_TRAVEL} from '../input/runnerControls.js';
 import {catchTolerance} from '../simulation/receiving.js';
 import { simulationNow } from '../state/clock.js';
@@ -10,6 +11,7 @@ import { PLAYS } from '../data/plays.js';
 import { interaction } from '../input/interactionState.js';
 import { drawPixelTurf, drawPixelStadium, drawPixelEndZone, drawPixelNumber, END_ZONE_STYLE } from './field.js';
 import { drawPlayer, toCanvas, drawRoutePreview } from './players.js';
+import { SCENE_TOP } from './sceneLayout.js';
 
 export function drawArcPath(x0,y0,x1,y1,arcHeight,color,width){
   ctx.strokeStyle=color;ctx.lineWidth=width;
@@ -39,7 +41,8 @@ function drawTackleImpact(){
   });
 }
 export function draw(){
-  const w=canvas.width,h=canvas.height;
+  const w=canvas.width;
+  ctx.setTransform(1,0,0,1,0,SCENE_TOP);
   const camPx=game.cameraYard*XPX;
   const xAt=(yard)=>BASE_X-(yard*XPX-camPx);
   ctx.imageSmoothingEnabled=false;
@@ -63,6 +66,13 @@ export function draw(){
     if(cx<-5||cx>w+5)continue;
     ctx.fillRect(cx-1,LAT_MIN+58,2,8);
     ctx.fillRect(cx-1,LAT_MAX-66,2,8);
+  }
+  // Paint the league shield over yard markings, below gameplay overlays.
+  if(brandArt.shield){
+    const logo=brandArt.shield,width=196,height=width*logo.height/logo.width;
+    ctx.save();ctx.globalAlpha=1;
+    ctx.drawImage(logo,Math.round(xAt(50)-width/2),Math.round((LAT_MIN+LAT_MAX-height)/2),width,height);
+    ctx.restore();
   }
   ctx.fillStyle='#f0f5e9';
   ctx.fillRect(0,LAT_MIN-2,w,3);

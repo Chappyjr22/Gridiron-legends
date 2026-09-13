@@ -1,3 +1,4 @@
+import {careerStorage} from '../cloud/storage.js';
 import {opponentBoxScore} from './leagueStats.js';
 import {validCheckpoint} from './checkpoints.js';
 import {COLLEGE_TEAMS,SCHOOL_TIERS} from './collegeData.js';
@@ -14,7 +15,7 @@ export const ARCHETYPES={
  quick:{name:'Quick release',description:'Get the ball out before pressure arrives.',attributes:{accuracy:74,arm:69,release:83}}
 };
 export function careerPlayer(c){return League.findTeamState(c.league,c.teamId).roster.find(p=>p.id===c.playerId);}
-export function createCareer({name,number=7,teamId='bos',archetype='precision',skin=2,difficulty='medium',quarterMinutes=2,schoolId=null}){
+export function createCareer({name,number=7,teamId='bos',archetype='precision',skin=2,portrait=0,difficulty='medium',quarterMinutes=2,schoolId=null}){
  const cleanName=String(name||'').trim().replace(/\s+/g,' ').slice(0,28);
  if(!cleanName)throw Error('Enter your player name.');
  if(!(schoolId?COLLEGE_TEAMS.some(t=>t.id===schoolId):League.TEAMS.some(t=>t.id===teamId))||!ARCHETYPES[archetype])throw Error('Choose a team and playing style.');
@@ -23,14 +24,14 @@ export function createCareer({name,number=7,teamId='bos',archetype='precision',s
  const league=schoolId?createCollegeLeague(schoolId):League.createFranchise(teamId),team=League.findTeamState(league,teamId),player=team.roster.find(p=>p.slot==='QB');
  const used=new Set(team.roster.map(p=>p.number));
  for(const teammate of team.roster)if(teammate!==player&&teammate.number===number){for(let n=0;n<100;n++)if(!used.has(n)&&n!==number){teammate.number=n;used.add(n);break;}}
- const names=cleanName.split(' ');Object.assign(player,{firstName:names.shift(),lastName:names.join(' '),number,age:21,skin:Math.max(0,Math.min(3,Number(skin)||0)),archetype,attributes:{...ARCHETYPES[archetype].attributes}});
+ const names=cleanName.split(' ');Object.assign(player,{firstName:names.shift(),lastName:names.join(' '),number,age:21,portrait:Number.isInteger(portrait)&&portrait>=0&&portrait<12?portrait:0,skin:Math.max(0,Math.min(3,Number(skin)||0)),archetype,attributes:{...ARCHETYPES[archetype].attributes}});
  if(schoolId)for(const key of Object.keys(player.attributes))player.attributes[key]+=SCHOOL_TIERS[team.tier].attributeBonus;
  player.rating=Math.round(Object.values(player.attributes).reduce((a,b)=>a+b)/3);
  League.refreshRatings(league);
  return {careerId:`career-${Date.now()}-${Math.random().toString(36).slice(2,10)}`,schemaVersion:1,stage:schoolId?'college':'pro',teamId,playerId:player.id,league,settings:{difficulty:['easy','medium','hard','gridiron'].includes(difficulty)?difficulty:'medium',quarterMinutes:[2,3,4,5].includes(Number(quarterMinutes))?Number(quarterMinutes):2},xp:0,level:1,points:0,totals:emptyStats(),seasonStats:emptyStats(),history:[],awards:[],postseason:null,lastResult:null,activeMatch:null,checkpoint:null};
 }
-export function saveCareer(c){try{return writeSlot(localStorage,parseCareer,CAREER_KEY,c);}catch{return false;}}
-export function listCareers(){return Object.values(readSlots(localStorage,parseCareer,CAREER_KEY).careers);}
+export function saveCareer(c){try{return writeSlot(careerStorage(),parseCareer,CAREER_KEY,c);}catch{return false;}}
+export function listCareers(){return Object.values(readSlots(careerStorage(),parseCareer,CAREER_KEY).careers);}
 export function parseCareer(raw){
  try{
   const c=JSON.parse(raw);
@@ -46,7 +47,7 @@ export function parseCareer(raw){
   return c;
  }catch{return null;}
 }
-export function loadCareer(){try{const bank=readSlots(localStorage,parseCareer,CAREER_KEY);return bank.careers[bank.lastId]||null;}catch{return null;}}
+export function loadCareer(){try{const bank=readSlots(careerStorage(),parseCareer,CAREER_KEY);return bank.careers[bank.lastId]||null;}catch{return null;}}
 export function nextMatch(c){
  if(c.activeMatch)return [...c.league.schedule,...(c.postseason?.games||[])].find(g=>g.id===c.activeMatch)||null;
  if(c.postseason)return c.postseason.games.find(g=>g.status==='scheduled'&&(g.homeTeamId===c.teamId||g.awayTeamId===c.teamId))||null;

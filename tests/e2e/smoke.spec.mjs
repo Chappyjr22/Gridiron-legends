@@ -197,16 +197,16 @@ test.describe('Formation Lab', () => {
     await expect(page.locator('#edit-panel')).toBeVisible();
     const before = JSON.parse(await page.locator('#edit-json').inputValue());
 
-    // The canvas is a fixed 800x380 drawing surface (native width/height
+    // The canvas is a fixed 800x420 drawing surface (native width/height
     // attributes), scaled to fit the viewport; pointerPos() converts a
     // client-pixel offset back to that native space by the same ratio, so
     // fractional coordinates land on the same field position regardless of
     // viewport size. In the default "trips" formation, with the practice
-    // default los=20, the QB sits at native canvas pixel (615, 191).
+    // default los=20, the QB sits at native canvas pixel (615, 231).
     const canvas = page.locator('#field');
     const box = await canvas.boundingBox();
     const qbStartX = box.x + box.width * (615 / 800);
-    const qbStartY = box.y + box.height * (191 / 380);
+    const qbStartY = box.y + box.height * (231 / 420);
     await page.mouse.move(qbStartX, qbStartY);
     await page.mouse.down();
     await page.mouse.move(qbStartX - box.width * 0.08, qbStartY - box.height * 0.08, { steps: 5 });

@@ -2,7 +2,7 @@ import {test,expect} from '@playwright/test';
 async function enroll(page){
  await page.goto('/');await page.getByRole('button',{name:'Career Mode',exact:true}).click();
  await page.getByRole('button',{name:'Start new career',exact:true}).click();
- await page.getByLabel('Player name',{exact:true}).fill('Campus Legend');
+ await page.getByLabel('Player name',{exact:true}).fill('Campus Legend');await page.getByRole('button',{name:'Next',exact:true}).click();
 }
 test('college school picker fits short landscape and previews tier attributes',async({browser})=>{
  for(const height of [304,390]){

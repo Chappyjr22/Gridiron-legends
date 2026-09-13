@@ -10,7 +10,7 @@ export function initPracticeGuide(){
  const end=()=>{lesson=null;coach.hidden=true;};
  const set=(title,text)=>{el('practice-coach-title').textContent=title;el('practice-coach-text').textContent=text;};
  for(const button of document.querySelectorAll('[data-open-guide]'))button.onclick=()=>{
-  el('practice-guide-start').disabled=!!game.career;el('practice-guide-note').textContent=game.career?'Finish or leave your career game before starting a practice session.':'Guided practice starts a fresh practice rep.';guide.showModal();
+  el('practice-guide-start').disabled=!!game.career;el('practice-guide-note').textContent=game.career?'Finish or leave your career game before starting a practice session.':'Guided practice starts a fresh practice rep.';guide.showModal();el('practice-guide-heading').focus({preventScroll:true});guide.scrollTop=0;
  };
  el('practice-guide-close').onclick=()=>guide.close();
  el('practice-guide-start').onclick=()=>{

@@ -215,6 +215,7 @@ export function openSetup(settingsOnly=false){
   document.getElementById('quarter-setting').style.display=settingsOnly?'none':'block';
   document.getElementById('team-setting').style.display=settingsOnly?'none':'block';
   document.getElementById('opponent-setting').style.display=settingsOnly?'none':'block';
+  document.querySelector('#setup-screen .setup-scroll').scrollTop=0;
 }
 export function closeSetup(){
   document.getElementById('setup-screen').classList.remove('show');
