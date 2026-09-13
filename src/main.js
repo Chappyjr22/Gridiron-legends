@@ -8,6 +8,7 @@ import {initMenuArt} from './ui/menuArt.js';
 import { game } from './state/gameState.js';
 import { initCareer } from './ui/career.js';
 import { initPWA } from './pwa.js';
+import { initMobileSelects } from './ui/mobileSelects.js';
 // Application entry point: wires the pieces that would otherwise need a
 // circular import between modules, registers the handful of top-level
 // "start screen" button routes, and kicks off the initial render.
@@ -52,6 +53,7 @@ updateHUD();
 initRunnerControls();
 initMenuArt();
 initCareer();
+initMobileSelects();
 initCloud();
 initAudio();
 initPracticeGuide();
