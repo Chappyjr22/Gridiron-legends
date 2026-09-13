@@ -2,6 +2,7 @@
 import {TACKLE_R} from '../state/constants.js';
 export const CONTACT_RADIUS=TACKLE_R;
 export const DIVE_REACH=44;
+export const TRAILING_DIVE_REACH=CONTACT_RADIUS+8;
 export const DIVE_DURATION=180;
 export const DIVE_SPEED=250;
 export function separation(a,b){return Math.hypot(a.x-b.x,a.yfield-b.yfield);}
@@ -13,7 +14,14 @@ export function pursuitTarget(def,carrier,velocity){
 // A lunge commits to a direction; it cannot home in after the runner cuts.
 export function startDive(def,carrier,now,timing={}){
  const distance=separation(def,carrier);
- if(distance<=CONTACT_RADIUS||distance>DIVE_REACH||now<(def.nextDiveAt||0))return false;
+ // Offense advances toward increasing yfield. A defender directly trailing the
+ // runner should keep pursuing until he is close enough to make a realistic
+ // shoestring tackle instead of launching from the full side/front dive range.
+ const longitudinalGap=carrier.yfield-def.yfield;
+ const lateralGap=Math.abs(carrier.x-def.x);
+ const trailing=longitudinalGap>CONTACT_RADIUS*0.45&&longitudinalGap>lateralGap*0.7;
+ const reach=trailing?TRAILING_DIVE_REACH:DIVE_REACH;
+ if(distance<=CONTACT_RADIUS||distance>reach||now<(def.nextDiveAt||0))return false;
  const duration=timing.diveDuration??DIVE_DURATION,windup=timing.diveWindup??0,speed=45/(duration/1000);
  def.dive={launchAt:now+windup,vx:(carrier.x-def.x)/distance*speed,vy:(carrier.yfield-def.yfield)/distance*speed,until:now+windup+duration};
  if(Math.abs(carrier.yfield-def.yfield)>0.5)def.facing=carrier.yfield>def.yfield?'left':'right';
