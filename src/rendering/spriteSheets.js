@@ -136,6 +136,10 @@ export function uniformChannelForPixel(x,y,source='gameplay'){
   return row===4?groundedChannel(localX,localY,col):uprightChannel(localX,localY,row,col);
 }
 
+function rampColor(ramp,r,g,b){
+  const light=(r+g+b)/3;
+  return ramp[light<45?0:light<80?1:light<135?2:3];
+}
 export function makeTeamSpriteSheet(team,skinIndex,sourceImage=spriteImage,expandedSkin=false){
   const out=document.createElement('canvas');
   out.width=sourceImage.width;out.height=sourceImage.height;
@@ -153,7 +157,19 @@ export function makeTeamSpriteSheet(team,skinIndex,sourceImage=spriteImage,expan
   for(let i=0;i<data.length;i+=4){
     if(data[i+3]===0)continue;
     const pixel=i/4,x=pixel%out.width,y=Math.floor(pixel/out.width);
+    const localX=x%64,localY=y%64,row=Math.floor(y/64),col=Math.floor(x/64);
     const r=data[i],g=data[i+1],b=data[i+2];
+
+    // Exact dev masks deliberately outrank every source-palette heuristic.
+    // This lets a manually-labelled gray/black helmet pixel become part of the
+    // helmet channel even though the original art did not use the blue ramp.
+    const manual=uniformMaskOverride(source,row,col,localX,localY);
+    if(manual){
+      const color=rampColor(ramps[manual]||uniformRamp,r,g,b);
+      data[i]=color[0];data[i+1]=color[1];data[i+2]=color[2];
+      continue;
+    }
+
     let skinSlot=SKIN_SOURCE.indexOf(r+','+g+','+b);
     if(skinSlot<0&&expandedSkin&&r>95&&r>g*1.08&&g>b*1.05&&r-b>40){
       const light=r+g+b;
@@ -163,9 +179,7 @@ export function makeTeamSpriteSheet(team,skinIndex,sourceImage=spriteImage,expan
       const color=SKIN_PALETTES[skinIndex][skinSlot];
       data[i]=color[0];data[i+1]=color[1];data[i+2]=color[2];
     } else if(b>r*1.22&&b>g*1.08){
-      const light=(r+g+b)/3;
-      const ramp=ramps[uniformChannelForPixel(x,y,source)]||uniformRamp;
-      const color=ramp[light<45?0:light<80?1:light<135?2:3];
+      const color=rampColor(ramps[uniformChannelForPixel(x,y,source)]||uniformRamp,r,g,b);
       data[i]=color[0];data[i+1]=color[1];data[i+2]=color[2];
     }
   }
