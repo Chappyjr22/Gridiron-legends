@@ -117,7 +117,7 @@ export function draw(){
   const fdX=Math.round(xAt(game.firstDownYard));
   if(fdX>=0&&fdX<=w){
     ctx.fillStyle='#edca3a';
-    for(let py=LAT_MIN;py<LAT_MAX;py+=10)ctx.fillRect(fdX-1,py,3,6);
+    ctx.fillRect(fdX-1,LAT_MIN,3,LAT_MAX-LAT_MIN);
   }
   // Show actual close contact, not the entire blocking assignment or pursuit path.
   if(game.phase==='live'){
