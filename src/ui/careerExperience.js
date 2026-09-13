@@ -3,6 +3,7 @@ import * as League from '../state/league.js';
 import {playerGameLog,playerSeasonStats} from '../career/recap.js';
 import {paintPlayerPortrait} from './playerPortrait.js';
 import {openPortraitPicker} from './portraitPicker.js';
+import {addCareerTeamEditorButton} from './teamEditor.js';
 const el=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=p=>[p.firstName,p.lastName].filter(Boolean).join(' ');
@@ -65,6 +66,12 @@ export function showPostgame(c){
 }
 export function initCareerExperience(getCareer,persist){
  saveCareer=persist;
+ addCareerTeamEditorButton(getCareer,persist,()=>{
+  const c=getCareer();if(!c)return;
+  const team=League.findTeamState(c.league,c.teamId);
+  renderMyTeam(c);
+  el('career-screen')?.style.setProperty('--career-color',team.colors.primary);
+ });
  el('team-player-close').onclick=()=>el('team-player-dialog').close();
  el('career-review-game').onclick=()=>showPostgame(getCareer());
  el('postgame-continue').onclick=()=>el('postgame-dialog').close();
