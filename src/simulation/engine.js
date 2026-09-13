@@ -1,6 +1,7 @@
 import {feedback} from '../state/feedback.js';
 import {advanceSkillBlocks} from './blocking.js';
 import {playingRoster,uniqueLineupNumbers} from '../career/roster.js';
+import {speedMultiplier,strengthEdge,attributeRating} from '../career/playerAttributes.js';
 import {controlPreferences} from '../state/preferences.js';
 import {advanceRoute,passingRead,throwProfile} from './passing.js';
 import {stickVector,jukeStep,syncRunnerControls} from '../input/runnerControls.js';
@@ -228,9 +229,13 @@ export function startNewGame(options={}){
   game.secondHalfReceiver=game.firstHalfReceiver==='player'?'cpu':'player';
   const openingSpot=kickoffSpot();
   if(game.firstHalfReceiver==='player'){
-    showResult('OPENING KICKOFF\nThe '+teamState.userTeam.name+' will receive.\nKickoff return to '+formatFieldPosition(openingSpot)+'.',()=>startPlayerDrive(openingSpot),'Receive Kickoff');
+    showResult('OPENING KICKOFF\
+The '+teamState.userTeam.name+' will receive.\
+Kickoff return to '+formatFieldPosition(openingSpot)+'.',()=>startPlayerDrive(openingSpot),'Receive Kickoff');
   } else {
-    showResult('OPENING KICKOFF\nThe '+teamState.cpuTeam.name+' will receive.\nThey begin at their own '+openingSpot+'.',()=>startOpponentPossession(openingSpot,'Opening kickoff'),'Kick Off');
+    showResult('OPENING KICKOFF\
+The '+teamState.cpuTeam.name+' will receive.\
+They begin at their own '+openingSpot+'.',()=>startOpponentPossession(openingSpot,'Opening kickoff'),'Kick Off');
   }
   checkpoint({type:'kickoff',receiver:game.firstHalfReceiver,spot:openingSpot,message:game.message,buttonLabel:game.firstHalfReceiver==='player'?'Receive Kickoff':'Kick Off'});
 }
@@ -255,7 +260,9 @@ export function startPractice(){
 export function finishGame(){
   if(game.career){game.phase='gameover';uiHooks.finishCareer(matchState.stats);return;}
   const result=game.playerScore===game.cpuScore?'Tie game':game.playerScore>game.cpuScore?teamState.userTeam.name+' win!':teamState.cpuTeam.name+' win.';
-  showResult('FINAL\n'+scoreLine()+'\n'+result,uiHooks.returnToMainMenu,'Main menu');
+  showResult('FINAL\
+'+scoreLine()+'\
+'+result,uiHooks.returnToMainMenu,'Main menu');
   game.phase='gameover';
 }
 function startOvertime(){
@@ -263,7 +270,8 @@ function startOvertime(){
   game.quarter=5;
   game.clock=0;
   game.otRound=1;
-  showResult('End of regulation. The game is tied.\nOvertime gives each team one possession.',()=>startPlayerDrive(20),'Start overtime');
+  showResult('End of regulation. The game is tied.\
+Overtime gives each team one possession.',()=>startPlayerDrive(20),'Start overtime');
 }
 function advanceExpiredPeriod(resumeAction){
   if(game.overtime||game.clock>0){resumeAction();return;}
@@ -276,7 +284,9 @@ function advanceExpiredPeriod(resumeAction){
       const playerReceives=game.secondHalfReceiver==='player';
       const receiverLine=playerReceives?'The '+teamState.userTeam.name+' receive the second-half kickoff.':'The '+teamState.cpuTeam.name+' receive the second-half kickoff.';
       const kickoffAction=playerReceives?()=>startPlayerDrive(secondHalfSpot):()=>startOpponentPossession(secondHalfSpot,'Second-half kickoff');
-      showResult('HALFTIME\n'+scoreLine()+'\n'+receiverLine,kickoffAction,'Start 3rd Quarter');
+      showResult('HALFTIME\
+'+scoreLine()+'\
+'+receiverLine,kickoffAction,'Start 3rd Quarter');
     } else {
       showResult('End of the '+ordinalQuarter(ended)+' quarter.',resumeAction,'Start '+ordinalQuarter(game.quarter)+' quarter');
     }
@@ -308,7 +318,9 @@ function handlePlayerTouchdown(){
   game.playerScore+=6;
   const patGood=simulateExtraPoint('player');
   adjustMomentum(0.35);
-  completePlayerPossession('TOUCHDOWN!\nExtra point '+(patGood?'is good.':'missed.')+'\n'+scoreLine(),kickoffSpot(),'Kickoff');
+  completePlayerPossession('TOUCHDOWN!\
+Extra point '+(patGood?'is good.':'missed.')+'\
+'+scoreLine(),kickoffSpot(),'Kickoff');
 }
 export function endPlay(yardGained,label,outOfBounds=false,exactSpot=game.los+yardGained){
   if(game.playResolved)return;
@@ -320,11 +332,13 @@ export function endPlay(yardGained,label,outOfBounds=false,exactSpot=game.los+ya
   }
   if(game.practice){
     if(newLOS>=100){
-      showResult('TOUCHDOWN!\nPractice rep complete.',()=>startPlayerDrive(20),'Next Rep');
+      showResult('TOUCHDOWN!\
+Practice rep complete.',()=>startPlayerDrive(20),'Next Rep');
       return;
     }
     if(label==='INTERCEPTED'){
-      showResult('Intercepted.\nReset and try the read again.',()=>startPlayerDrive(20),'Next Rep');
+      showResult('Intercepted.\
+Reset and try the read again.',()=>startPlayerDrive(20),'Next Rep');
       return;
     }
     if(label==='INCOMPLETE'){
@@ -384,7 +398,8 @@ export function attemptFieldGoal(){
   if(good){
     game.playerScore+=3;
     adjustMomentum(0.12);
-    completePlayerPossession(distance+'-yard field goal is GOOD!\n'+scoreLine(),kickoffSpot(),'Kickoff');
+    completePlayerPossession(distance+'-yard field goal is GOOD!\
+'+scoreLine(),kickoffSpot(),'Kickoff');
   } else {
     adjustMomentum(-0.1);
     completePlayerPossession(distance+'-yard field goal is no good.',clamp(100-game.los,1,99),'Missed field goal');
@@ -467,13 +482,15 @@ function simulateOpponentDrive(startField,reason){
   lines.push(outcome);
   lines.push('Drive time: '+Math.floor(consumedSeconds/60)+':'+String(consumedSeconds%60).padStart(2,'0'));
   lines.push(scoreLine());
-  return {message:lines.join('\n'),playerStart};
+  return {message:lines.join('\
+'),playerStart};
 }
 function finishOpponentPossession(playerStart){
   if(game.overtime){
     if(game.playerScore!==game.cpuScore){finishGame();return;}
     game.otRound+=1;
-    showResult('Overtime remains tied.\nStarting possession round '+game.otRound+'.',()=>startPlayerDrive(20),'Next possession');
+    showResult('Overtime remains tied.\
+Starting possession round '+game.otRound+'.',()=>startPlayerDrive(20),'Next possession');
     return;
   }
   advanceExpiredPeriod(()=>startPlayerDrive(playerStart));
@@ -550,7 +567,7 @@ function resolveCatchAtTarget(){
   const defenders=[...['cb1','cb2','s1','lb1',...DL_KEYS].map(k=>entities.players[k]),...entities.decor.filter(d=>d.team===DEF)].filter(d=>!(d.missedUntil>simulationNow())&&!d.dive);
   let nearestDefender=null,dist=Infinity;
   for(const defender of defenders){const distance=separation(best,defender);if(distance<dist){dist=distance;nearestDefender=defender;}}
-  const outcome=catchOutcome({error:bestD,tolerance:bestTol,defenderDistance:dist,ballDefenderDistance:nearestDefender?separation(nearestDefender,{x:entities.ball.toX,yfield:entities.ball.toY}):Infinity,receiverRating:best.rating,defenderRating:nearestDefender?.rating},Math.random());
+  const outcome=catchOutcome({error:bestD,tolerance:bestTol,defenderDistance:dist,ballDefenderDistance:nearestDefender?separation(nearestDefender,{x:entities.ball.toX,yfield:entities.ball.toY}):Infinity,receiverRating:attributeRating(best,'catching'),defenderRating:nearestDefender?.rating},Math.random());
   if(outcome==='interception'){endPlay(0,'INTERCEPTED');return;}
   if(outcome!=='catch'){
     game.passFeedback=outcome==='breakup'?'Pass broken up.':'Dropped pass.';
@@ -644,7 +661,7 @@ function updateSimulation(dt,now){
       if(now<(dl.blockedUntil||0))return;
       if(dl.state==='approach'){
         if(t>diff.approachDelay){
-          moveToward(dl,dl.blockerX,game.centerYfield,RUSH_SPEED*screenMult*ratingMultiplier(dl.rating,0.18),dt);
+          moveToward(dl,dl.blockerX,game.centerYfield,RUSH_SPEED*screenMult*speedMultiplier(dl,game.difficulty,game.momentum),dt);
           if(dl.yfield<=game.centerYfield+2){
             dl.state='engaged';
             dl.engageStart=now;
@@ -662,7 +679,7 @@ function updateSimulation(dt,now){
     if(playDef&&playDef.type!=='run'&&entities.ballCarrier===qb){
       Object.keys(playDef.routes).forEach(key=>{
         if(t*1000<(playDef.routeDelays?.[key]||0))return;
-        const receiver=entities.players[key],speed=ROUTE_YPS*XPX*SPEED_SCALE*diff.offenseSpeedMult*ratingMultiplier(receiver.rating,0.18);
+        const receiver=entities.players[key],speed=ROUTE_YPS*XPX*SPEED_SCALE*diff.offenseSpeedMult*speedMultiplier(receiver,game.difficulty,game.momentum);
         const ball=entities.ball,remaining=ball.startTime+ball.duration-now;
         const landing={x:ball.toX,yfield:ball.toY};
         const canAdjust=ball.inFlight&&ball.targetKey===key&&now>=ball.startTime&&remaining<=450&&remaining>=0&&separation(receiver,landing)<=catchTolerance(receiver,diff)+speed*remaining/1000;
@@ -675,13 +692,14 @@ function updateSimulation(dt,now){
       });
       ['cb1','cb2','s1','lb1'].forEach(dk=>{
         if(coverAssign[dk]&&dk!==game.blitzer){
-          const recv=entities.players[coverAssign[dk]];
+          const recv=entities.players[coverAssign[dk]],defender=entities.players[dk];
           const sMult=(playDef.type==='screen'&&dk==='cb1')?screenMult:1;
-          moveToward(entities.players[dk],recv.x,recv.yfield-4,COVER_YPS*XPX*SPEED_SCALE*sMult*(now<(entities.players[dk].blockedUntil||0)?.25:1)*ratingMultiplier(entities.players[dk].rating,0.18),dt);
+          moveToward(defender,recv.x,recv.yfield-4,COVER_YPS*XPX*SPEED_SCALE*sMult*(now<(defender.blockedUntil||0)?.25:1)*speedMultiplier(defender,game.difficulty,game.momentum),dt);
         }
       });
       if(game.blitzer&&t>0.25&&now>=(game.blitzBlockedUntil||0)){
-        moveToward(entities.players[game.blitzer],qb.x,qb.yfield,RUSH_SPEED_BLITZ*screenMult*(now<(entities.players[game.blitzer].blockedUntil||0)?.25:1)*ratingMultiplier(entities.players[game.blitzer].rating,0.18),dt);
+        const blitzer=entities.players[game.blitzer];
+        moveToward(blitzer,qb.x,qb.yfield,RUSH_SPEED_BLITZ*screenMult*(now<(blitzer.blockedUntil||0)?.25:1)*speedMultiplier(blitzer,game.difficulty,game.momentum),dt);
       }
     }
 
@@ -726,7 +744,7 @@ function updateSimulation(dt,now){
         }
         const fwdMult = jx>0 ? (1-jx*0.85) : (1-jx*0.15);
         const breakSlowMult=now<(entities.ballCarrier.breakSlowUntil||0)?BREAK_SPEED_MULT:1;
-        const carrierSpeedMult=ratingMultiplier(entities.ballCarrier.rating,0.18);
+        const carrierSpeedMult=speedMultiplier(entities.ballCarrier,game.difficulty,game.momentum);
         if(game.runActive&&entities.ballCarrier===entities.players.rb&&game.activeRunPath?.length){
           const runPath=game.activeRunPath;
           while(game.runPathIndex<runPath.length-1&&entities.ballCarrier.yfield/XPX-game.los>=runPath[game.runPathIndex].y)game.runPathIndex++;
@@ -792,7 +810,7 @@ function updateSimulation(dt,now){
           }
           const target=pursuitTarget(def,entities.ballCarrier,entities.ballCarrier.velocity||{x:0,yfield:0});
           const blockedMult=now<(def.blockedUntil||0)?0.25:1;
-          moveToward(def,clamp(target.x,LAT_MIN,LAT_MAX),target.yfield,pursueSpeed*ratingMultiplier(def.rating,0.2)*blockedMult,dt);
+          moveToward(def,clamp(target.x,LAT_MIN,LAT_MAX),target.yfield,pursueSpeed*speedMultiplier(def,game.difficulty,game.momentum)*blockedMult,dt);
           if(!entities.ball.inFlight&&entities.ballCarrier!==qb&&blockedMult===1&&entities.breakCooldown<=0)startDive(def,entities.ballCarrier,now,diff);
         }
         if(!entities.ball.inFlight&&entities.breakCooldown<=0){
@@ -803,7 +821,7 @@ function updateSimulation(dt,now){
             if(distance<nearest){nearest=distance;nearestDefender=def;}
           });
           if(nearestDefender&&!(nearestDefender.missedUntil>now)&&touching(nearestDefender,entities.ballCarrier)){
-            const matchup=((entities.ballCarrier.rating||75)-(nearestDefender?.rating||75))*0.004;
+            const matchup=strengthEdge(entities.ballCarrier,nearestDefender);
             const breakChance=clamp(diff.breakTackle+(game.runActive&&entities.ballCarrier===entities.players.rb?diff.runBreakBonus:0)+matchup,0.02,0.72);
             if(Math.random()<breakChance){
               entities.breakCooldown=0.45;
