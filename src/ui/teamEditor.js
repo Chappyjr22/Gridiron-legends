@@ -22,7 +22,7 @@ const PREVIEW_STATES=[
 const HEX=/^#[0-9a-f]{6}$/i;
 let state=null,activeVariant='home',screen='teams';
 const el=id=>document.getElementById(id);
-function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));}
+function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function titleCase(value){return String(value||'').replace(/[-_]/g,' ').replace(/\b\w/g,c=>c.toUpperCase());}
 function teamLabel(team){return `${team.city} ${team.name}`;}
 function ensureUI(){
