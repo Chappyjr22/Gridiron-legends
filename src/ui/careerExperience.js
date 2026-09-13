@@ -2,9 +2,12 @@ import {playingRoster} from '../career/roster.js';
 import * as League from '../state/league.js';
 import {playerGameLog,playerSeasonStats} from '../career/recap.js';
 import {paintPlayerPortrait} from './playerPortrait.js';
+import {openPortraitPicker} from './portraitPicker.js';
 const el=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=p=>[p.firstName,p.lastName].filter(Boolean).join(' ');
+let saveCareer=()=>false;
+function attributeLabel(key){return String(key).replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase());}
 function line(s,position){
  if(!s)return 'Stats unavailable for this game';
  if(position==='QB')return `${s.completions}/${s.attempts} CMP · ${s.passingYards} YDS · ${s.passingTD} TD · ${s.interceptions} INT · ${s.sacks} SACKS`;
@@ -14,19 +17,34 @@ function line(s,position){
 }
 function openPlayer(c,p){
  const team=League.findTeamState(c.league,c.teamId),season=playerSeasonStats(c,p.id),log=playerGameLog(c,p.id);
+ const editable=!p.generic&&p.id!==c.playerId;
  el('team-player-heading').textContent=name(p);
  el('team-player-content').innerHTML=`<div class="player-passport"><canvas id="team-card-sprite" width="64" height="64" aria-hidden="true"></canvas><div><p class="sports-kicker">#${p.number} · ${esc(p.position)} · AGE ${p.age}</p><strong class="player-overall">${p.rating} OVR</strong><p>${esc(team.city)} ${esc(team.name)}</p><p>${esc(p.development)} development</p></div></div>
- ${p.attributes?'<div class="teammate-attributes">'+Object.entries(p.attributes).map(([k,v])=>`<div><span>${esc(k)}</span><b>${v}</b><span class="teammate-meter"><i style="width:${Math.min(100,v)}%"></i></span></div>`).join('')+'</div>':''}
+ <h3>Attributes</h3><div class="teammate-attributes">${Object.entries(p.attributes||{}).map(([k,v])=>`<div><span>${esc(attributeLabel(k))}</span><b>${v}</b><span class="teammate-meter"><i style="width:${Math.min(100,v)}%"></i></span></div>`).join('')}</div>
  <h3>Season production</h3><p>${esc(line(season.tracked?season.stats:null,p.position))}</p><p class="experience-note">${season.tracked} tracked games this season</p>
- <h3>Game log</h3><div class="player-game-log">${log.map(r=>`<article><b>S${r.season} · Week ${r.week} · ${r.userScore>r.cpuScore?'WIN':'LOSS'} ${r.userScore}–${r.cpuScore}</b><p>${esc(line(r.stats,p.position))}</p></article>`).join('')||'<p>Your first game is waiting.</p>'}</div>`;
+ <h3>Game log</h3><div class="player-game-log">${log.map(r=>`<article><b>S${r.season} · Week ${r.week} · ${r.userScore>r.cpuScore?'WIN':'LOSS'} ${r.userScore}–${r.cpuScore}</b><p>${esc(line(r.stats,p.position))}</p></article>`).join('')||'<p>Your first game is waiting.</p>'}</div>
+ ${editable?`<section class="teammate-customize"><h3>Customize teammate</h3><label for="teammate-name-input">Player name</label><div class="teammate-name-row"><input id="teammate-name-input" maxlength="28" value="${esc(name(p))}" autocomplete="off"><button type="button" id="teammate-save-name" class="sports-button blue">Save name</button></div><button type="button" id="teammate-edit-face" class="sports-button blue">Edit appearance</button><p id="teammate-edit-status" class="experience-note"></p></section>`:''}`;
  paintPlayerPortrait(el('team-card-sprite'),team,p);
- el('team-player-dialog').showModal();
+ if(editable){
+  el('teammate-save-name').onclick=()=>{
+   const clean=el('teammate-name-input').value.trim().replace(/\s+/g,' ').slice(0,28);
+   if(!clean){el('teammate-edit-status').textContent='Enter a player name.';return;}
+   const parts=clean.split(' ');p.firstName=parts.shift();p.lastName=parts.join(' ');
+   saveCareer();renderMyTeam(c);openPlayer(c,p);el('teammate-edit-status').textContent='Name saved.';
+  };
+  el('teammate-edit-face').onclick=()=>{
+   el('team-player-dialog').close();
+   openPortraitPicker(p,team,choice=>{Object.assign(p,choice);saveCareer();renderMyTeam(c);openPlayer(c,p);});
+  };
+ }
+ if(!el('team-player-dialog').open)el('team-player-dialog').showModal();
 }
 export function renderMyTeam(c){
  const team=League.findTeamState(c.league,c.teamId);
+ const roster=playingRoster(team);
  el('my-team-name').textContent=`${team.city} ${team.name}`;
- el('my-team-roster').innerHTML=playingRoster(team).map(p=>`<button class="roster-card" data-player-id="${esc(p.id)}"><span>#${p.number} · ${esc(p.position)}${p.id===c.playerId?' · YOU':''}</span><canvas width="64" height="64" aria-hidden="true"></canvas><strong>${esc(name(p))}</strong><span>${p.rating} OVR</span><span class="roster-rating" aria-hidden="true"><i style="width:${p.rating}%"></i></span></button>`).join('');
- for(const b of el('my-team-roster').querySelectorAll('button')){const p=playingRoster(team).find(p=>p.id===b.dataset.playerId);paintPlayerPortrait(b.querySelector('canvas'),team,p);b.onclick=()=>openPlayer(c,p);}
+ el('my-team-roster').innerHTML=roster.map(p=>`<button class="roster-card" data-player-id="${esc(p.id)}"><span>#${p.number} · ${esc(p.position)}${p.id===c.playerId?' · YOU':''}</span><canvas width="64" height="64" aria-hidden="true"></canvas><strong>${esc(name(p))}</strong><span>${p.rating} OVR</span><span class="roster-rating" aria-hidden="true"><i style="width:${p.rating}%"></i></span></button>`).join('');
+ for(const b of el('my-team-roster').querySelectorAll('button')){const p=roster.find(p=>p.id===b.dataset.playerId);paintPlayerPortrait(b.querySelector('canvas'),team,p);b.onclick=()=>openPlayer(c,p);}
 }
 export function showPostgame(c){
  const r=c.lastResult;if(!r)return;
@@ -37,6 +55,7 @@ export function showPostgame(c){
  const dialog=el('postgame-dialog');dialog.dataset.gameId=r.gameId;if(!dialog.open)dialog.showModal();
 }
 export function initCareerExperience(getCareer,persist){
+ saveCareer=persist;
  el('team-player-close').onclick=()=>el('team-player-dialog').close();
  el('career-review-game').onclick=()=>showPostgame(getCareer());
  el('postgame-continue').onclick=()=>el('postgame-dialog').close();

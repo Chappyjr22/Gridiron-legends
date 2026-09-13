@@ -44,7 +44,32 @@ export function updateHUD(){
   if(game.difficulty==='gridiron'){ml.style.display='block';ml.textContent=momentumLabel();}
   else{ml.style.display='none';}
 }
+function restoreResultLineBreaks(message){
+  if(message.includes('\n'))return message;
+  let text=message;
+  text=text.replace(/^OPENING KICKOFF(?=The )/,'OPENING KICKOFF\n');
+  text=text.replace(/^HALFTIME(?=[A-Z]{2,3} \d)/,'HALFTIME\n');
+  text=text.replace(/^FINAL(?=[A-Z]{2,3} \d)/,'FINAL\n');
+  text=text.replace(/^TOUCHDOWN!(?=Extra point)/,'TOUCHDOWN!\n');
+  text=text.replace(/^End of regulation\. The game is tied\.(?=Overtime)/,'End of regulation. The game is tied.\n');
+  text=text.replace(/^Overtime remains tied\.(?=Starting)/,'Overtime remains tied.\n');
+  text=text.replace(/^Intercepted\.(?=Reset)/,'Intercepted.\n');
+  text=text.replace(/^TOUCHDOWN!(?=Practice)/,'TOUCHDOWN!\n');
+  text=text.replace(/(field goal is GOOD!)(?=[A-Z]{2,3} \d)/,'$1\n');
+  text=text.replace(/(Extra point (?:is good\.|missed\.))(?=[A-Z]{2,3} \d)/,'$1\n');
+  text=text.replace(/^(FINAL\n[A-Z]{2,3} \d+\s+\|\s+[A-Z]{2,3} \d+)(?=[A-Z])/,'$1\n');
+  text=text.replace(/^(HALFTIME\n[A-Z]{2,3} \d+\s+\|\s+[A-Z]{2,3} \d+)(?=The )/,'$1\n');
+  if(text.startsWith('OPPONENT DRIVE')){
+    text=text.replace(/^OPPONENT DRIVE/,'OPPONENT DRIVE\n');
+    text=text.replace(/(?=The drive gains \d)/,'\n');
+    text=text.replace(/(?=Turnover!|Opponent touchdown|Opponent \d+-yard field goal|Opponent punts \d+)/,'\n');
+    text=text.replace(/(?=Drive time:)/,'\n');
+    text=text.replace(/(Drive time: \d+:\d{2})(?=[A-Z]{2,3} \d)/,'$1\n');
+  }
+  return text;
+}
 export function showResult(message,nextAction,buttonLabel='Continue'){
+  message=restoreResultLineBreaks(message);
   game.message=message;
   game.phase='result';
   resultFlow.continueAction=nextAction;

@@ -1,6 +1,8 @@
 import {CATCH_TOL_BASE,CONTEST_NEAR_BASE,CONTEST_MID_BASE,clamp,ratingMultiplier} from '../state/constants.js';
+import {attributeRating} from '../career/playerAttributes.js';
 export function catchTolerance(receiver,difficulty){
- return CATCH_TOL_BASE*clamp(difficulty.catchRadiusMult,0.85,1.2)*ratingMultiplier(receiver.rating,0.18);
+ const catching=attributeRating(receiver,'catching');
+ return CATCH_TOL_BASE*clamp(difficulty.catchRadiusMult,0.85,1.2)*ratingMultiplier(catching,0.22);
 }
 // Precise, uncontested placement is dependable. Pressure and stretching for a ball
 // create distinct outcomes rather than adding interception odds to drop odds.
