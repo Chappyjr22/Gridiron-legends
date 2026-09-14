@@ -1,0 +1,222 @@
+/* Visual identity polish for MobileCareerApp.
+   This layer intentionally contains no legacy DOM overrides. */
+
+#mobile-career-app {
+  --shadow:#010a1d;
+  --soft-line:#0a5fbb;
+  --body:#dbe8fb;
+}
+
+/* One consistent game-panel treatment. */
+#mobile-career-app .mca-panel,
+#mobile-career-app .mca-subtabs,
+#mobile-career-app .mca-team-editor,
+#mobile-career-app .mca-upgrade {
+  box-shadow:3px 3px 0 var(--shadow), inset 0 0 0 1px rgba(255,255,255,.025);
+}
+#mobile-career-app .mca-panel { border-color:#148cf5; }
+
+/* Keep readable body copy, but make it feel authored by the same game. */
+#mobile-career-app .mca-standing,
+#mobile-career-app .mca-challenge-copy,
+#mobile-career-app .mca-league-sub,
+#mobile-career-app .mca-leader-row,
+#mobile-career-app .mca-game-row,
+#mobile-career-app .mca-profile-detail,
+#mobile-career-app .mca-stat span,
+#mobile-career-app .mca-story p {
+  font-family:"Courier New",monospace;
+  font-weight:700;
+  color:var(--body);
+}
+
+/* Header gets a subtle team identity stripe without changing the shell palette. */
+#mobile-career-app .mca-header {
+  box-shadow:inset 5px 0 0 var(--mca-primary,#1976d2),0 3px 0 var(--shadow);
+}
+#mobile-career-app .mca-profile canvas {
+  box-shadow:inset 0 0 0 2px #04285c,0 0 0 1px var(--mca-primary,#1976d2);
+}
+
+/* Cleaner tactile button language. */
+#mobile-career-app button {
+  -webkit-tap-highlight-color:transparent;
+  transition:transform 55ms linear,filter 55ms linear,background-color 80ms linear;
+}
+#mobile-career-app button:active:not(:disabled) {
+  transform:translateY(2px);
+  filter:brightness(.88);
+}
+#mobile-career-app .mca-play {
+  box-shadow:0 4px 0 #6b5700,3px 3px 0 var(--shadow);
+}
+#mobile-career-app .mca-play:active:not(:disabled) { box-shadow:0 2px 0 #6b5700; }
+#mobile-career-app .mca-upgrade:disabled {
+  opacity:.66;
+  color:#9cb5d0;
+  background:#173d66;
+  border-color:#487aa8;
+  box-shadow:2px 2px 0 var(--shadow),inset 0 0 0 1px #0a274b;
+}
+#mobile-career-app .mca-team-editor {
+  background:linear-gradient(180deg,#08488f,#06346d);
+}
+
+/* Pixel-built bottom-nav icons. The old glyph remains only as semantic markup. */
+#mobile-career-app .mca-nav button {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  letter-spacing:.03em;
+}
+#mobile-career-app .mca-nav i {
+  position:relative;
+  display:inline-block;
+  width:19px;
+  height:19px;
+  margin:0;
+  flex:0 0 19px;
+  font-size:0;
+  color:currentColor;
+}
+#mobile-career-app .mca-nav i:before,
+#mobile-career-app .mca-nav i:after {
+  content:"";
+  position:absolute;
+  box-sizing:border-box;
+}
+/* Home */
+#mobile-career-app .mca-nav [data-view="home"] i:before {
+  left:3px;top:7px;width:13px;height:10px;
+  border:2px solid currentColor;border-top:0;
+}
+#mobile-career-app .mca-nav [data-view="home"] i:after {
+  left:4px;top:2px;width:11px;height:11px;
+  border-left:2px solid currentColor;border-top:2px solid currentColor;
+  transform:rotate(45deg);
+}
+/* Player */
+#mobile-career-app .mca-nav [data-view="player"] i:before {
+  left:6px;top:1px;width:7px;height:7px;
+  background:currentColor;border-radius:50%;
+}
+#mobile-career-app .mca-nav [data-view="player"] i:after {
+  left:3px;top:10px;width:13px;height:7px;
+  border:2px solid currentColor;border-bottom:0;border-radius:8px 8px 0 0;
+}
+/* Team */
+#mobile-career-app .mca-nav [data-view="team"] i:before {
+  inset:2px;
+  background:currentColor;
+  box-shadow:6px 0 0 currentColor,12px 0 0 currentColor,0 6px 0 currentColor,6px 6px 0 currentColor,12px 6px 0 currentColor,0 12px 0 currentColor,6px 12px 0 currentColor,12px 12px 0 currentColor;
+  width:3px;height:3px;
+}
+/* League trophy */
+#mobile-career-app .mca-nav [data-view="league"] i:before {
+  left:5px;top:2px;width:9px;height:10px;
+  border:2px solid currentColor;border-radius:0 0 6px 6px;
+}
+#mobile-career-app .mca-nav [data-view="league"] i:after {
+  left:3px;top:3px;width:13px;height:14px;
+  border-left:2px solid currentColor;border-right:2px solid currentColor;
+  box-shadow:inset 0 -2px 0 currentColor;
+}
+#mobile-career-app .mca-nav button.active i { filter:drop-shadow(1px 1px 0 #5f5100); }
+
+/* Subtabs read as game tabs rather than large web buttons. */
+#mobile-career-app .mca-subtabs button {
+  box-shadow:inset 0 -2px 0 #021635;
+}
+#mobile-career-app .mca-subtabs button.active {
+  background:linear-gradient(180deg,#073274,#05275c);
+  box-shadow:inset 0 -2px 0 var(--yellow);
+}
+
+/* Home: turn the challenge into a compact objective module. */
+#mobile-career-app .mca-challenge-copy {
+  position:relative;
+  align-content:center;
+  background:linear-gradient(90deg,rgba(11,127,240,.10),transparent 62%);
+}
+#mobile-career-app .mca-challenge-copy > span:nth-child(2):before {
+  content:"OBJECTIVE";
+  display:block;
+  margin-bottom:4px;
+  color:#7fb7f2;
+  font:900 9px/1 MCAPixel,"Courier New",monospace;
+  letter-spacing:.12em;
+}
+#mobile-career-app .mca-check {
+  display:grid;
+  place-items:center;
+  width:38px;height:38px;
+  border:2px solid #148cf5;
+  background:#06295f;
+  color:var(--yellow);
+  font-size:24px;
+  box-shadow:2px 2px 0 var(--shadow);
+}
+#mobile-career-app .mca-metrics > div {
+  padding:2px 4px;
+  border-right:1px solid var(--soft-line);
+}
+#mobile-career-app .mca-metrics > div:last-child { border-right:0; }
+
+/* Player: more room for the actual build, less for the passport. */
+#mobile-career-app .mca-player-grid { grid-template-columns:148px minmax(0,1fr); }
+#mobile-career-app .mca-player-profile canvas { width:72px;height:72px; }
+#mobile-career-app .mca-player-profile h2 { font-size:17px; }
+#mobile-career-app .mca-player-profile .mca-profile-detail { font-size:7px; }
+#mobile-career-app .mca-attr-row {
+  grid-template-columns:30px minmax(82px,.62fr) 38px minmax(90px,1fr) 84px;
+}
+#mobile-career-app .mca-upgrade { border-radius:0; }
+
+/* Team: fix the collapsed rating meters and reduce dead space. */
+#mobile-career-app .mca-player-card {
+  position:relative;
+  min-height:94px;
+  box-shadow:3px 3px 0 var(--shadow),inset 0 0 0 1px #041a3b;
+}
+#mobile-career-app .mca-player-card.you {
+  box-shadow:inset 4px 0 0 var(--mca-primary,#1976d2),3px 3px 0 var(--shadow);
+}
+#mobile-career-app .mca-player-card .mca-ratingbar {
+  display:block;
+  width:86%;
+  height:5px;
+  margin:0 auto;
+  background:#021a40;
+  border:1px solid #0a6edb;
+  overflow:hidden;
+}
+#mobile-career-app .mca-player-card .mca-ratingbar i {
+  display:block;
+  height:100%;
+  background:linear-gradient(90deg,#ffd900,#fff061);
+}
+
+/* League: one visual system for standings and highlight the user's row cleanly. */
+#mobile-career-app .mca-conf h3 { text-transform:uppercase;letter-spacing:.05em; }
+#mobile-career-app .mca-conf .mca-standing {
+  min-height:27px;
+}
+#mobile-career-app .mca-conf .mca-standing.you {
+  box-shadow:inset 4px 0 0 var(--mca-primary,#1976d2);
+}
+
+/* Keep all primary panels visually above the nav divider. */
+#mobile-career-app .mca-stage { border-bottom:1px solid #0a6fda; }
+
+@media (orientation: landscape) and (max-height:520px) {
+  #mobile-career-app .mca-nav button { gap:6px; }
+  #mobile-career-app .mca-nav i { width:16px;height:16px;flex-basis:16px;transform:scale(.84); }
+  #mobile-career-app .mca-check { width:30px;height:30px;font-size:19px; }
+  #mobile-career-app .mca-challenge-copy > span:nth-child(2):before { font-size:7px;margin-bottom:2px; }
+  #mobile-career-app .mca-player-grid { grid-template-columns:138px minmax(0,1fr); }
+  #mobile-career-app .mca-player-profile canvas { width:66px;height:66px; }
+  #mobile-career-app .mca-attr-row { grid-template-columns:28px minmax(76px,.58fr) 36px minmax(82px,1fr) 78px; }
+  #mobile-career-app .mca-player-card { min-height:88px; }
+  #mobile-career-app .mca-player-card canvas { width:43px;height:43px; }
+}
