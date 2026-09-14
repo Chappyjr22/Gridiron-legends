@@ -14,6 +14,7 @@ import { initMobileCareerApp } from './ui/mobileCareerApp.js';
 import mobileCareerAppFit from './ui/mobileCareerAppFit.css?inline';
 import mobileCareerAppPolish from './ui/mobileCareerAppPolish.css?inline';
 import mobileCareerAppRefine from './ui/mobileCareerAppRefine.css?inline';
+import mobileCareerHelmetArt from './ui/mobileCareerHelmetArt.css?inline';
 import * as League from './state/league.js';
 import { updateHUD, continueResult } from './ui/hud.js';
 import { uiHooks, initPlay, attemptFieldGoal, simulatePunt } from './simulation/engine.js';
@@ -95,6 +96,15 @@ if(!document.getElementById('mobile-career-app-refine-style')){
   refineStyle.id='mobile-career-app-refine-style';
   refineStyle.textContent=mobileCareerAppRefine;
   document.head.appendChild(refineStyle);
+}
+
+// Generated helmet reference is the locked art direction for matchup helmets.
+// Inject it last so it replaces the older CSS placeholder geometry cleanly.
+if(!document.getElementById('mobile-career-helmet-art-style')){
+  const helmetStyle=document.createElement('style');
+  helmetStyle.id='mobile-career-helmet-art-style';
+  helmetStyle.textContent=mobileCareerHelmetArt;
+  document.head.appendChild(helmetStyle);
 }
 
 initMainTeamEditor(
