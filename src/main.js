@@ -48,7 +48,25 @@ updateHUD();
 initRunnerControls();
 initMenuArt();
 initCareer();
-initMobileCareerApp();
+
+// The dedicated Career app may observe legacy data nodes, but it must never
+// observe the Career screen class that it changes itself. Watching that class
+// creates a self-refresh loop before the browser can finish its initial load.
+const NativeMutationObserver=globalThis.MutationObserver;
+if(NativeMutationObserver){
+  globalThis.MutationObserver=class MobileCareerSafeObserver{
+    constructor(callback){this.callback=callback;this.inner=null;}
+    observe(target,options={}){
+      if(target?.id==='career-screen'&&options.attributes&&options.attributeFilter?.includes('class'))return;
+      this.inner=new NativeMutationObserver(this.callback);
+      this.inner.observe(target,options);
+    }
+    disconnect(){this.inner?.disconnect();}
+    takeRecords(){return this.inner?.takeRecords()||[];}
+  };
+}
+try{initMobileCareerApp();}
+finally{if(NativeMutationObserver)globalThis.MutationObserver=NativeMutationObserver;}
 
 initMainTeamEditor(
   ()=>teamState.franchise,
