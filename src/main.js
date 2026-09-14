@@ -52,7 +52,22 @@ initMenuArt();
 initCareer();
 initMobileGameUI();
 initMobileGameUIPolish();
-initMobileGameUIRenderSpec();
+
+// The render-spec layer is intentionally initialized without its broad DOM
+// observer. Its initial sync and explicit tab/time-based refreshes are enough,
+// while the observer can self-trigger on title/content mutations and lock the
+// browser main thread before the page finishes loading.
+const NativeMutationObserver=globalThis.MutationObserver;
+if(NativeMutationObserver){
+  globalThis.MutationObserver=class RenderSpecNoopObserver{
+    observe(){}
+    disconnect(){}
+    takeRecords(){return [];}
+  };
+}
+try{initMobileGameUIRenderSpec();}
+finally{if(NativeMutationObserver)globalThis.MutationObserver=NativeMutationObserver;}
+
 initMainTeamEditor(
   ()=>teamState.franchise,
   ()=>game.userTeamId,
