@@ -10,9 +10,7 @@ import { initCareer } from './ui/career.js';
 import { initPWA } from './pwa.js';
 import { initMobileSelects } from './ui/mobileSelects.js';
 import { initMainTeamEditor } from './ui/teamEditor.js';
-import { initMobileGameUI } from './ui/mobileGameUI.js';
-import { initMobileGameUIPolish } from './ui/mobileGameUIPolish.js';
-import { initMobileGameUIRenderSpec } from './ui/mobileGameUIRenderSpec.js';
+import { initMobileCareerApp } from './ui/mobileCareerApp.js';
 import * as League from './state/league.js';
 import { updateHUD, continueResult } from './ui/hud.js';
 import { uiHooks, initPlay, attemptFieldGoal, simulatePunt } from './simulation/engine.js';
@@ -25,7 +23,7 @@ import './input/pointer.js';
 initPWA();
 
 document.addEventListener('touchmove',function(e){
-  if(e.target.closest('dialog')||e.target.closest('.stadium-home')||e.target.closest('.card')||e.target.closest('.setup-panel')||e.target.closest('#edit-panel'))return;
+  if(e.target.closest('dialog')||e.target.closest('.stadium-home')||e.target.closest('.card')||e.target.closest('.setup-panel')||e.target.closest('#edit-panel')||e.target.closest('#mobile-career-app'))return;
   e.preventDefault();
 },{passive:false});
 document.addEventListener('gesturestart',function(e){e.preventDefault();});
@@ -50,23 +48,7 @@ updateHUD();
 initRunnerControls();
 initMenuArt();
 initCareer();
-initMobileGameUI();
-initMobileGameUIPolish();
-
-// The render-spec layer is intentionally initialized without its broad DOM
-// observer. Its initial sync and explicit tab/time-based refreshes are enough,
-// while the observer can self-trigger on title/content mutations and lock the
-// browser main thread before the page finishes loading.
-const NativeMutationObserver=globalThis.MutationObserver;
-if(NativeMutationObserver){
-  globalThis.MutationObserver=class RenderSpecNoopObserver{
-    observe(){}
-    disconnect(){}
-    takeRecords(){return [];}
-  };
-}
-try{initMobileGameUIRenderSpec();}
-finally{if(NativeMutationObserver)globalThis.MutationObserver=NativeMutationObserver;}
+initMobileCareerApp();
 
 initMainTeamEditor(
   ()=>teamState.franchise,
