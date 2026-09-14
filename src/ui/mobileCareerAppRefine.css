@@ -41,6 +41,7 @@ html[data-installed-app="true"] #mobile-career-app .mca-nav {
 #mobile-career-app .mca-standing.you {
   background:linear-gradient(90deg,#08468f,#07336f) !important;
   box-shadow:inset 4px 0 0 var(--yellow) !important;
+  padding-left:8px !important;
 }
 
 /* The NOW marker is a tab underline, not a progress bar laid over the text. */
@@ -59,8 +60,55 @@ html[data-installed-app="true"] #mobile-career-app .mca-nav {
   background:var(--yellow) !important;
 }
 
-/* The abbreviation below the helmet already identifies the team. */
-#mobile-career-app .mca-helmet b { display:none !important; }
+/* Use the same stepped pixel helmet geometry as the approved #helmet-icon.
+   The existing wrapper supplies team colors; its child <b> becomes the crown stripe. */
+#mobile-career-app .mca-helmet {
+  position:relative !important;
+  width:78px !important;
+  height:68px !important;
+  margin:0 auto 3px !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  overflow:visible !important;
+}
+#mobile-career-app .mca-helmet::before {
+  content:"" !important;
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  background:var(--helmet,#2f6df0) !important;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 28'%3E%3Cpath fill='white' d='M9 1h12v2h4v3h3v5h2v6h-3v7h-5v3H10v-2H6v-3H3V9h2V5h4Z'/%3E%3Cpath fill='white' d='M10 3h10v2h5v3h2v7h-8v9h-8v-2H7v-3H5v-9h2V7h3Z'/%3E%3C/svg%3E") center/contain no-repeat !important;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 28'%3E%3Cpath fill='white' d='M9 1h12v2h4v3h3v5h2v6h-3v7h-5v3H10v-2H6v-3H3V9h2V5h4Z'/%3E%3Cpath fill='white' d='M10 3h10v2h5v3h2v7h-8v9h-8v-2H7v-3H5v-9h2V7h3Z'/%3E%3C/svg%3E") center/contain no-repeat !important;
+  filter:drop-shadow(3px 3px 0 rgba(0,0,0,.45));
+}
+#mobile-career-app .mca-helmet b {
+  display:block !important;
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  color:transparent !important;
+  font-size:0 !important;
+  background:var(--stripe,#fff4d6) !important;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 28'%3E%3Cpath fill='white' d='M17 3h3v2h2v3h1v5h-3V8h-1V5h-2Z'/%3E%3C/svg%3E") center/contain no-repeat !important;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 28'%3E%3Cpath fill='white' d='M17 3h3v2h2v3h1v5h-3V8h-1V5h-2Z'/%3E%3C/svg%3E") center/contain no-repeat !important;
+  pointer-events:none !important;
+}
+#mobile-career-app .mca-helmet::after {
+  content:"" !important;
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  border:0 !important;
+  background:#dbe3df !important;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 28'%3E%3Cpath fill='white' d='M18 17h13v2H20v4h9v-4h2v7H18Z'/%3E%3Cpath fill='white' d='M22 19h2v4h-2ZM20 21h9v2h-9Z'/%3E%3C/svg%3E") center/contain no-repeat !important;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 28'%3E%3Cpath fill='white' d='M18 17h13v2H20v4h9v-4h2v7H18Z'/%3E%3Cpath fill='white' d='M22 19h2v4h-2ZM20 21h9v2h-9Z'/%3E%3C/svg%3E") center/contain no-repeat !important;
+  pointer-events:none !important;
+}
 
 /* Make the League nav mark read as a trophy rather than a book/lock. */
 #mobile-career-app .mca-nav [data-view="league"] i:before {
@@ -82,6 +130,17 @@ html[data-installed-app="true"] #mobile-career-app .mca-nav {
   background:currentColor !important;
   box-shadow:-3px 5px 0 currentColor,3px 5px 0 currentColor !important;
 }
+
+/* Disabled upgrades should remain legible as controls. */
+#mobile-career-app .mca-upgrade:disabled {
+  opacity:.78 !important;
+  color:#a9c0d9 !important;
+  border-color:#527da3 !important;
+}
+
+/* Small spacing consistency fixes. */
+#mobile-career-app .mca-player-card { align-content:center; }
+#mobile-career-app .mca-league-body { padding-bottom:12px !important; }
 
 @media (orientation:landscape) and (max-height:520px) {
   /* Player: guarantee three useful attribute rows before scrolling. */
@@ -133,17 +192,21 @@ html[data-installed-app="true"] #mobile-career-app .mca-nav {
   #mobile-career-app .mca-player-card .mca-ratingbar { width:88% !important;height:4px !important; }
 
   /* League: restore four visible teams per conference. */
-  #mobile-career-app .mca-league-body { padding:3px 6px !important; }
+  #mobile-career-app .mca-league-body { padding:3px 6px 10px !important; }
   #mobile-career-app .mca-league-title { font-size:18px !important; }
   #mobile-career-app .mca-league-sub { margin:2px 0 4px !important;font-size:8px !important; }
   #mobile-career-app .mca-confs { gap:5px !important; }
-  #mobile-career-app .mca-conf { padding:4px 6px !important; }
+  #mobile-career-app .mca-conf { padding:4px 6px 10px !important; }
   #mobile-career-app .mca-conf h3 { margin:0 0 2px !important;font-size:11px !important; }
   #mobile-career-app .mca-conf .mca-standing {
     min-height:22px !important;
     padding:3px 2px !important;
     font-size:8px !important;
   }
+  #mobile-career-app .mca-conf .mca-standing.you { padding-left:8px !important; }
+
+  /* Re-scale the approved helmet geometry for the real iPhone landscape viewport. */
+  #mobile-career-app .mca-helmet { width:58px !important;height:51px !important;margin-bottom:1px !important; }
 
   /* Slightly tighter navigation after reclaiming the browser safe area. */
   #mobile-career-app .mca-nav button { font-size:9px !important;gap:5px !important; }
@@ -160,4 +223,5 @@ html[data-installed-app="true"] #mobile-career-app .mca-nav {
   #mobile-career-app .mca-player-card { min-height:67px !important;height:67px !important; }
   #mobile-career-app .mca-roster { grid-auto-rows:67px !important; }
   #mobile-career-app .mca-attr-row { min-height:31px !important;height:31px !important; }
+  #mobile-career-app .mca-helmet { width:54px !important;height:47px !important; }
 }
