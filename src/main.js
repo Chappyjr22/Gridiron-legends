@@ -12,6 +12,7 @@ import { initMobileSelects } from './ui/mobileSelects.js';
 import { initMainTeamEditor } from './ui/teamEditor.js';
 import { initMobileCareerApp } from './ui/mobileCareerApp.js';
 import mobileCareerAppFit from './ui/mobileCareerAppFit.css?inline';
+import mobileCareerAppPolish from './ui/mobileCareerAppPolish.css?inline';
 import * as League from './state/league.js';
 import { updateHUD, continueResult } from './ui/hud.js';
 import { uiHooks, initPlay, attemptFieldGoal, simulatePunt } from './simulation/engine.js';
@@ -76,6 +77,15 @@ if(!document.getElementById('mobile-career-app-fit-style')){
   fitStyle.id='mobile-career-app-fit-style';
   fitStyle.textContent=mobileCareerAppFit;
   document.head.appendChild(fitStyle);
+}
+
+// Apply visual identity polish last so it can refine both the base app and the
+// real-device fit layer without changing Career state or legacy DOM structure.
+if(!document.getElementById('mobile-career-app-polish-style')){
+  const polishStyle=document.createElement('style');
+  polishStyle.id='mobile-career-app-polish-style';
+  polishStyle.textContent=mobileCareerAppPolish;
+  document.head.appendChild(polishStyle);
 }
 
 initMainTeamEditor(
