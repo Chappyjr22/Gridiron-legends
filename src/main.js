@@ -13,6 +13,7 @@ import { initMainTeamEditor } from './ui/teamEditor.js';
 import { initMobileCareerApp } from './ui/mobileCareerApp.js';
 import mobileCareerAppFit from './ui/mobileCareerAppFit.css?inline';
 import mobileCareerAppPolish from './ui/mobileCareerAppPolish.css?inline';
+import mobileCareerAppRefine from './ui/mobileCareerAppRefine.css?inline';
 import * as League from './state/league.js';
 import { updateHUD, continueResult } from './ui/hud.js';
 import { uiHooks, initPlay, attemptFieldGoal, simulatePunt } from './simulation/engine.js';
@@ -79,13 +80,21 @@ if(!document.getElementById('mobile-career-app-fit-style')){
   document.head.appendChild(fitStyle);
 }
 
-// Apply visual identity polish last so it can refine both the base app and the
-// real-device fit layer without changing Career state or legacy DOM structure.
+// Apply visual identity polish after the base and fit layers.
 if(!document.getElementById('mobile-career-app-polish-style')){
   const polishStyle=document.createElement('style');
   polishStyle.id='mobile-career-app-polish-style';
   polishStyle.textContent=mobileCareerAppPolish;
   document.head.appendChild(polishStyle);
+}
+
+// Final surgical refinements are kept separate while the branch is under visual QA.
+// Consolidate fit/polish/refine before merging once the look is locked.
+if(!document.getElementById('mobile-career-app-refine-style')){
+  const refineStyle=document.createElement('style');
+  refineStyle.id='mobile-career-app-refine-style';
+  refineStyle.textContent=mobileCareerAppRefine;
+  document.head.appendChild(refineStyle);
 }
 
 initMainTeamEditor(
