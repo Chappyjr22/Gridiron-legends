@@ -1,0 +1,151 @@
+/* Real-device landscape fit for the dedicated MobileCareerApp.
+   Keep this sizing-only: no legacy DOM overrides or layout mutation. */
+@media (orientation: landscape) and (max-height: 520px) {
+  #mobile-career-app {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .mca-header {
+    height: 52px;
+    flex-basis: 52px;
+    grid-template-columns: minmax(170px,.8fr) 1.35fr 52px;
+    gap: 8px;
+    padding: 3px 12px;
+  }
+  .mca-profile { grid-template-columns: 40px 1fr; gap: 7px; }
+  .mca-profile canvas { width: 40px; height: 40px; }
+  .mca-profile-name { font-size: 21px; }
+  .mca-profile-meta { margin-top: 3px; font-size: 9px; }
+  .mca-page-title strong { font-size: 24px; }
+  .mca-page-title strong:before,
+  .mca-page-title strong:after { font-size: 13px; margin: 0 9px; vertical-align: 3px; }
+  .mca-page-title span { margin-top: 3px; font-size: 9px; }
+  .mca-menu { width: 42px; height: 40px; font-size: 20px; border-width: 2px; }
+
+  .mca-stage { padding: 5px 9px 4px; }
+  .mca-screen { gap: 5px; }
+  .mca-panel { border-width: 2px; }
+
+  .mca-subtabs { height: 37px; flex-basis: 37px; }
+  .mca-subtabs button { min-height: 35px; font-size: 11px; border-bottom-width: 4px; }
+
+  .mca-home-timeline { height: 42px; flex-basis: 42px; }
+  .mca-timeline-cell { padding: 4px 9px; }
+  .mca-timeline-cell small { font-size: 8px; }
+  .mca-timeline-cell strong { margin-top: 3px; font-size: 11px; }
+  .mca-timeline-cell.current strong { font-size: 12px; }
+  .mca-progress { bottom: 4px; height: 5px; }
+
+  .mca-home-grid {
+    grid-template-columns: minmax(0,1.46fr) minmax(170px,.72fr) minmax(185px,.78fr);
+    gap: 5px;
+  }
+  .mca-match { padding: 5px 8px; }
+  .mca-match:before,
+  .mca-match:after { top: 17px; font-size: 14px; }
+  .mca-kicker { font-size: 10px; }
+  .mca-kicker:before,
+  .mca-kicker:after { width: 43px; margin: 0 7px; }
+  .mca-matchup { grid-template-columns: 1fr 38px 1fr; }
+  .mca-helmet { width: 50px; height: 42px; margin-bottom: 2px; border-width: 3px; }
+  .mca-helmet:before { left: 21px; width: 8px; height: 42px; }
+  .mca-helmet:after { right: -10px; bottom: 5px; width: 20px; height: 11px; border-width: 3px; border-left: 0; }
+  .mca-helmet b { inset: 13px 6px auto 6px; font-size: 9px; }
+  .mca-side strong { font-size: 21px; }
+  .mca-side span { font-size: 9px; }
+  .mca-vs { font-size: 18px; }
+  .mca-play { height: 36px; flex-basis: 36px; font-size: 11px; border-width: 2px; box-shadow: 0 3px 0 #02122b; }
+  .mca-play:before { margin-right: 7px; }
+
+  .mca-card-title { height: 31px; padding: 0 8px; font-size: 12px; }
+  .mca-card-title small { font-size: 7px; }
+  .mca-challenge-copy { padding: 7px 8px; grid-template-columns: 28px 1fr; gap: 6px; font-size: 10px; line-height: 1.15; }
+  .mca-check { font-size: 24px; }
+  .mca-xp { padding: 4px 5px; font-size: 10px; }
+  .mca-metrics { margin: auto 7px 6px; padding-top: 6px; gap: 3px; }
+  .mca-metrics b { font-size: 17px; }
+  .mca-metrics span { font-size: 8px; }
+  .mca-standings-list { padding: 1px 6px; }
+  .mca-standing { grid-template-columns: 18px 1fr auto; gap: 4px; padding: 5px 2px; font-size: 9px; }
+  .mca-standing.you { padding: 4px 2px; }
+
+  .mca-player-grid { grid-template-columns: 158px minmax(0,1fr); gap: 5px; }
+  .mca-player-profile { padding: 7px; }
+  .mca-player-profile canvas { width: 78px; height: 78px; }
+  .mca-player-profile h2 { margin: 5px 0 2px; font-size: 18px; }
+  .mca-player-profile p { margin: 2px 0; font-size: 9px; }
+  .mca-xpbar { margin-top: 5px; height: 6px; }
+  .mca-player-profile .mca-profile-detail { margin-top: 5px; padding-top: 5px; font-size: 8px; line-height: 1.25; }
+  .mca-attributes { padding: 5px 7px; }
+  .mca-attr-heading { height: 31px; }
+  .mca-attr-heading h2 { font-size: 15px; }
+  .mca-points { padding: 5px 7px; font-size: 9px; }
+  .mca-attr-row {
+    grid-template-columns: 32px minmax(88px,.65fr) 40px minmax(82px,1fr) 88px;
+    gap: 5px;
+    min-height: 43px;
+    padding: 3px;
+  }
+  .mca-attr-icon { width: 27px; height: 27px; font-size: 15px; }
+  .mca-attr-name { font-size: 13px; }
+  .mca-attr-desc { margin-top: 2px; font-size: 7px; }
+  .mca-attr-value { font-size: 20px; }
+  .mca-ratingbar { height: 6px; }
+  .mca-upgrade { min-height: 31px; font-size: 9px; }
+  .mca-upgrade small { margin-top: 2px; font-size: 7px; }
+  .mca-stat-grid { gap: 6px; padding: 8px; }
+  .mca-stat { padding: 10px; }
+  .mca-stat b { font-size: 21px; }
+  .mca-stat span { margin-top: 4px; font-size: 9px; }
+  .mca-story { padding: 10px; }
+  .mca-story h2 { font-size: 18px; }
+  .mca-story p { margin: 6px 0; font-size: 10px; line-height: 1.3; }
+
+  .mca-team-head { height: 54px; flex-basis: 54px; padding: 0 10px; }
+  .mca-team-head h1 { font-size: 22px; }
+  .mca-team-head p { margin-top: 4px; font-size: 8px; }
+  .mca-team-editor { min-height: 33px; padding: 0 10px; font-size: 9px; }
+  .mca-roster { grid-auto-rows: min-content; gap: 5px; padding: 0 3px 3px; }
+  .mca-player-card { min-height: 100px; padding: 5px 4px; }
+  .mca-player-card canvas { width: 47px; height: 47px; }
+  .mca-player-card .pos { font-size: 9px; }
+  .mca-player-card strong { margin-top: 2px; font-size: 10px; }
+  .mca-player-card .ovr { margin: 2px 0 3px; font-size: 8px; }
+  .mca-player-card .mca-ratingbar { height: 5px; }
+
+  .mca-league-body { padding: 4px 7px; }
+  .mca-league-title { font-size: 20px; }
+  .mca-league-sub { margin: 4px 0 6px; font-size: 9px; }
+  .mca-confs { gap: 6px; }
+  .mca-conf { padding: 5px 7px; }
+  .mca-conf h3 { margin-bottom: 3px; font-size: 13px; }
+  .mca-leader-row,
+  .mca-game-row { padding: 6px 4px; font-size: 9px; }
+  .mca-schedule { gap: 3px; }
+
+  .mca-nav {
+    height: calc(43px + env(safe-area-inset-bottom));
+    flex-basis: calc(43px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .mca-nav button { font-size: 10px; }
+  .mca-nav i { font-size: 15px; margin-right: 5px; }
+  .mca-nav button.active:after { height: 4px; }
+}
+
+/* Extra squeeze for very short browser chrome / compact landscape windows. */
+@media (orientation: landscape) and (max-height: 360px) {
+  .mca-header { height: 46px; flex-basis: 46px; }
+  .mca-profile canvas { width: 34px; height: 34px; }
+  .mca-profile { grid-template-columns: 34px 1fr; }
+  .mca-profile-name { font-size: 18px; }
+  .mca-page-title strong { font-size: 21px; }
+  .mca-menu { width: 38px; height: 36px; }
+  .mca-stage { padding: 4px 7px 3px; }
+  .mca-home-timeline { height: 36px; flex-basis: 36px; }
+  .mca-subtabs { height: 33px; flex-basis: 33px; }
+  .mca-nav { height: calc(39px + env(safe-area-inset-bottom)); flex-basis: calc(39px + env(safe-area-inset-bottom)); }
+  .mca-team-head { height: 47px; flex-basis: 47px; }
+  .mca-player-card { min-height: 91px; }
+  .mca-player-card canvas { width: 42px; height: 42px; }
+}
