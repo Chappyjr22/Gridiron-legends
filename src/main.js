@@ -11,7 +11,7 @@ import { initPWA } from './pwa.js';
 import { initMobileSelects } from './ui/mobileSelects.js';
 import { initMainTeamEditor } from './ui/teamEditor.js';
 import { initMobileCareerApp } from './ui/mobileCareerApp.js';
-import './ui/mobileCareerAppFit.css';
+import mobileCareerAppFit from './ui/mobileCareerAppFit.css?inline';
 import * as League from './state/league.js';
 import { updateHUD, continueResult } from './ui/hud.js';
 import { uiHooks, initPlay, attemptFieldGoal, simulatePunt } from './simulation/engine.js';
@@ -68,6 +68,15 @@ if(NativeMutationObserver){
 }
 try{initMobileCareerApp();}
 finally{if(NativeMutationObserver)globalThis.MutationObserver=NativeMutationObserver;}
+
+// MobileCareerApp injects its base style at runtime. Add the short-landscape
+// fit rules after that base style so the real-device overrides win the cascade.
+if(!document.getElementById('mobile-career-app-fit-style')){
+  const fitStyle=document.createElement('style');
+  fitStyle.id='mobile-career-app-fit-style';
+  fitStyle.textContent=mobileCareerAppFit;
+  document.head.appendChild(fitStyle);
+}
 
 initMainTeamEditor(
   ()=>teamState.franchise,
