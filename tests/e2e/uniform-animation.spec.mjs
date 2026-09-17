@@ -21,7 +21,7 @@ test('all 33 uniform poses preserve protected pixels and alpha through palettes 
   for(const palette of ['contrast','classic','dark']){await page.locator('#'+palette).click();await page.screenshot({path:`test-results/uniform-${name}-${palette}.png`,fullPage:true});}
   const mirror=await page.evaluate(()=>{const c=document.querySelector('#gallery canvas'),ctx=c.getContext('2d');return [...ctx.getImageData(0,0,64,64).data];});
   await page.locator('#mirror').check();const mirrored=await page.evaluate(()=>[...document.querySelector('#gallery canvas').getContext('2d').getImageData(0,0,64,64).data]);
-  for(let y=0;y<64;y++)for(let x=0;x<64;x++)for(let k=0;k<4;k++)expect(mirrored[(y*64+x)*4+k]).toBe(mirror[(y*64+63-x)*4+k]);
+  const expectedMirror=new Array(mirror.length);for(let y=0;y<64;y++)for(let x=0;x<64;x++)for(let k=0;k<4;k++)expectedMirror[(y*64+x)*4+k]=mirror[(y*64+63-x)*4+k];expect(mirrored).toEqual(expectedMirror);
   await page.locator('#mirror').uncheck();
  }
  await page.locator('#sheet').selectOption('sprites');
