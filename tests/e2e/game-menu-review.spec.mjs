@@ -29,3 +29,13 @@ test('sprite inspector exports reversible labels tied to immutable source',async
  await expect(page.locator('#status')).toContainText('Labels are review data only');await page.screenshot({path:'test-results/sprite-inspector.png'});
  await page.locator('#undo').click();await expect(page.locator('#status')).toContainText('0/');
 });
+test('uniform pilot isolates three masks and preserves all protected source pixels',async({page})=>{
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/tools/uniform-pilot.html');await expect(page.locator('#status')).toContainText('Source hash verified');
+ await page.locator('#helmet').fill('#ff0000');await page.locator('#jersey').fill('#00ff00');await page.locator('#pants').fill('#0000ff');
+ const check=await page.evaluate(async()=>{
+  const mask=await (await fetch('/assets/masks/uniform-pilot.json')).json(),{decodeMask}=await import('/tools/uniform-pilot.mjs'),labels=decodeMask(mask,mask.sha256,384,320);let protectedPixels=0,changed=0,alphaErrors=0,protectedErrors=0;
+  for(const f of mask.pilotFrames){const a=document.querySelector(`canvas[aria-label="${f.name} original large"]`).getContext('2d').getImageData(0,0,64,64).data,b=document.querySelector(`canvas[aria-label="${f.name} custom large"]`).getContext('2d').getImageData(0,0,64,64).data;for(let i=0;i<4096;i++){const id=labels[(f.row*64+Math.floor(i/64))*384+f.col*64+i%64];if(a[i*4+3]!==b[i*4+3])alphaErrors++;if(![1,2,3,4].includes(id)){protectedPixels++;for(let k=0;k<4;k++)if(a[i*4+k]!==b[i*4+k])protectedErrors++;}else if(a[i*4]!==b[i*4]||a[i*4+1]!==b[i*4+1]||a[i*4+2]!==b[i*4+2])changed++;}}
+  return {protectedPixels,changed,alphaErrors,protectedErrors};
+ });expect(check.alphaErrors).toBe(0);expect(check.protectedErrors).toBe(0);expect(check.changed).toBeGreaterThan(700);expect(check.protectedPixels).toBeGreaterThan(1000);
+ await page.locator('#contrast').click();await page.screenshot({path:'test-results/uniform-pilot-contrast.png',fullPage:true});await page.locator('#classic').click();await page.screenshot({path:'test-results/uniform-pilot-classic.png',fullPage:true});await page.locator('#swap').click();expect(errors).toEqual([]);
+});

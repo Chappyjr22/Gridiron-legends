@@ -24,3 +24,13 @@ The Formation Lab edits formation positions, not sprite pixels. A separate devel
 Yes, the small gameplay frames can be mapped carefully with this tool. No, all pixels of all poses have not been identified or validated yet. Automatic segmentation is not safe enough to ship. The tool is a preparation and inspection aid, not completed uniform customization. The large sideline image needs a decision on canonical source resolution before mask authoring, because the renderer currently trims and rescales it.
 
 Recommended next implementation: manually label one standing pose, one throwing pose, and one dive. Review high-contrast helmet/jersey/pants colors at native game size and enlarged size. Verify all unlabeled regions explicitly. Only then extend to all used frames, save immutable masks with source hashes, add a shading-preserving renderer, and integrate pants controls/save defaults. Existing runtime art stays untouched until that validation is complete.
+
+## Three-pose pilot
+
+`/tools/uniform-pilot.html` now loads explicit masks from `public/assets/masks/uniform-pilot.json` for standing/aiming (row 0, col 2), throw follow-through (row 3, col 2), and diving (row 4, col 5), using zero-based coordinates. Four independently colored materials are available. Stripe color also controls the existing pants trim.
+
+Authoring used individually inspected anatomical regions and exact stripe spans, with color selectors as an offline aid. The final JSON records explicit pixel labels. The renderer never guesses a material from color or height. The source hash prevents using this mask with a different sheet. `scripts/build-uniform-pilot.py` records the authoring selections and generates a diagnostic comparison; its regions must not be generalized to other poses.
+
+Contrast review caught and corrected two standing helmet highlights being treated as stripe paint, one facemask pixel being treated as jersey, and isolated blue hand-edge pixels in the diving pose. Non-uniform pixels are labeled preserve (10), not falsely claimed as separately identified skin/facemask/etc. The pilot intentionally retains original dark outlines and gray edge highlights. Shading is an initial source-brightness approximation and can clip on very bright selected colors.
+
+This is a reviewable three-pose proof of concept, not a complete uniform renderer. `reviewed:false` remains deliberate: there is no animation-sequence review or full frame coverage yet. Other gameplay frames, pre-snap sheets and sideline sources are untouched. No masks are wired into gameplay and no save fields are changed. Node checks and browser pixel comparisons verify source identity, frame boundaries, immutable source data, alpha and preserved regions.
