@@ -16,7 +16,7 @@ for(const viewport of [{width:844,height:304},{width:932,height:430},{width:390,
   await page.evaluate(async()=>{const {game}=await import('/src/state/gameState.js');game.los=72;game.distance=3;game.down=4;const hud=await import('/src/ui/hud.js');hud.showFourthDown();});
   await shot('fourth-down');for(const id of ['btn-go-for-it','btn-field-goal','btn-punt'])await expect(page.locator('#'+id)).toBeInViewport({ratio:1});
   await page.evaluate(async()=>{const hud=await import('/src/ui/hud.js');hud.showResult('OPPONENT DRIVE\nKickoff: opponent starts at its own 25.\nThe drive gains 42 yards.\nOpponent 50-yard field goal is good.\nDrive time: 1:37\nBOS 7 | BUF 3',()=>{});});
-  await shot('drive-result');await expect(page.locator('#btn-continue')).toBeInViewport({ratio:1});
+  await shot('drive-result');await expect(page.locator('#btn-continue')).toBeInViewport({ratio:1});await expect(page.locator('#result-kicker')).toBeInViewport({ratio:1});
   expect(errors).toEqual([]);await context.close();
  });
 }
