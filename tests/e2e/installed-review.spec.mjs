@@ -25,7 +25,7 @@ for(const viewport of [{width:844,height:304},{width:932,height:430},{width:390,
   await page.locator('#btn-menu-settings').tap();await shot('settings');await page.locator('#btn-setup-close').tap();
   await page.locator('#btn-career').tap();await shot('career-menu');await page.locator('#career-new').tap();
   await page.getByLabel('Player name',{exact:true}).fill('App Review');await shot('creation');
-  await page.getByRole('button',{name:'Choose face',exact:true}).tap();await shot('faces');await page.locator('#portrait-cancel').tap();
+  await page.getByRole('button',{name:'Choose face',exact:true}).tap();await shot('faces');await page.getByRole('button',{name:'Tan',exact:true}).tap();await page.locator('#portrait-confirm').tap();await expect(page.locator('#career-skin-app-control')).toHaveText('Tan');
   await page.getByRole('button',{name:'Next',exact:true}).tap();await shot('season');
   await page.getByRole('button',{name:'Choose your school',exact:true}).tap();await shot('schools');await page.locator('#school-confirm').tap();
   await page.locator('#career-begin').tap();await shot('home');

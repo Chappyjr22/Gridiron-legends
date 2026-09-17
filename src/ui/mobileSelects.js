@@ -32,8 +32,9 @@ function hideNativeSelect(select){
 
 function syncButton(select,button){
   const option=select.options[select.selectedIndex];
-  button.textContent=option?.textContent||labelFor(select);
-  button.disabled=select.disabled;
+  const text=option?.textContent||labelFor(select);
+  if(button.textContent!==text)button.textContent=text;
+  if(button.disabled!==select.disabled)button.disabled=select.disabled;
 }
 
 function buildSheet(){
@@ -156,6 +157,7 @@ function enhanceSheet(select){
 function enhanceAll(){
   if(!isInstalled())return;
   for(const select of document.querySelectorAll('select')){
+    if(select.dataset.appEnhanced==='sheet'){syncButton(select,document.getElementById(select.id+'-app-control'));continue;}
     if(select.id==='league-stat-category')enhanceSegmented(select);
     else enhanceSheet(select);
   }
