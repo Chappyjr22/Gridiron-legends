@@ -1,3 +1,4 @@
+import {speedMultiplier} from '../career/playerAttributes.js';
 import {XPX,SPEED_SCALE,ROUTE_YPS,BALL_SPEED_BULLET,BALL_SPEED_LOB,clamp,ratingMultiplier} from '../state/constants.js';
 import {catchTolerance} from './receiving.js';
 export function advanceRoute(player,waypoints,speed,dt,los){
@@ -18,11 +19,11 @@ export function throwProfile(qb,landing,kind){
  return {duration:Math.max(180,distance/speed*1000),releaseDelay:clamp(125-((qb.attributes?.release??qb.rating)-60)*2,55,125),arcHeight:Math.min(60,distance*.12)*(kind==='bullet'?.3:1)};
 }
 // Predict from route data without modifying the receiver or moving the landing point.
-export function passingRead({players,play,los,elapsed,landing,kind,difficulty}){
+export function passingRead({players,play,los,elapsed,landing,kind,difficulty,difficultyName='medium',momentum=0}){
  const profile=throwProfile(players.qb,landing,kind),arrival=profile.duration+profile.releaseDelay;
  let best=null;
  for(const [key,route] of Object.entries(play.routes||{})){
-  const receiver=players[key],predicted={...receiver},speed=ROUTE_YPS*XPX*SPEED_SCALE*difficulty.offenseSpeedMult*ratingMultiplier(receiver.rating,.18);
+  const receiver=players[key],predicted={...receiver},speed=ROUTE_YPS*XPX*SPEED_SCALE*difficulty.offenseSpeedMult*speedMultiplier(receiver,difficultyName,momentum);
   const delay=Math.max(0,(play.routeDelays?.[key]||0)-elapsed);
   advanceRoute(predicted,route,speed,Math.max(0,arrival-delay)/1000,los);
   const error=Math.hypot(predicted.x-landing.x,predicted.yfield-landing.yfield),tolerance=catchTolerance(receiver,difficulty);

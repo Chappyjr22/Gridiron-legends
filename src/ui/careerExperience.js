@@ -28,7 +28,7 @@ function renderNameEditor(c,p){
   saveCareer();renderMyTeam(c);openPlayer(c,p);
  };
  el('teammate-cancel-name').onclick=()=>openPlayer(c,p);
- setTimeout(()=>{input.focus();input.select();},60);
+ input.focus();input.select();input.scrollIntoView({block:'center'});
 }
 function openPlayer(c,p){
  const team=League.findTeamState(c.league,c.teamId),season=playerSeasonStats(c,p.id),log=playerGameLog(c,p.id);

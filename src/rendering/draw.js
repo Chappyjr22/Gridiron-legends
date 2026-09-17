@@ -196,7 +196,7 @@ export function draw(){
       const fDown=camPx+(BASE_X-tx);
       const playDef=PLAYS[game.playCall];
       if(playDef){
-        const read=passingRead({players:entities.players,play:playDef,los:game.los,elapsed:simulationNow()-game.snapTime,landing:{x:fLat,yfield:fDown},kind:game.throwType,difficulty:currentDiff()});
+        const read=passingRead({players:entities.players,play:playDef,los:game.los,elapsed:simulationNow()-game.snapTime,landing:{x:fLat,yfield:fDown},kind:game.throwType,difficulty:currentDiff(),difficultyName:game.difficulty,momentum:game.momentum});
         if(read.target){
           const rc=toCanvas(read.target.predicted),current=toCanvas(entities.players[read.target.key]);
           ctx.strokeStyle=read.target.error<=read.target.tolerance?'#8cf0cf':read.target.reachable?'#ffd166':'rgba(255,255,255,.45)';

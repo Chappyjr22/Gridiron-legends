@@ -17,7 +17,7 @@ import {
   RUSH_SPEED, RUSH_SPEED_BLITZ, BASE_RUN_YPS, LATERAL_YPS, PURSUE_YPS_BASE, ROUTE_YPS, COVER_YPS,
   TACKLE_RESULT_DELAY, BREAK_SLOW_MS, BREAK_SPEED_MULT, MISSED_TACKLE_RECOVERY_MS,
   SPRITE_GROUND_Y_OFFSET, SIDELINE_STEP_DEPTH, BETWEEN_PLAY_RUNOFF, PAT_CHANCE, SKIN_PALETTES,
-  clamp, ratingMultiplier, fieldGoalChance
+  clamp, fieldGoalChance
 } from '../state/constants.js';
 import { currentDiff, adjustMomentum } from '../state/difficulty.js';
 import { FORMATIONS } from '../data/formations.js';
@@ -229,13 +229,9 @@ export function startNewGame(options={}){
   game.secondHalfReceiver=game.firstHalfReceiver==='player'?'cpu':'player';
   const openingSpot=kickoffSpot();
   if(game.firstHalfReceiver==='player'){
-    showResult('OPENING KICKOFF\
-The '+teamState.userTeam.name+' will receive.\
-Kickoff return to '+formatFieldPosition(openingSpot)+'.',()=>startPlayerDrive(openingSpot),'Receive Kickoff');
+    showResult('OPENING KICKOFF\nThe '+teamState.userTeam.name+' will receive.\nKickoff return to '+formatFieldPosition(openingSpot)+'.',()=>startPlayerDrive(openingSpot),'Receive Kickoff');
   } else {
-    showResult('OPENING KICKOFF\
-The '+teamState.cpuTeam.name+' will receive.\
-They begin at their own '+openingSpot+'.',()=>startOpponentPossession(openingSpot,'Opening kickoff'),'Kick Off');
+    showResult('OPENING KICKOFF\nThe '+teamState.cpuTeam.name+' will receive.\nThey begin at their own '+openingSpot+'.',()=>startOpponentPossession(openingSpot,'Opening kickoff'),'Kick Off');
   }
   checkpoint({type:'kickoff',receiver:game.firstHalfReceiver,spot:openingSpot,message:game.message,buttonLabel:game.firstHalfReceiver==='player'?'Receive Kickoff':'Kick Off'});
 }
@@ -260,9 +256,7 @@ export function startPractice(){
 export function finishGame(){
   if(game.career){game.phase='gameover';uiHooks.finishCareer(matchState.stats);return;}
   const result=game.playerScore===game.cpuScore?'Tie game':game.playerScore>game.cpuScore?teamState.userTeam.name+' win!':teamState.cpuTeam.name+' win.';
-  showResult('FINAL\
-'+scoreLine()+'\
-'+result,uiHooks.returnToMainMenu,'Main menu');
+  showResult('FINAL\n'+scoreLine()+'\n'+result,uiHooks.returnToMainMenu,'Main menu');
   game.phase='gameover';
 }
 function startOvertime(){
@@ -270,8 +264,7 @@ function startOvertime(){
   game.quarter=5;
   game.clock=0;
   game.otRound=1;
-  showResult('End of regulation. The game is tied.\
-Overtime gives each team one possession.',()=>startPlayerDrive(20),'Start overtime');
+  showResult('End of regulation. The game is tied.\nOvertime gives each team one possession.',()=>startPlayerDrive(20),'Start overtime');
 }
 function advanceExpiredPeriod(resumeAction){
   if(game.overtime||game.clock>0){resumeAction();return;}
@@ -284,9 +277,7 @@ function advanceExpiredPeriod(resumeAction){
       const playerReceives=game.secondHalfReceiver==='player';
       const receiverLine=playerReceives?'The '+teamState.userTeam.name+' receive the second-half kickoff.':'The '+teamState.cpuTeam.name+' receive the second-half kickoff.';
       const kickoffAction=playerReceives?()=>startPlayerDrive(secondHalfSpot):()=>startOpponentPossession(secondHalfSpot,'Second-half kickoff');
-      showResult('HALFTIME\
-'+scoreLine()+'\
-'+receiverLine,kickoffAction,'Start 3rd Quarter');
+      showResult('HALFTIME\n'+scoreLine()+'\n'+receiverLine,kickoffAction,'Start 3rd Quarter');
     } else {
       showResult('End of the '+ordinalQuarter(ended)+' quarter.',resumeAction,'Start '+ordinalQuarter(game.quarter)+' quarter');
     }
@@ -318,9 +309,7 @@ function handlePlayerTouchdown(){
   game.playerScore+=6;
   const patGood=simulateExtraPoint('player');
   adjustMomentum(0.35);
-  completePlayerPossession('TOUCHDOWN!\
-Extra point '+(patGood?'is good.':'missed.')+'\
-'+scoreLine(),kickoffSpot(),'Kickoff');
+  completePlayerPossession('TOUCHDOWN!\nExtra point '+(patGood?'is good.':'missed.')+'\n'+scoreLine(),kickoffSpot(),'Kickoff');
 }
 export function endPlay(yardGained,label,outOfBounds=false,exactSpot=game.los+yardGained){
   if(game.playResolved)return;
@@ -332,13 +321,11 @@ export function endPlay(yardGained,label,outOfBounds=false,exactSpot=game.los+ya
   }
   if(game.practice){
     if(newLOS>=100){
-      showResult('TOUCHDOWN!\
-Practice rep complete.',()=>startPlayerDrive(20),'Next Rep');
+      showResult('TOUCHDOWN!\nPractice rep complete.',()=>startPlayerDrive(20),'Next Rep');
       return;
     }
     if(label==='INTERCEPTED'){
-      showResult('Intercepted.\
-Reset and try the read again.',()=>startPlayerDrive(20),'Next Rep');
+      showResult('Intercepted.\nReset and try the read again.',()=>startPlayerDrive(20),'Next Rep');
       return;
     }
     if(label==='INCOMPLETE'){
@@ -398,8 +385,7 @@ export function attemptFieldGoal(){
   if(good){
     game.playerScore+=3;
     adjustMomentum(0.12);
-    completePlayerPossession(distance+'-yard field goal is GOOD!\
-'+scoreLine(),kickoffSpot(),'Kickoff');
+    completePlayerPossession(distance+'-yard field goal is GOOD!\n'+scoreLine(),kickoffSpot(),'Kickoff');
   } else {
     adjustMomentum(-0.1);
     completePlayerPossession(distance+'-yard field goal is no good.',clamp(100-game.los,1,99),'Missed field goal');
@@ -482,15 +468,13 @@ function simulateOpponentDrive(startField,reason){
   lines.push(outcome);
   lines.push('Drive time: '+Math.floor(consumedSeconds/60)+':'+String(consumedSeconds%60).padStart(2,'0'));
   lines.push(scoreLine());
-  return {message:lines.join('\
-'),playerStart};
+  return {message:lines.join('\n'),playerStart};
 }
 function finishOpponentPossession(playerStart){
   if(game.overtime){
     if(game.playerScore!==game.cpuScore){finishGame();return;}
     game.otRound+=1;
-    showResult('Overtime remains tied.\
-Starting possession round '+game.otRound+'.',()=>startPlayerDrive(20),'Next possession');
+    showResult('Overtime remains tied.\nStarting possession round '+game.otRound+'.',()=>startPlayerDrive(20),'Next possession');
     return;
   }
   advanceExpiredPeriod(()=>startPlayerDrive(playerStart));
@@ -545,7 +529,7 @@ export function releaseThrow(t){
   const dist=Math.hypot(fLat-qb.x,fDown-qb.yfield);
   const landing={x:fLat,yfield:fDown},profile=throwProfile(qb,landing,game.throwType);
   entities.ball={inFlight:true,fromX:qb.x,fromY:qb.yfield,toX:fLat,toY:fDown,startTime:throwStart+profile.releaseDelay,duration:profile.duration,arcHeight:profile.arcHeight};
-  const read=passingRead({players:entities.players,play:PLAYS[game.playCall],los:game.los,elapsed:throwStart-game.snapTime,landing,kind:game.throwType,difficulty:currentDiff()});
+  const read=passingRead({players:entities.players,play:PLAYS[game.playCall],los:game.los,elapsed:throwStart-game.snapTime,landing,kind:game.throwType,difficulty:currentDiff(),difficultyName:game.difficulty,momentum:game.momentum});
   if(read.target?.reachable){entities.ball.targetKey=read.target.key;game.playFacts.targetId=entities.players[read.target.key].playerId;}
 
 }
