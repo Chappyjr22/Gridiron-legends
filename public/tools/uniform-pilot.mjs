@@ -1,4 +1,4 @@
-// Isolated proof of concept. Not imported by the gameplay renderer.
+// Shared explicit-mask decoder and material shading. Source pixels remain immutable.
 export const EDITABLE_PARTS = [1, 2, 3, 4];
 export function decodeMask(mask, sourceHash, width, height) {
   if (mask.version !== 1 || mask.sha256 !== sourceHash || mask.width !== width || mask.height !== height) throw Error('Mask does not match the original sprite sheet.');
@@ -20,8 +20,9 @@ export function recolorPixels(source, labels, palette) {
     if (!EDITABLE_PARTS.includes(labels[i]) || !color || !source[i * 4 + 3]) continue;
     const [r,g,b] = source.subarray(i*4,i*4+3);
     // This is shading only. Material selection comes exclusively from the mask.
-    const reference = b > r * 1.22 && b > g * 1.08 ? 184 : 252;
-    const shade = Math.max(r,g,b) / reference;
+    const blue = b > r * 1.22 && b > g * 1.08;
+    const reference = blue ? (labels[i] === 1 ? 100 : 184) : 252;
+    const shade = Math.max(0.30, Math.min(1.15, Math.max(r,g,b) / reference));
     for (let k=0;k<3;k++) out[i*4+k]=Math.min(255,Math.round(color[k]*shade));
   }
   return out;

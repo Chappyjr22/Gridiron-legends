@@ -1,5 +1,7 @@
 # Sprite part mapping audit
 
+The first sections document the initial audit and pilot. See **Full gameplay and pre-snap implementation** below for current behavior.
+
 The existing raster art is flattened RGBA, not layered art. Runtime uniform recoloring in `src/rendering/spriteSheets.js` classifies blue pixels using RGB ratios. It does not distinguish helmet from jersey or blue pants trim. Skin has exact source-color matching plus a broader rule on generated pre-snap sheets. Sideline recoloring uses approximate vertical cutoffs after downsampling. None of those rules is a reliable anatomical mask.
 
 ## Inventory inspected
@@ -34,3 +36,15 @@ Authoring used individually inspected anatomical regions and exact stripe spans,
 Contrast review caught and corrected two standing helmet highlights being treated as stripe paint, one facemask pixel being treated as jersey, and isolated blue hand-edge pixels in the diving pose. Non-uniform pixels are labeled preserve (10), not falsely claimed as separately identified skin/facemask/etc. The pilot intentionally retains original dark outlines and gray edge highlights. Shading is an initial source-brightness approximation and can clip on very bright selected colors.
 
 This is a reviewable three-pose proof of concept, not a complete uniform renderer. `reviewed:false` remains deliberate: there is no animation-sequence review or full frame coverage yet. Other gameplay frames, pre-snap sheets and sideline sources are untouched. No masks are wired into gameplay and no save fields are changed. Node checks and browser pixel comparisons verify source identity, frame boundaries, immutable source data, alpha and preserved regions.
+
+## Full gameplay and pre-snap implementation (supersedes pilot limitations above)
+
+The preview branch now contains explicit uniform masks for all 26 nonempty gameplay cells and all seven pre-snap cells. `scripts/build-uniform-masks.py` records individual anatomical polygons and corrections; runtime JSON contains only labeled pixel runs. Contact-sheet inspection corrected a tackled shoulder entering the helmet region, incomplete raised-leg selections, crown highlights, and pre-snap ankle bands. The original PNGs are unchanged. Non-uniform pixels remain a single preserve label, so this does **not** claim separate masks for gear, faces, hands, or footballs.
+
+The shared recolorer independently handles helmet, stripe/pants trim, jersey, and pants. Helmet shading has its own brightness reference so light helmets remain legible. Dark edges and neutral edge highlights intentionally remain; selected colors are shaded, not flat replacements. `/tools/uniform-lab.html` displays every frame, seven gameplay animation sequences, both pre-snap sets, mirroring, three contrast palettes, and 46px previews. Motion respects reduced-motion preferences and pauses when hidden.
+
+Gameplay loads and SHA-256 checks the exact PNG bytes used for image decoding against the corresponding mask. Dimension/range validation prevents coordinate mismatches. A missing or mismatched mask falls back to the previous uniform renderer instead of blocking play. Recoloring happens only while rebuilding cached team/skin sheets, not per animation frame. Team Editor adds pants for home, away and alternate sets; existing saves default to white pants. Original source art, simulation, and career progress remain unchanged.
+
+The generated sideline art is **not** part of this pass. It still uses its existing renderer, and its pants do not yet follow the new pants setting. Its large source and rescaling require a separate mapping pass. Visors, sleeves, gloves, spat, and other gear also need their own masks/overlays before customization is safe.
+
+Validation includes PNG identity, complete visible-pixel labeling, four-material coverage per pose, protected-pixel and alpha comparisons under light/dark palettes, mirrored output, runtime output across skin palettes, wrong-hash fallback, and saved pants variants. Pixel tests establish data integrity; anatomy was checked visually in contact sheets and must be rechecked if the source or mask changes.

@@ -5,9 +5,9 @@ export function defaultUniforms(team){
  const secondary=team?.colors?.secondary||'#eef1f4';
  const accent=team?.colors?.accent||'#f4c542';
  return {
-  home:{jersey:primary,helmet:secondary,stripe:accent},
-  away:{jersey:secondary,helmet:primary,stripe:accent},
-  alternate:{jersey:accent,helmet:primary,stripe:secondary}
+  home:{jersey:primary,helmet:secondary,stripe:accent,pants:'#ffffff'},
+  away:{jersey:secondary,helmet:primary,stripe:accent,pants:'#ffffff'},
+  alternate:{jersey:accent,helmet:primary,stripe:secondary,pants:'#ffffff'}
  };
 }
 

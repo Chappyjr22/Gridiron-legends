@@ -11,3 +11,11 @@ const pixels=new Uint8ClampedArray([19,73,184,255,252,252,252,128,12,30,70,255,1
 const out=recolorPixels(pixels,new Uint8Array([1,4,10,1]),{1:[255,0,0],4:[0,255,0]});
 assert.deepEqual(pixels,before);assert.deepEqual([...out.slice(0,4)],[255,0,0,255]);assert.deepEqual([...out.slice(4,8)],[0,255,0,128]);assert.deepEqual(out.slice(8),pixels.slice(8));
 assert.equal(mask.reviewed,false);console.log('Uniform pilot checks passed: source hash, frame scope, part coverage, alpha, protected pixels, immutable source.');
+for(const [name,count]of [['sprites',26],['presnap-offense',4],['presnap-defense',3]]){
+ const mask=JSON.parse(readFileSync(`public/assets/masks/${name}-uniform.json`,'utf8')),bytes=readFileSync(`public/assets/${name}.png`),hash=createHash('sha256').update(bytes).digest('hex');
+ const labels=decodeMask(mask,hash,bytes.readUInt32BE(16),bytes.readUInt32BE(20));assert.equal(mask.frames.length,count);assert.throws(()=>decodeMask({...mask,width:mask.width+1},hash,mask.width,mask.height));
+ for(const f of mask.frames){const parts=new Set();for(let y=0;y<64;y++)for(let x=0;x<64;x++)parts.add(labels[(f.row*64+y)*mask.width+f.col*64+x]);for(const id of [1,2,3,4])assert.ok(parts.has(id),`${name} ${f.row}:${f.col} part ${id}`);}
+}
+const {ensureUniformVariants}=await import('../src/rendering/uniformVariants.js');
+const legacy={uniform:{jersey:'#123456',helmet:'#eeeeee',stripe:'#abcdef'}};ensureUniformVariants(legacy);assert.equal(legacy.uniforms.home.jersey,'#123456');for(const v of Object.values(legacy.uniforms))assert.equal(v.pants,'#ffffff');legacy.uniforms.away.pants='#102030';ensureUniformVariants(legacy);assert.equal(legacy.uniforms.away.pants,'#102030');
+console.log('All 33 poses cover four materials with immutable source hashes; legacy pants defaults preserve saved variants.');
