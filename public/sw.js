@@ -24,7 +24,7 @@ self.addEventListener('fetch',event=>{
     return;
   }
 
-  if(url.pathname==='/app-mobile.css'){
+  if(url.pathname==='/app-mobile.css'||url.pathname.startsWith('/assets/masks/')){
     event.respondWith(fetch(request).then(response=>{
       if(response.ok)event.waitUntil(caches.open(CACHE).then(cache=>cache.put(request,response.clone())));
       return response;

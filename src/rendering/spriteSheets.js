@@ -5,6 +5,7 @@ const uniformMasks=new WeakMap();
 export const uniformMaskStatus={};
 
 export const spriteImage=new Image();
+export const spriteLoaded=new Promise(resolve=>{spriteImage.addEventListener('load',resolve,{once:true});spriteImage.addEventListener('error',resolve,{once:true});});
 export const spriteSheets={off:[],def:[]};
 export const presnapSpriteImage=new Image();
 export const presnapSpriteSheets={off:[],def:[]};

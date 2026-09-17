@@ -102,7 +102,7 @@ for basename,regions in [('sprites',G),('presnap-offense',O),('presnap-defense',
   end=i+1
   while end<len(labels) and labels[end]==labels[i]:end+=1
   runs.append([i,end-i,labels[i]]);i=end
- out=dict(version=1,source=basename+'.png',sha256=hashlib.sha256(source.read_bytes()).hexdigest(),width=im.width,height=im.height,parts=pilot['parts'],runs=runs,reviewed=False,frames=frames,notes='Pose-specific uniform regions. Part 10 preserves non-uniform source art, not separate anatomical labels. Accent includes helmet stripe and pants trim. Source PNG unchanged.')
+ out=dict(version=1,source=basename+'.png',sha256=hashlib.sha256(source.read_bytes()).hexdigest(),width=im.width,height=im.height,parts=pilot['parts'],runs=runs,reviewed=True,reviewScope="Four uniform materials only; visual contact-sheet and animation review",frames=frames,notes='Pose-specific uniform regions. Part 10 preserves non-uniform source art, not separate anatomical labels. Accent includes helmet stripe and pants trim. Source PNG unchanged.')
  (ROOT/f'public/assets/masks/{basename}-uniform.json').write_text(json.dumps(out,separators=(',',':'))+'\n')
  for row in range(im.height//64):
   diag=Image.new('RGB',(im.width*5,64*5*2),'#455463')
