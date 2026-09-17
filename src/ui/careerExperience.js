@@ -44,10 +44,12 @@ function openPlayer(c,p){
   el('teammate-edit-name').onclick=()=>renderNameEditor(c,p);
   el('teammate-edit-face').onclick=()=>{
    el('team-player-dialog').close();
-   openPortraitPicker(p,team,choice=>{Object.assign(p,choice);saveCareer();renderMyTeam(c);openPlayer(c,p);});
+   openPortraitPicker(p,team,choice=>{Object.assign(p,choice);saveCareer();renderMyTeam(c);openPlayer(c,p);},()=>openPlayer(c,p));
   };
  }
+ const heading=el('team-player-heading');heading.tabIndex=-1;
  if(!el('team-player-dialog').open)el('team-player-dialog').showModal();
+ heading.focus({preventScroll:true});el('team-player-content').scrollTop=0;
 }
 export function renderMyTeam(c){
  const team=League.findTeamState(c.league,c.teamId);

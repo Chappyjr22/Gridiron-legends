@@ -1,5 +1,5 @@
 const isInstalled=()=>document.documentElement.dataset.installedApp==='true';
-const labelFor=select=>select.getAttribute('aria-label')||document.querySelector(`label[for="${select.id}"]`)?.textContent?.trim()||'Choose option';
+const labelFor=select=>select.dataset.appLabel||select.getAttribute('aria-label')||document.querySelector(`label[for="${select.id}"]`)?.textContent?.trim()||'Choose option';
 
 function optionItems(select){
   const out=[];
@@ -13,6 +13,7 @@ function optionItems(select){
 }
 
 function detachNativeLabel(select,replacement){
+  select.dataset.appLabel=labelFor(select);
   const label=select.id?document.querySelector(`label[for="${select.id}"]`):null;
   if(!label)return;
   label.removeAttribute('for');
@@ -40,6 +41,7 @@ function buildSheet(){
   if(dialog)return dialog;
   dialog=document.createElement('dialog');
   dialog.id='app-select-sheet';
+  dialog.setAttribute('aria-labelledby','app-select-title');
   dialog.className='app-select-sheet';
   dialog.innerHTML='<div class="app-select-card"><header><div><span class="app-select-kicker">SELECT</span><h2 id="app-select-title">Choose option</h2></div><button type="button" class="app-select-close" aria-label="Close">✕</button></header><input id="app-select-search" class="app-select-search" type="search" inputmode="search" placeholder="Search" autocomplete="off"><div id="app-select-options" class="app-select-options" role="listbox"></div></div>';
   document.body.appendChild(dialog);
@@ -93,7 +95,9 @@ function openSheet(select,button){
     for(const group of list.querySelectorAll('.app-select-group'))group.hidden=!!term;
   };
   dialog.showModal();
-  if(!search.hidden)setTimeout(()=>search.focus(),50);
+  list.scrollTop=0;
+  // Opening a picker must not summon the phone keyboard before search is requested.
+  dialog.querySelector('.app-select-close').focus({preventScroll:true});
 }
 
 function enhanceSegmented(select){

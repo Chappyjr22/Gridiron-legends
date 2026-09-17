@@ -1,10 +1,12 @@
 import {paintPlayerPortrait,portraitChoice,PORTRAITS_PER_TONE} from './playerPortrait.js';
 const el=id=>document.getElementById(id);
 const TONES=['Light','Tan','Brown','Deep brown'];
-let apply,choice,team;
-export function openPortraitPicker(player,t,onApply){
+let apply,choice,team,onCancel=null,accepted=false;
+export function openPortraitPicker(player,t,onApply,cancel=null){
+ onCancel=cancel;accepted=false;
  team=t;apply=onApply;const current=portraitChoice(t,player);choice={...player,skin:current.tone,portrait:current.face};
  el('portrait-tone').value=choice.skin;render();el('portrait-dialog').showModal();
+ const heading=el('portrait-heading');heading.tabIndex=-1;heading.focus({preventScroll:true});el('portrait-grid').parentElement.scrollTop=0;
 }
 function render(){
  const toneWrap=el('portrait-tone-buttons');
@@ -43,6 +45,7 @@ export function initPortraitPicker(){
   select.value=String(choice.skin);
   render();
  };
- el('portrait-confirm').onclick=()=>{apply({skin:choice.skin,portrait:choice.portrait});el('portrait-dialog').close();};
+ el('portrait-confirm').onclick=()=>{accepted=true;el('portrait-dialog').close();apply({skin:choice.skin,portrait:choice.portrait});};
+ el('portrait-dialog').addEventListener('close',()=>{if(!accepted)onCancel?.();});
  el('portrait-cancel').onclick=()=>el('portrait-dialog').close();
 }

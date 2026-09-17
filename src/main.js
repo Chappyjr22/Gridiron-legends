@@ -22,7 +22,7 @@ import './input/pointer.js';
 initPWA();
 
 document.addEventListener('touchmove',function(e){
-  if(e.target.closest('dialog')||e.target.closest('.stadium-home')||e.target.closest('.card')||e.target.closest('.setup-panel')||e.target.closest('#edit-panel'))return;
+  if(e.target.closest('dialog')||e.target.closest('.stadium-home')||e.target.closest('.card')||e.target.closest('.setup-panel')||e.target.closest('.league-panel')||e.target.closest('#edit-panel'))return;
   e.preventDefault();
 },{passive:false});
 document.addEventListener('gesturestart',function(e){e.preventDefault();});

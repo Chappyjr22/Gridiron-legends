@@ -869,3 +869,22 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
 #career-league-panel .career-list-row{color:#fff3d4;border-color:#6b879d;min-height:40px}
 #career-league-panel .career-list-row.career-selected{color:#ffdc63;background:#244f72}
 #career-league-panel #career-standings-note,#career-league-panel .league-schedule{color:#d2e1ed}
+
+/* Shared mobile controls must remain usable in Safari as well as installed mode. */
+.app-select-native-hidden{position:absolute!important;width:1px!important;height:1px!important;min-height:0!important;opacity:0!important;pointer-events:none!important;clip-path:inset(50%)!important;}
+.portrait-tone-buttons{display:flex;gap:6px;flex-wrap:wrap;}
+.portrait-tone-buttons button{min-height:44px;padding:8px 12px;font:20px var(--sports-face);box-shadow:none;background:#123858;color:#fff3d4;border:2px solid #6a8ca8;}
+.portrait-tone-buttons button.active{background:#ffda54;color:#102a46;border-color:#fff1a4;}
+.teammate-profile-actions,.teammate-name-row{display:flex;flex-wrap:wrap;gap:8px;}
+.teammate-profile-actions button,.teammate-name-row button{min-height:44px;}
+.teammate-name-editor label{display:block;margin:10px 0 6px;}
+#teammate-name-input{min-width:0;flex:1 1 180px;min-height:44px;padding:10px;font-size:16px;color:#0c2742;background:#fff;border:2px solid #587b97;}
+@media(max-height:500px) and (orientation:landscape){
+ #portrait-dialog header{gap:8px;flex-wrap:nowrap;}
+ #portrait-dialog header h2{font-size:23px;}
+ #portrait-dialog header>label{display:none;}
+ .portrait-tone-buttons{flex-wrap:nowrap;}
+ .portrait-tone-buttons button{padding:6px 10px;font-size:19px;}
+ .teammate-attributes{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
+}
+@media(orientation:portrait){.teammate-attributes{grid-template-columns:repeat(2,minmax(0,1fr));}}

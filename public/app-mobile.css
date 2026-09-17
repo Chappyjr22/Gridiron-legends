@@ -4,12 +4,6 @@ html[data-installed-app="true"] {
   user-select: none;
 }
 
-html[data-installed-app="true"] body {
-  padding-top: env(safe-area-inset-top);
-  padding-right: env(safe-area-inset-right);
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-left: env(safe-area-inset-left);
-}
 
 html[data-installed-app="true"] .app {
   min-height: 100dvh;
@@ -347,7 +341,7 @@ html[data-installed-app="true"] .app-select-option b {
 
 @keyframes appScreenIn {
   from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
+  to { opacity: 1; transform: none; }
 }
 
 @keyframes appOverlayIn {
@@ -364,3 +358,11 @@ html[data-installed-app="true"] .app-select-option b {
   from { opacity: 0; transform: translateY(18px) scale(.99); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* Keep typed text readable without iOS focus zoom. */
+html[data-installed-app="true"] input:not([type=color]):not([type=range]),
+html[data-installed-app="true"] textarea{font-size:16px;}
+html[data-installed-app="true"] .app-select-trigger{font-size:14px;}
+html[data-installed-app="true"] .app-select-card header,
+html[data-installed-app="true"] .app-select-search{flex-shrink:0;}
+html[data-installed-app="true"] .app-select-options{min-height:0;overscroll-behavior:contain;}
