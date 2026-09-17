@@ -6,7 +6,7 @@ for(const viewport of [{width:844,height:304},{width:932,height:430},{width:390,
   const shot=async name=>{await page.evaluate(()=>document.fonts.ready);await page.screenshot({path:`test-results/game-menu-${name}-${viewport.width}.png`,animations:'disabled'});};
   await page.goto('/');await page.locator('#btn-new-game').tap();await shot('quickplay');
   await expect(page.locator('#team-select')).toBeInViewport({ratio:1});await expect(page.locator('#opponent-select')).toBeInViewport({ratio:1});await expect(page.locator('#btn-start-play')).toBeInViewport({ratio:1});
-  await page.locator('#btn-start-play').tap();await shot('playbook');await expect(page.locator('#formation-tabs')).toBeInViewport({ratio:1});
+  await page.locator('#btn-start-play').tap();await page.getByRole('button',{name:'Receive Kickoff',exact:true}).tap();await shot('playbook');await expect(page.locator('#formation-tabs')).toBeInViewport({ratio:1});
   if(viewport.width>viewport.height){await expect(page.locator('#play-page-next')).toBeInViewport({ratio:1});await page.locator('#play-page-next').tap();await expect(page.locator('#play-page-label')).toHaveText('2 / 2');}
   await page.locator('.play-btn').first().tap();await page.locator('#btn-pause').tap();await shot('pause');
   await expect(page.locator('#btn-close-settings')).toBeInViewport({ratio:1});await expect(page.locator('#btn-resume')).toBeInViewport({ratio:1});
