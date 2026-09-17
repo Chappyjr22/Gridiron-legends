@@ -905,7 +905,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
 /* Gameplay menus: fixed actions and readable controls at phone heights. */
 #setup-screen .setup-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 #setup-screen #team-setting,#setup-screen #opponent-setting{grid-column:auto;min-width:0}
-#setup-screen .team-picker,#setup-screen .opponent-picker{display:flex;flex-direction:column;gap:6px}
+#setup-screen .team-picker,#setup-screen .opponent-picker{display:flex;flex-direction:column;align-items:stretch;gap:6px}
 #setup-screen .team-select{font:16px Arial,sans-serif;min-height:44px}
 #setup-screen .team-preview{grid-template-columns:36px minmax(0,1fr) auto;padding:6px;gap:6px;min-height:54px}
 #setup-screen .team-badge{width:32px;height:32px;font-size:12px;border-width:2px}
