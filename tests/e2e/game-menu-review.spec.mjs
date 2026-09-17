@@ -12,7 +12,12 @@ for(const viewport of [{width:844,height:304},{width:932,height:430},{width:390,
   await expect(page.locator('#btn-close-settings')).toBeInViewport({ratio:1});await expect(page.locator('#btn-resume')).toBeInViewport({ratio:1});
   await page.locator('#pause-overlay [data-mode="tap"]').tap();await page.locator('#pause-overlay [data-diff="easy"]').tap();await shot('pause-controls');
   await expect(page.locator('#btn-close-settings')).toBeInViewport({ratio:1});await expect(page.locator('#btn-resume')).toBeInViewport({ratio:1});
-  await page.locator('#btn-resume').tap();await expect(page.locator('#pause-overlay')).not.toBeVisible();expect(errors).toEqual([]);await context.close();
+  await page.locator('#btn-resume').tap();await expect(page.locator('#pause-overlay')).not.toBeVisible();
+  await page.evaluate(async()=>{const {game}=await import('/src/state/gameState.js');game.los=72;game.distance=3;game.down=4;const hud=await import('/src/ui/hud.js');hud.showFourthDown();});
+  await shot('fourth-down');for(const id of ['btn-go-for-it','btn-field-goal','btn-punt'])await expect(page.locator('#'+id)).toBeInViewport({ratio:1});
+  await page.evaluate(async()=>{const hud=await import('/src/ui/hud.js');hud.showResult('OPPONENT DRIVE\nKickoff: opponent starts at its own 25.\nThe drive gains 42 yards.\nOpponent 50-yard field goal is good.\nDrive time: 1:37\nBOS 7 | BUF 3',()=>{});});
+  await shot('drive-result');await expect(page.locator('#btn-continue')).toBeInViewport({ratio:1});
+  expect(errors).toEqual([]);await context.close();
  });
 }
 test('sprite inspector exports reversible labels tied to immutable source',async({page})=>{
