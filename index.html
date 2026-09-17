@@ -449,7 +449,7 @@
       <div class="card wide">
         <div class="card-header"><div><p class="card-title">Offensive Playbook</p><p class="card-subtitle" id="playbook-situation">Choose the call</p></div></div>
         <div class="card-body">
-          <div class="callsheet-toolbar"><div id="formation-tabs" role="group" aria-label="Formation"></div><span class="formation-label" id="playbook-formation"></span></div><div class="playbook-pages"><button id="play-page-prev" aria-label="Previous plays">◀</button><span id="play-page-label"></span><button id="play-page-next" aria-label="Next plays">▶</button></div>
+          <div class="callsheet-toolbar"><div id="formation-tabs" role="group" aria-label="Formation"></div><span class="formation-label" id="playbook-formation"></span><div class="playbook-pages"><button id="play-page-prev" aria-label="Previous plays">◀</button><span id="play-page-label"></span><button id="play-page-next" aria-label="Next plays">▶</button></div></div>
           <div class="callsheet-grid" id="callsheet-grid"></div>
         </div>
       </div>
@@ -486,7 +486,7 @@
           <div><p class="card-title">Game Paused</p><p class="card-subtitle">Gridiron Legends</p></div>
           <button class="card-close" id="btn-close-settings" aria-label="Close">&#10005;</button>
         </div>
-        <div class="card-body">
+        <div class="card-body pause-scroll">
           <section class="audio-settings"><h3>Sound &amp; help</h3><button data-audio-mute aria-pressed="true">Sound on</button><label>Effects <input type="range" min="0" max="100" data-audio-volume="effects" aria-label="Effects volume"></label><label>Crowd <input type="range" min="0" max="100" data-audio-volume="crowd" aria-label="Crowd volume"></label><button data-audio-test>Test sound</button><button data-open-guide>Practice guide</button><small data-audio-status role="status" aria-live="polite">Tap Test sound to enable audio.</small></section><p class="settings-section">Gameplay</p>
           <div class="settings-row">
             <span class="label">Difficulty</span>
@@ -524,8 +524,8 @@
             <p id="checkpoint-help" class="experience-note" role="status"></p>
           <button id="btn-main-menu">Main menu</button>
           </div>
-          <button class="btn-primary" id="btn-resume">Resume</button>
         </div>
+        <div class="pause-actions"><button class="btn-primary" id="btn-resume" aria-label="Resume">Resume game</button></div>
       </div>
     </div>
   </div>

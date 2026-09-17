@@ -193,6 +193,7 @@ document.getElementById('btn-pause').addEventListener('click',()=>{
   document.getElementById('checkpoint-help').textContent=game.career&&['live','tackle'].includes(game.phase)?'Leaving now saves your career at the start of this play. Resume will restart this play.':'';
   game.paused=true;
   document.getElementById('pause-overlay').classList.add('show');
+  document.querySelector('#pause-overlay .card-body').scrollTop=0;
 });
 document.getElementById('btn-resume').addEventListener('click',closeSettings);
 document.getElementById('btn-close-settings').addEventListener('click',closeSettings);
@@ -209,7 +210,7 @@ export function openSetup(settingsOnly=false){
   syncSettingsUI();
   document.getElementById('start-screen').classList.remove('show');
   document.getElementById('setup-screen').classList.add('show');
-  document.getElementById('setup-title').textContent=settingsOnly?'Settings':'New Game';
+  document.getElementById('setup-title').textContent=settingsOnly?'Settings':'Quick Play';
   document.getElementById('setup-subtitle').textContent=settingsOnly?'Customize how Gridiron Legends plays':'Set the rules before kickoff';
   document.getElementById('btn-start-play').style.display=settingsOnly?'none':'block';
   document.getElementById('quarter-setting').style.display=settingsOnly?'none':'block';
