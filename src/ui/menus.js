@@ -26,8 +26,9 @@ export function updateTeamPreview(teamId){
 }
 export function syncMatchupUI(){
   syncSettingsUI();
-  applyUniform(teamState.userTeam,OFF);
-  applyUniform(contrastingOpponent(teamState.userTeam,teamState.cpuTeam),DEF);
+  const userIsHome=game.userIsHome!==false;
+  applyUniform(teamState.userTeam,OFF,userIsHome);
+  applyUniform(contrastingOpponent(teamState.userTeam,teamState.cpuTeam,userIsHome),DEF,!userIsHome);
   document.getElementById('hud-user-name').textContent=teamState.userTeam.abbr;
   document.getElementById('hud-user-name').title=League.fullName(teamState.userTeam);
   document.getElementById('hud-cpu-name').textContent=teamState.cpuTeam.abbr;
@@ -37,6 +38,8 @@ export function syncMatchupUI(){
   for(const [side,team] of [['user',teamState.userTeam],['cpu',teamState.cpuTeam]]){
     const el=document.getElementById('hud-'+side+'-team');
     el.style.setProperty('--team-primary',team.colors.primary);
+    const uniform=side==='user'?OFF:DEF;
+    el.style.setProperty('--helmet-color',uniform.helmet);el.style.setProperty('--helmet-stripe',uniform.stripe);
     el.setAttribute('aria-label',League.fullName(team));
   }
   END_ZONE_STYLE.near.label=teamState.userTeam.abbr;

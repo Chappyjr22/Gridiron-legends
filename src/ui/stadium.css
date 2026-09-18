@@ -1008,3 +1008,5 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
  #career-qb-stats .stat-tiles>div{padding:0;}
  #career-qb-stats .stat-tiles dt,#career-qb-stats .stat-tiles dd{font:16px/1 var(--sports-face);}
 }
+
+.topbar .score-helmet{color:var(--helmet-color,var(--team-primary,#326591));}

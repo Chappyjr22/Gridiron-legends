@@ -1,3 +1,5 @@
+import {resolvedUniform} from '../rendering/uniformVariants.js';
+import {contrastingOpponent} from '../rendering/uniforms.js';
 import {normalizeQuarterback,upgradeOffer,levelThreshold,weeklyGoal,QB_KEYS,assessGoal} from '../career/development.js';
 import {paintPlayerPortrait} from './playerPortrait.js';
 import {initPortraitPicker,openPortraitPicker} from './portraitPicker.js';
@@ -77,7 +79,7 @@ function render(){
  el('career-player-name').textContent=rosterName(player);el('career-player-detail').textContent=`#${player.number} QB · ${Career.ARCHETYPES[player.archetype].name} · ${team.city} ${team.name}`;
  el('career-screen').style.setProperty('--career-color',team.colors.primary);
  el('career-jersey-number').textContent=player.number;
- paintMenuPlayer(el('career-player-sprite'),team,player.skin);
+ paintMenuPlayer(el('career-player-sprite'),team,player.skin,match?match.homeTeamId===career.teamId:true);
  paintPlayerPortrait(el('qb-profile-sprite'),team,player);el('qb-profile-name').textContent=rosterName(player);el('qb-profile-detail').textContent=`#${player.number} · QB · LV ${career.level}`;el('qb-profile-xp').value=career.xp;
  el('career-user-abbr').textContent=team.abbr;el('career-user-record').textContent=recordLabel(team);
  el('career-open-player').textContent=career.points?`${career.points} upgrade ${career.points===1?'point':'points'}`:'View your player';
@@ -96,6 +98,9 @@ function render(){
  el('career-play').hidden=!match;el('career-next-season').hidden=!career.postseason?.champion;
  if(match){
   const opponent=League.findTeamState(career.league,match.homeTeamId===career.teamId?match.awayTeamId:match.homeTeamId);
+  const home=match.homeTeamId===career.teamId,ours=resolvedUniform(team,home),theirs=resolvedUniform(contrastingOpponent(team,opponent,home),!home);
+  const helmets=document.querySelectorAll('.helmet-matchup .helmet');
+  [ours,theirs].forEach((u,i)=>{helmets[i].style.color=u.helmet;helmets[i].style.setProperty('--helmet-stripe',u.stripe);});
   el('career-opponent-abbr').textContent=opponent.abbr;el('career-opponent-record').textContent=recordLabel(opponent);el('career-screen').style.setProperty('--opponent-color',opponent.colors.primary);
   el('career-next-opponent').textContent=`${match.homeTeamId===career.teamId?'vs':'at'} ${opponent.city} ${opponent.name}`;
   el('career-matchup').textContent=`${recordLabel(opponent)} · Defense ${opponent.ratings.defense} · ${match.round===3?'Championship':match.round===2?(career.stage==='college'?'National semifinal':'Conference final'):match.round===1?(career.stage==='college'?'Conference championship':'Conference semifinal'):`Week ${match.week}`}`;
@@ -128,15 +133,15 @@ function render(){
 }
 function launch(){
  const match=Career.nextMatch(career);if(!match)return;
- if(!exhibition)exhibition={teams:{...teamState},game:{userTeamId:game.userTeamId,cpuTeamId:game.cpuTeamId,difficulty:game.difficulty,quarterMinutes:game.quarterMinutes}};
+ if(!exhibition)exhibition={teams:{...teamState},game:{userIsHome:game.userIsHome,userTeamId:game.userTeamId,cpuTeamId:game.cpuTeamId,difficulty:game.difficulty,quarterMinutes:game.quarterMinutes}};
  career.activeMatch=match.id;
  career.matchContext??={difficulty:career.settings.difficulty,quarterMinutes:career.settings.quarterMinutes};
  teamState.franchise=career.league;game.userTeamId=career.teamId;game.cpuTeamId=match.homeTeamId===career.teamId?match.awayTeamId:match.homeTeamId;
  teamState.userTeam=League.findTeamState(career.league,career.teamId);teamState.cpuTeam=League.findTeamState(career.league,game.cpuTeamId);
- Object.assign(game,career.settings);game.career=true;
+ Object.assign(game,career.settings);game.career=true;game.userIsHome=match.homeTeamId===career.teamId;
  el('career-screen').classList.remove('show');el('game-view').style.display='flex';
  syncMatchupUI();
- if(career.checkpoint)restoreCheckpoint(career.checkpoint);else startNewGame({career:true});
+ if(career.checkpoint)restoreCheckpoint(career.checkpoint);else startNewGame({career:true,userIsHome:game.userIsHome});
  syncSettingsUI();
  persist();ensureLoopStarted();
 }

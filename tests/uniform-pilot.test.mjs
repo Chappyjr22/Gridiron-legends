@@ -19,3 +19,13 @@ for(const [name,count]of [['sprites',26],['presnap-offense',4],['presnap-defense
 const {ensureUniformVariants}=await import('../src/rendering/uniformVariants.js');
 const legacy={uniform:{jersey:'#123456',helmet:'#eeeeee',stripe:'#abcdef'}};ensureUniformVariants(legacy);assert.equal(legacy.uniforms.home.jersey,'#123456');for(const v of Object.values(legacy.uniforms))assert.equal(v.pants,'#ffffff');legacy.uniforms.away.pants='#102030';ensureUniformVariants(legacy);assert.equal(legacy.uniforms.away.pants,'#102030');
 console.log('All 33 poses cover four materials with immutable source hashes; legacy pants defaults preserve saved variants.');
+const {defaultUniforms,resolvedUniform}=await import('../src/rendering/uniformVariants.js');
+const {contrastingOpponent}=await import('../src/rendering/uniforms.js');
+const colors={primary:'#174a7e',secondary:'#dce8ef',accent:'#d44a3a'};
+const defaults=defaultUniforms({colors});assert.equal(defaults.home.helmet,colors.primary);assert.equal(defaults.away.helmet,colors.primary);
+const oldDefault={colors,uniformPreference:'auto',uniforms:structuredClone(defaults)};oldDefault.uniforms.home.helmet=colors.secondary;ensureUniformVariants(oldDefault);assert.equal(oldDefault.uniforms.home.helmet,colors.primary);
+for(const kind of ['material','explicit','saved']){const t={colors,uniformPreference:'auto',uniforms:structuredClone(defaults)};t.uniforms.home.helmet=colors.secondary;if(kind==='material')t.uniforms.away.pants='#102030';if(kind==='explicit')t.uniformPreference='home';if(kind==='saved')t.uniformsCustomized=true;const expected=structuredClone(t.uniforms);ensureUniformVariants(t);assert.deepEqual(t.uniforms,expected);}
+const user={colors},opponent={colors,uniformPreference:'home',uniforms:structuredClone(defaults)},snapshot=structuredClone(opponent);
+const contrasting=contrastingOpponent(user,opponent);assert.equal(resolvedUniform(contrasting,false).jersey,colors.secondary);assert.deepEqual(opponent,snapshot);
+assert.equal(resolvedUniform(user,false).jersey,colors.secondary);assert.equal(resolvedUniform(user,true).jersey,colors.primary);
+console.log('Uniform regression: restored defaults, custom colors preserved, home/away selection and real alternate contrast kits passed.');

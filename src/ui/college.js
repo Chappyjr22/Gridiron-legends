@@ -4,7 +4,7 @@ import * as Career from '../career/career.js';
 import * as League from '../state/league.js';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const el=id=>document.getElementById(id);
-const helmet=t=>`<svg class="school-helmet" style="--career-color:${t.colors.primary};--team-primary:${t.colors.primary}" viewBox="0 0 32 28" aria-hidden="true"><use href="#helmet-icon"/></svg>`;
+const helmet=t=>`<svg class="school-helmet" style="--career-color:${t.colors.primary};--team-primary:${t.colors.primary};--helmet-stripe:${t.colors.accent}" viewBox="0 0 32 28" aria-hidden="true"><use href="#helmet-icon"/></svg>`;
 let selected=COLLEGE_TEAMS[0].id,conference=COLLEGE_TEAMS[0].conference;
 function preview(school){
  const tier=SCHOOL_TIERS[school.tier],attrs=Career.ARCHETYPES[el('career-archetype').value].attributes;

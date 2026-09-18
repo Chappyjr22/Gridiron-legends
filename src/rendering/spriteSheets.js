@@ -27,11 +27,8 @@ export function colorRamp(hex){
   const rgb=hexToRGB(hex);
   return [0.38,0.62,0.9,1.2].map(mult=>rgb.map(channel=>Math.max(0,Math.min(255,Math.round(channel*mult)))));
 }
-export function applyUniform(team,target){
-  // OFF is the user's side and DEF the opponent side. Auto therefore uses the
-  // traditional home look for the user and away look for the opponent; a
-  // team's explicit Home/Away/Alternate preference overrides this.
-  const uniform=resolvedUniform(team,target===OFF);
+export function applyUniform(team,target,isHome=target===OFF){
+  const uniform=resolvedUniform(team,isHome);
   target.jersey=uniform.jersey;
   target.helmet=uniform.helmet;
   target.stripe=uniform.stripe;

@@ -35,7 +35,7 @@ import { interaction } from '../input/interactionState.js';
 export const uiHooks={renderCallsheet:()=>{},syncMatchup:()=>{},returnToMainMenu:()=>{},checkpoint:()=>{},finishCareer:()=>{}};
 export const matchState={stats:emptyMatch()};
 let restoring=false;
-const checkpointFields=['playerScore','cpuScore','quarter','quarterMinutes','clock','overtime','otRound','down','distance','los','firstDownYard','difficulty','momentum','possession','firstHalfReceiver','secondHalfReceiver','userTeamId','cpuTeamId','career','practice','passMode','throwType','showRoutes'];
+const checkpointFields=['playerScore','cpuScore','quarter','quarterMinutes','clock','overtime','otRound','down','distance','los','firstDownYard','difficulty','momentum','possession','firstHalfReceiver','secondHalfReceiver','userTeamId','cpuTeamId','userIsHome','career','practice','passMode','throwType','showRoutes'];
 export function getCheckpoint(resume){
  return JSON.parse(JSON.stringify({game:Object.fromEntries(checkpointFields.map(k=>[k,game[k]])),stats:matchState.stats,resume}));
 }
@@ -209,6 +209,7 @@ function consumeClock(seconds){
 
 export function startNewGame(options={}){
   game.career=!!options.career;
+  game.userIsHome=options.userIsHome??true;
   matchState.stats=emptyMatch();
   game.practice=false;
   teamState.userTeam=League.findTeamState(teamState.franchise,game.userTeamId)||teamState.franchise.teams[0];
@@ -237,6 +238,7 @@ export function startNewGame(options={}){
 }
 export function startPractice(){
   game.career=false;
+  game.userIsHome=true;
   matchState.stats=emptyMatch();
   game.practice=true;
   teamState.userTeam=League.findTeamState(teamState.franchise,game.userTeamId)||teamState.franchise.teams[0];

@@ -54,3 +54,21 @@ test('mismatched mask falls back safely without blocking sprite readiness',async
  await page.route('**/assets/masks/sprites-uniform.json',async route=>{const response=await route.fetch(),mask=await response.json();mask.sha256='wrong';await route.fulfill({json:mask});});await page.goto('/');
  await expect.poll(()=>page.evaluate(async()=>{const s=await import('/src/rendering/spriteSheets.js');return [s.uniformMaskStatus.sprites,s.spriteState.spritesReady];})).toEqual(['fallback',true]);
 });
+
+test('career away uniforms agree with scoreboard and survive a resume',async({page})=>{
+ await page.goto('/');await page.getByRole('button',{name:'Career Mode',exact:true}).click();await page.getByRole('button',{name:'Start new career',exact:true}).click();await page.getByLabel('Player name',{exact:true}).fill('Uniform Audit');await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Begin senior season',exact:true}).click();await page.getByRole('button',{name:'Play next game',exact:true}).click();
+ const check=()=>page.evaluate(async()=>{const {game,teamState}=await import('/src/state/gameState.js');const {OFF,DEF}=await import('/src/state/constants.js');const {resolvedUniform}=await import('/src/rendering/uniformVariants.js');const ours=resolvedUniform(teamState.userTeam,game.userIsHome);return {home:game.userIsHome,jersey:OFF.jersey,expected:ours.jersey,helmet:OFF.helmet,hud:document.getElementById('hud-user-team').style.getPropertyValue('--helmet-color'),opponentHelmet:DEF.helmet,opponentHud:document.getElementById('hud-cpu-team').style.getPropertyValue('--helmet-color')};});
+ let s=await check();expect(s.home).toBe(false);expect(s.jersey).toBe(s.expected);expect(s.helmet).toBe(s.hud);expect(s.opponentHelmet).toBe(s.opponentHud);
+ await page.reload();await page.getByRole('button',{name:'Career Mode',exact:true}).click();await page.getByRole('button',{name:'Continue last career',exact:true}).click();await page.getByRole('button',{name:'Resume game',exact:true}).click();expect(await check()).toEqual(s);
+});
+
+test('real team home and away palettes across gameplay and presnap poses',async({page})=>{
+ await page.goto('/');await expect.poll(()=>page.evaluate(async()=>{const s=await import('/src/rendering/spriteSheets.js');return s.spriteState.spritesReady&&s.spriteState.presnapSpritesReady&&s.spriteState.defensePresnapSpritesReady;})).toBe(true);
+ await page.evaluate(async()=>{
+  const s=await import('/src/rendering/spriteSheets.js'),{TEAMS}=await import('/src/state/league.js'),{resolvedUniform}=await import('/src/rendering/uniformVariants.js');
+  document.body.innerHTML='';document.body.style='margin:0;background:#263c50;color:white;font:16px sans-serif;display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:12px';
+  for(const id of ['bos','cin','min'])for(const home of [true,false]){const team=structuredClone(TEAMS.find(t=>t.id===id)),uniform=resolvedUniform(team,home),card=document.createElement('section');card.innerHTML=`<b>${team.abbr} ${home?'Home':'Away'} · helmet ${uniform.helmet} · jersey ${uniform.jersey}</b>`;document.body.append(card);
+   for(const [img,row,col] of [[s.spriteImage,0,3],[s.spriteImage,1,0],[s.spriteImage,4,4],[s.presnapSpriteImage,0,0],[s.presnapSpriteImage,0,3],[s.defensePresnapSpriteImage,0,1]]){const canvas=document.createElement('canvas');canvas.width=128;canvas.height=128;canvas.style='width:96px;height:96px;image-rendering:pixelated';const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;ctx.drawImage(s.makeTeamSpriteSheet(uniform,2,img,img!==s.spriteImage),col*64,row*64,64,64,0,0,128,128);card.append(canvas);}
+  }
+ });await page.screenshot({path:'test-results/uniform-real-team-palettes.png',fullPage:true});
+});
