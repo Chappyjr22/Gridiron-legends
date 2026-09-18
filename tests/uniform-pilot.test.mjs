@@ -29,3 +29,5 @@ const user={colors},opponent={colors,uniformPreference:'home',uniforms:structure
 const contrasting=contrastingOpponent(user,opponent);assert.equal(resolvedUniform(contrasting,false).jersey,colors.secondary);assert.deepEqual(opponent,snapshot);
 assert.equal(resolvedUniform(user,false).jersey,colors.secondary);assert.equal(resolvedUniform(user,true).jersey,colors.primary);
 console.log('Uniform regression: restored defaults, custom colors preserved, home/away selection and real alternate contrast kits passed.');
+
+{const m=JSON.parse(readFileSync('public/assets/masks/presnap-offense-uniform.json'));const labels=new Uint8Array(m.width*m.height);for(const [s,n,id]of m.runs)labels.fill(id,s,s+n);assert.equal(labels[41*m.width+3*64+17],3,'OL forward sleeve must use jersey color');}
