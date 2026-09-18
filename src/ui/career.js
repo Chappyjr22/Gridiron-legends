@@ -99,6 +99,8 @@ function render(){
   el('career-opponent-abbr').textContent=opponent.abbr;el('career-opponent-record').textContent=recordLabel(opponent);el('career-screen').style.setProperty('--opponent-color',opponent.colors.primary);
   el('career-next-opponent').textContent=`${match.homeTeamId===career.teamId?'vs':'at'} ${opponent.city} ${opponent.name}`;
   el('career-matchup').textContent=`${recordLabel(opponent)} · Defense ${opponent.ratings.defense} · ${match.round===3?'Championship':match.round===2?(career.stage==='college'?'National semifinal':'Conference final'):match.round===1?(career.stage==='college'?'Conference championship':'Conference semifinal'):`Week ${match.week}`}`;
+  if(opponent.division===team.division&&career.stage!=='college')el('career-matchup').textContent+=' · Division rival';
+  if(!match.round&&career.league.week>=(career.stage==='college'?9:14))el('career-matchup').textContent+=' · Playoff race';
   el('career-play').textContent=career.checkpoint?'Resume game':'Play next game';
   if(career.checkpoint?.resume.type==='offense')el('career-matchup').textContent+=' · Resumes before the snap';
  }else if(career.postseason?.champion){
@@ -120,7 +122,7 @@ function render(){
  const objective=weeklyGoal(career);
  if(match){el('career-weekly-goal').textContent=objective.label;el('career-goal-reward').textContent=`+${objective.xp} XP`;}
  let journey=el('career-journey');if(!journey){journey=document.createElement('section');journey.id='career-journey';el('career-awards').after(journey);}
- journey.innerHTML=`<h3>Career timeline</h3>${career.proEntry?`<p>${escape(career.proEntry.expectation)} · Coach confidence ${career.coachConfidence??50}%</p>`:''}${(career.seasonArchive||[]).map(s=>`<p>Season ${s.season} · ${escape(s.team)} · ${s.record.wins}–${s.record.losses} · ${s.stats.passingYards} YDS · ${s.stats.passingTD} TD<br>${escape(s.awards.join(' · '))}</p>`).join('')}${career.collegeArchive?`<p>College: ${escape(career.collegeArchive.awards.map(a=>a.title).join(' · '))}</p>`:''}${career.offseasonNews?.length?`<details><summary>Offseason changes (${career.offseasonNews.length})</summary>${career.offseasonNews.map(n=>`<p>${escape(n)}</p>`).join('')}</details>`:''}`;
+ journey.innerHTML=`<h3>Career timeline</h3><p>Next passing milestone: ${Math.max(1000,Math.ceil((career.totals.passingYards+1)/1000)*1000).toLocaleString()} yards</p>${career.proEntry?`<p>${escape(career.proEntry.expectation)} · Coach confidence ${career.coachConfidence??50}%</p>`:''}${(career.seasonArchive||[]).map(s=>`<p>Season ${s.season} · ${escape(s.team)} · ${s.record.wins}–${s.record.losses} · ${s.stats.passingYards} YDS · ${s.stats.passingTD} TD<br>${escape(s.awards.join(' · '))}</p>`).join('')}${career.collegeArchive?`<p>College: ${escape(career.collegeArchive.awards.map(a=>a.title).join(' · '))}</p>`:''}${career.offseasonNews?.length?`<details><summary>Offseason changes (${career.offseasonNews.length})</summary>${career.offseasonNews.map(n=>`<p>${escape(n)}</p>`).join('')}</details>`:''}`;
 
  el('career-awards').textContent=career.awards.map(a=>`${career.stage==='college'?'College':'Season '+a.season}: ${a.title}`).join(' · ')||'First milestone: finish your first game.';
 }
@@ -255,7 +257,7 @@ export function initCareer(){
  });
  el('career-next-season').addEventListener('click',()=>{if(Career.startNextSeason(career)){persist();render();el('career-progress-dialog').showModal();}});
  el('career-export').addEventListener('click',()=>{
-  const raw=career?JSON.stringify(career,null,2):careerStorage().getItem(Career.CAREER_KEY);if(!raw)return;
+  const raw=career?JSON.stringify(career):careerStorage().getItem(Career.CAREER_KEY);if(!raw)return;
   const url=URL.createObjectURL(new Blob([raw],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='gridiron-career-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
  });
  uiHooks.checkpoint=saved=>{if(career?.activeMatch){career.checkpoint=saved;persist();

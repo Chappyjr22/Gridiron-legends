@@ -12,9 +12,9 @@ import * as League from '../state/league.js';
 import {emptyStats,addStats} from './stats.js';
 export const CAREER_KEY='gridironLegendsCareerV1';
 export const ARCHETYPES={
- precision:{name:'Precision passer',description:'Place the ball into tighter windows.',attributes:{accuracy:82,arm:68,release:73}},
- power:{name:'Strong arm',description:'Put more velocity behind downfield throws.',attributes:{accuracy:70,arm:84,release:69}},
- quick:{name:'Quick release',description:'Get the ball out before pressure arrives.',attributes:{accuracy:74,arm:69,release:83}}
+ precision:{name:'Precision passer',description:'Place the ball into tighter windows.',attributes:{accuracy:82,arm:68,release:73,speed:68}},
+ power:{name:'Strong arm',description:'Put more velocity behind downfield throws.',attributes:{accuracy:70,arm:84,release:69,speed:65}},
+ quick:{name:'Quick release',description:'Get the ball out before pressure arrives.',attributes:{accuracy:74,arm:69,release:83,speed:76}}
 };
 export function careerPlayer(c){return League.findTeamState(c.league,c.teamId).roster.find(p=>p.id===c.playerId);}
 export function createCareer({name,number=7,teamId='bos',archetype='precision',skin=2,portrait=0,difficulty='medium',quarterMinutes=2,schoolId=null}){
@@ -91,6 +91,7 @@ export function progressPostseason(c){
   for(const g of games)if(g.status!=='completed'&&g.homeTeamId!==c.teamId&&g.awayTeamId!==c.teamId)simulatePostseasonGame(c,g);
   if(games.some(g=>g.status!=='completed'))return;
   const winners=games.map(g=>g.homeScore>g.awayScore?g.homeTeamId:g.awayTeamId);
+  if(c.stage==='college'&&p.round===1&&winners.includes(c.teamId)&&!c.awards.some(a=>a.title==='Conference champion'))c.awards.push({season:c.league.season,title:'Conference champion'});
   if(winners.length===1){p.champion=winners[0];if(p.champion===c.teamId)c.awards.push({season:c.league.season,title:c.stage==='college'?'National college champion':'League champion'});return;}
   p.round++;
   for(let i=0;i<winners.length;i+=2)p.games.push(bracketGame(c,winners[i],winners[i+1],p.round,i));
@@ -127,6 +128,7 @@ export function completeCareerGame(c,gameId,userScore,cpuScore,matchStats){
  c.coachConfidence=Math.max(0,Math.min(100,(c.coachConfidence??50)+(userScore>cpuScore?3:-2)+(goal.met?2:0)-Math.min(6,stats.interceptions*2)));
  c.lastResult.coachConfidence=c.coachConfidence;
  for(const [threshold,title,key] of [[1000,'1,000 career passing yards','passingYards'],[10000,'10,000 career passing yards','passingYards'],[100,'100 career passing touchdowns','passingTD'],[100,'100 career rushing yards','rushingYards']])if(c.totals[key]>=threshold&&!c.awards.some(a=>a.title===title))c.awards.push({season:c.league.season,title});
+ for(let mark=2000;mark<=c.totals.passingYards;mark+=1000)if(!c.awards.some(a=>a.title===`${mark.toLocaleString('en-US')} career passing yards`))c.awards.push({season:c.league.season,title:`${mark.toLocaleString('en-US')} career passing yards`});
  if(c.history.length===1)c.awards.push({season:c.league.season,title:c.stage==='college'?'Senior season debut':'Rookie debut'});
  c.activeMatch=null;c.checkpoint=null;c.matchContext=null;
  if(!match.round){League.simulateWeek(c.league,c.league.week,c.teamId);if(c.league.week<(c.stage==='college'?12:17))League.advanceWeek(c.league);else if(c.stage==='college')seedCollegePostseason(c);else seedPlayoffs(c);}

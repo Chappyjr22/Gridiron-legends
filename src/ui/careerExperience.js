@@ -12,7 +12,7 @@ let saveCareer=()=>false;
 function attributeLabel(key){return String(key).replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase());}
 function line(s,position){
  if(!s)return 'Stats unavailable for this game';
- if(position==='QB')return `${s.completions}/${s.attempts} CMP · ${s.passingYards} YDS · ${s.passingTD} TD · ${s.interceptions} INT · ${s.sacks} SACKS`;
+ if(position==='QB')return `${s.completions}/${s.attempts} CMP · ${s.passingYards} YDS · ${s.passingTD} TD · ${s.interceptions} INT · ${s.sacks} SACKS · ${s.rushingYards} RUSH YDS · ${s.rushingTD} RUSH TD`;
  if(position==='RB')return `${s.carries} CAR · ${s.rushingYards} RUSH YDS · ${s.rushingTD} RUSH TD · ${s.receptions} REC · ${s.receivingYards} REC YDS`;
  if(['WR','TE'].includes(position))return `${s.receptions}/${s.targets} REC/TGT · ${s.receivingYards} YDS · ${s.receivingTD} TD`;
  return 'Individual blocking and defensive stats are not tracked yet.';

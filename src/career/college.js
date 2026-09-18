@@ -105,7 +105,8 @@ export function collegeGameAssessment(c,stats,won,opponent){
  const goalMet=stats.attempts>=6&&completion>=tier.goalCompletions&&stats.interceptions<=tier.goalTurnovers;
  const difficulty={easy:0,medium:3,hard:6,gridiron:9}[settings.difficulty]||0;
  // Efficiency avoids rewarding longer quarters simply for generating more snaps.
- const score=stats.attempts<6?20:clamp(completion*30+clamp(stats.passingYards/attempts,0,10)*3+clamp(stats.passingTD/attempts,0,.12)/.12*20-stats.interceptions/attempts*120+(won?8:0)+clamp((opponent.ratings.defense-65)/3,-5,8)+difficulty,0,100);
+ const performance=clamp(completion*30+clamp(stats.passingYards/attempts,0,10)*3+clamp(stats.passingTD/attempts,0,.12)/.12*20-stats.interceptions/attempts*120+(won?8:0)+clamp((opponent.ratings.defense-65)/3,-5,8)+difficulty,0,100);
+ const weight=Math.min(1,stats.attempts/6);const score=20*(1-weight)+performance*weight;
  return {score:Math.round(score),difficulty:settings.difficulty,quarterMinutes:settings.quarterMinutes,opponentDefense:opponent.ratings.defense,goal:{label:`Complete ${Math.round(tier.goalCompletions*100)}% of passes, at most ${tier.goalTurnovers} INT (6+ attempts)`,met:goalMet,xp:goalMet?tier.goalXP:0}};
 }
 export function draftProjection(c){

@@ -30,3 +30,14 @@ console.log('Career depth: rating repair, costs, persistence, development, goals
  assert.ok(h.game.playerScore>=6);assert.equal(h.engine.matchState.stats.players[qb.playerId].rushingTD,1);
 }
 console.log('QB scrambling crosses the goal line, scores and credits a rushing touchdown.');
+{
+ let c=C.createCareer({name:'Twenty Season Save'});const original=C.careerPlayer(c).id;
+ for(let year=1;year<=20;year++){
+  let games=0;while(!c.postseason?.champion){const m=C.nextMatch(c);assert.ok(m);c.activeMatch=m.id;C.completeCareerGame(c,m.id,21,7,{players:{[c.playerId]:{...emptyStats(),attempts:15,completions:10,passingYards:160,passingTD:2}},plays:[]});assert.ok(++games<=20);}
+  C.startNextSeason(c);c=C.parseCareer(JSON.stringify(c));assert.ok(c);assert.equal(c.playerId,original);
+  const ids=c.league.teams.flatMap(t=>t.roster.map(p=>p.id));assert.equal(new Set(ids).size,ids.length);
+  for(const t of c.league.teams){assert.equal(new Set(t.roster.map(p=>p.number)).size,t.roster.length);assert.equal(t.roster.filter(p=>p.slot==='QB').length,1);}
+ }
+ assert.equal(c.seasonArchive.length,20);assert.ok(c.offseasonNews.length);
+}
+console.log('Twenty seasons preserve identity, unique roster IDs/numbers, archives and readable saves.');

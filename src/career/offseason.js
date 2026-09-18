@@ -24,7 +24,7 @@ export function evolveLeague(c,next){
   for(const coach of Object.values(t.coaches)){coach.contractYears=Math.max(0,(coach.contractYears||1)-1);if(!coach.contractYears)coach.contractYears=3;}
   t.roster=prior.roster.map((old,i)=>{
    const p=structuredClone(old);p.age++;p.contractYears=Math.max(0,(p.contractYears||1)-1);
-   if(p.id===c.playerId){normalizeQuarterback(p);if(!p.contractYears){p.contractYears=3;news.push(`${t.abbr}: your contract renewed for 3 seasons. Coach confidence ${c.coachConfidence??50}%.`);}return p;}
+   if(p.id===c.playerId){normalizeQuarterback(p);if(!p.contractYears){p.contractYears=(c.coachConfidence??50)>=70?4:(c.coachConfidence??50)>=40?3:1;news.push(`${t.abbr}: your contract renewed for ${p.contractYears} seasons. Coach confidence ${c.coachConfidence??50}%.`);}return p;}
    if(p.age>=36||(p.age>=33&&p.rating<72)){
     const rookie={...rookies.find(r=>r.slot===p.slot)||rookies[i],age:21,contractYears:4};
     news.push(`${t.abbr}: ${p.firstName} ${p.lastName} retired. Rookie ${rookie.firstName} ${rookie.lastName} joins at ${rookie.slot}.`);return rookie;
