@@ -7,6 +7,7 @@ for(const height of [304,390])test(`scramble and career depth at 844x${height}`,
  await page.evaluate(async()=>{const {renderPlayerStats}=await import('/src/ui/careerStats.js');const {emptyStats}=await import('/src/career/stats.js');const s=(n)=>({...emptyStats(),attempts:n*10,completions:n*7,passingYards:n*100,passingTD:n,carries:n*2,rushingYards:n*15,rushingTD:n});renderPlayerStats({lastResult:{stats:s(1)},seasonStats:s(2),totals:s(3)});});
  await expect(page.getByRole('button',{name:'Passing',exact:true})).toHaveAttribute('aria-pressed','true');
  await expect(page.getByRole('region',{name:'Game passing'})).toContainText('100');
+ for(const section of await page.locator('.stat-comparison>section').all())await expect(section).toBeInViewport({ratio:1});
  await page.screenshot({path:`test-results/passing-stats-${height}.png`});
  await page.getByRole('button',{name:'Rushing',exact:true}).tap();
  for(const [title,values] of [['Game',['2','15','7.5','1']],['Season',['4','30','7.5','2']],['Career',['6','45','7.5','3']]]){

@@ -992,3 +992,19 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
  .player-stat-categories{margin-bottom:2px;}
  #career-qb-stats .stat-tiles{gap:0;margin:0;}
 }
+/* Keep the category controls beside the numbers on short landscape screens. */
+@media(orientation:landscape) and (max-height:500px){
+ #career-qb-stats{display:grid;grid-template-columns:100px minmax(0,1fr);gap:10px;align-items:start;}
+ .player-stat-categories{flex-direction:column;margin:0;gap:8px;}
+ .player-stat-categories button{padding-inline:4px;}
+ #career-qb-stats .stat-comparison>section{padding:5px 10px;}
+ #career-qb-stats .stat-comparison h3{font:22px/1 var(--sports-face);margin:0 0 4px;}
+ #career-qb-stats .stat-tiles>div{padding:2px 0;}
+ #career-qb-stats .stat-tiles dt,#career-qb-stats .stat-tiles dd{font:20px/1 var(--sports-face);}
+}
+@media(orientation:landscape) and (max-height:350px){
+ #career-qb-stats .stat-comparison>section{padding:2px 8px;}
+ #career-qb-stats .stat-comparison h3{font-size:20px;margin-bottom:2px;}
+ #career-qb-stats .stat-tiles>div{padding:0;}
+ #career-qb-stats .stat-tiles dt,#career-qb-stats .stat-tiles dd{font:16px/1 var(--sports-face);}
+}
