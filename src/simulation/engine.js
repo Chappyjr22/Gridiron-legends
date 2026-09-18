@@ -836,7 +836,8 @@ function updateSimulation(dt,now){
         }
       }
     }
-    if(game.phase==='live'){
+    // Screen-space aiming must stay stable while the finger is held down.
+    if(game.phase==='live'&&!interaction.aiming){
       game.cameraYard+= ((entities.ballCarrier?entities.ballCarrier.yfield/XPX:game.los)-game.cameraYard)*Math.min(1,dt*4);
     }
   }

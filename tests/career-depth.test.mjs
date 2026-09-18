@@ -60,3 +60,13 @@ for(const offset of [-60,0]){
  h.game.paused=false;h.engine.releaseThrow({x:cx+offset,y:cy+40});assert.equal(h.entities.ball.inFlight,true);assert.equal(h.game.scrambling,false);assert.equal(h.game.playFacts.threw,true);
 }
 console.log('Backward gestures scramble after pocket time in all three control modes; forward/lateral throws and pause remain safe.');
+
+{
+ const h=await harness();await h.load('src/input/pointer.js');h.engine.startNewGame({career:true});h.engine.startPlayerDrive(25);h.engine.choosePlay('trips_slants');h.game.passMode='drag';
+ const qb=h.entities.players.qb;for(const d of [...Object.values(h.entities.players),...h.entities.decor])if(d!==qb){d.x=-10000;d.yfield=-10000;}
+ const {toCanvas}=await h.load('src/rendering/players.js');const {cx,cy}=toCanvas(qb),camera=h.game.cameraYard;
+ h.event('pointerdown',{clientX:cx,clientY:cy+40});h.event('pointermove',{clientX:cx-45,clientY:cy+40});
+ for(let i=0;i<45;i++)h.step(16);assert.equal(h.game.cameraYard,camera);h.event('pointerup');assert.equal(h.game.scrambling,true);
+ h.step(16);assert.notEqual(h.game.cameraYard,camera);
+}
+console.log('Holding a backward aim through the snap keeps the camera stable; following resumes after release.');
