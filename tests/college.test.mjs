@@ -34,7 +34,7 @@ for(const win of [true,false]){
   const stats={...emptyStats(),attempts:20,completions:win?16:8,passingYards:win?240:70,passingTD:win?3:0,interceptions:win?0:3};
   const result=C.completeCareerGame(c,match.id,win?35:7,win?7:35,{players:{[c.playerId]:stats},plays:[]});
   assert.ok(result);played++;assert.ok(played<=15);
-  assert.equal(result.collegeAssessment.goal.met,win);
+  assert.equal(result.collegeAssessment.goal.met,win&&result.goal.kind!=='scramble');
   assert.equal(result.xpBreakdown.reduce((n,x)=>n+x.xp,0),result.xp);
   c=C.parseCareer(JSON.stringify(c));assert.ok(c);
  }

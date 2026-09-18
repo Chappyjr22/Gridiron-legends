@@ -186,7 +186,10 @@ export function draw(){
       tx=interaction.aimTarget.x;ty=interaction.aimTarget.y;
       showArc=true;
     }
-    if(showArc){
+    if(showArc&&tx>cx+XPX){
+      ctx.save();ctx.font='bold 13px sans-serif';ctx.textAlign='center';ctx.fillStyle='#101e30';
+      ctx.fillRect(cx-72,cy-49,144,24);ctx.fillStyle='#ffdc63';ctx.fillText('Release to scramble',cx,cy-32);ctx.restore();
+    }else if(showArc){
       const previewDist=Math.hypot(tx-cx,ty-cy);
       const previewArc=Math.min(60,previewDist*0.12)*(game.throwType==='bullet'?0.3:1);
       drawArcPath(cx,cy,tx,ty,previewArc,'rgba(255,209,102,0.9)',2.5);
@@ -196,7 +199,7 @@ export function draw(){
       const fDown=camPx+(BASE_X-tx);
       const playDef=PLAYS[game.playCall];
       if(playDef){
-        const read=passingRead({players:entities.players,play:playDef,los:game.los,elapsed:simulationNow()-game.snapTime,landing:{x:fLat,yfield:fDown},kind:game.throwType,difficulty:currentDiff()});
+        const read=passingRead({players:entities.players,play:playDef,los:game.los,elapsed:simulationNow()-game.snapTime,landing:{x:fLat,yfield:fDown},kind:game.throwType,difficulty:currentDiff(),difficultyName:game.difficulty,momentum:game.momentum});
         if(read.target){
           const rc=toCanvas(read.target.predicted),current=toCanvas(entities.players[read.target.key]);
           ctx.strokeStyle=read.target.error<=read.target.tolerance?'#8cf0cf':read.target.reachable?'#ffd166':'rgba(255,255,255,.45)';

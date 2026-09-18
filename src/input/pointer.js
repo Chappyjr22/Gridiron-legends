@@ -63,7 +63,7 @@ canvas.addEventListener('pointerdown',ev=>{
     } else {
       interaction.aiming=true;interaction.aimStartedAt=simulationNow();interaction.aimTarget=p;
     }
-  } else if(entities.ballCarrier&&entities.ballCarrier!==entities.players.qb){
+  } else if(entities.ballCarrier&&(entities.ballCarrier!==entities.players.qb||game.scrambling)){
     interaction.steering=true;interaction.steerAnchor={x:p.x,y:p.y};interaction.steerCurrent={x:p.x,y:p.y};
   }
 });

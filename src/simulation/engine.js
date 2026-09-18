@@ -17,7 +17,7 @@ import {
   RUSH_SPEED, RUSH_SPEED_BLITZ, BASE_RUN_YPS, LATERAL_YPS, PURSUE_YPS_BASE, ROUTE_YPS, COVER_YPS,
   TACKLE_RESULT_DELAY, BREAK_SLOW_MS, BREAK_SPEED_MULT, MISSED_TACKLE_RECOVERY_MS,
   SPRITE_GROUND_Y_OFFSET, SIDELINE_STEP_DEPTH, BETWEEN_PLAY_RUNOFF, PAT_CHANCE, SKIN_PALETTES,
-  clamp, ratingMultiplier, fieldGoalChance
+  clamp, fieldGoalChance
 } from '../state/constants.js';
 import { currentDiff, adjustMomentum } from '../state/difficulty.js';
 import { FORMATIONS } from '../data/formations.js';
@@ -35,7 +35,7 @@ import { interaction } from '../input/interactionState.js';
 export const uiHooks={renderCallsheet:()=>{},syncMatchup:()=>{},returnToMainMenu:()=>{},checkpoint:()=>{},finishCareer:()=>{}};
 export const matchState={stats:emptyMatch()};
 let restoring=false;
-const checkpointFields=['playerScore','cpuScore','quarter','quarterMinutes','clock','overtime','otRound','down','distance','los','firstDownYard','difficulty','momentum','possession','firstHalfReceiver','secondHalfReceiver','userTeamId','cpuTeamId','career','practice','passMode','throwType','showRoutes'];
+const checkpointFields=['playerScore','cpuScore','quarter','quarterMinutes','clock','overtime','otRound','down','distance','los','firstDownYard','difficulty','momentum','possession','firstHalfReceiver','secondHalfReceiver','userTeamId','cpuTeamId','userIsHome','career','practice','passMode','throwType','showRoutes'];
 export function getCheckpoint(resume){
  return JSON.parse(JSON.stringify({game:Object.fromEntries(checkpointFields.map(k=>[k,game[k]])),stats:matchState.stats,resume}));
 }
@@ -151,7 +151,7 @@ export function initPlay(){
   game.playCall=null;
   game.formation=null;
   game.playbookView='formations';
-  game.runActive=false;
+  game.runActive=false;game.scrambling=false;
   game.runType='handoff';
   game.activeRunPath=[];
   game.runPathIndex=0;
@@ -209,6 +209,7 @@ function consumeClock(seconds){
 
 export function startNewGame(options={}){
   game.career=!!options.career;
+  game.userIsHome=options.userIsHome??true;
   matchState.stats=emptyMatch();
   game.practice=false;
   teamState.userTeam=League.findTeamState(teamState.franchise,game.userTeamId)||teamState.franchise.teams[0];
@@ -229,18 +230,15 @@ export function startNewGame(options={}){
   game.secondHalfReceiver=game.firstHalfReceiver==='player'?'cpu':'player';
   const openingSpot=kickoffSpot();
   if(game.firstHalfReceiver==='player'){
-    showResult('OPENING KICKOFF\
-The '+teamState.userTeam.name+' will receive.\
-Kickoff return to '+formatFieldPosition(openingSpot)+'.',()=>startPlayerDrive(openingSpot),'Receive Kickoff');
+    showResult('OPENING KICKOFF\nThe '+teamState.userTeam.name+' will receive.\nKickoff return to '+formatFieldPosition(openingSpot)+'.',()=>startPlayerDrive(openingSpot),'Receive Kickoff');
   } else {
-    showResult('OPENING KICKOFF\
-The '+teamState.cpuTeam.name+' will receive.\
-They begin at their own '+openingSpot+'.',()=>startOpponentPossession(openingSpot,'Opening kickoff'),'Kick Off');
+    showResult('OPENING KICKOFF\nThe '+teamState.cpuTeam.name+' will receive.\nThey begin at their own '+openingSpot+'.',()=>startOpponentPossession(openingSpot,'Opening kickoff'),'Kick Off');
   }
   checkpoint({type:'kickoff',receiver:game.firstHalfReceiver,spot:openingSpot,message:game.message,buttonLabel:game.firstHalfReceiver==='player'?'Receive Kickoff':'Kick Off'});
 }
 export function startPractice(){
   game.career=false;
+  game.userIsHome=true;
   matchState.stats=emptyMatch();
   game.practice=true;
   teamState.userTeam=League.findTeamState(teamState.franchise,game.userTeamId)||teamState.franchise.teams[0];
@@ -260,9 +258,7 @@ export function startPractice(){
 export function finishGame(){
   if(game.career){game.phase='gameover';uiHooks.finishCareer(matchState.stats);return;}
   const result=game.playerScore===game.cpuScore?'Tie game':game.playerScore>game.cpuScore?teamState.userTeam.name+' win!':teamState.cpuTeam.name+' win.';
-  showResult('FINAL\
-'+scoreLine()+'\
-'+result,uiHooks.returnToMainMenu,'Main menu');
+  showResult('FINAL\n'+scoreLine()+'\n'+result,uiHooks.returnToMainMenu,'Main menu');
   game.phase='gameover';
 }
 function startOvertime(){
@@ -270,8 +266,7 @@ function startOvertime(){
   game.quarter=5;
   game.clock=0;
   game.otRound=1;
-  showResult('End of regulation. The game is tied.\
-Overtime gives each team one possession.',()=>startPlayerDrive(20),'Start overtime');
+  showResult('End of regulation. The game is tied.\nOvertime gives each team one possession.',()=>startPlayerDrive(20),'Start overtime');
 }
 function advanceExpiredPeriod(resumeAction){
   if(game.overtime||game.clock>0){resumeAction();return;}
@@ -284,9 +279,7 @@ function advanceExpiredPeriod(resumeAction){
       const playerReceives=game.secondHalfReceiver==='player';
       const receiverLine=playerReceives?'The '+teamState.userTeam.name+' receive the second-half kickoff.':'The '+teamState.cpuTeam.name+' receive the second-half kickoff.';
       const kickoffAction=playerReceives?()=>startPlayerDrive(secondHalfSpot):()=>startOpponentPossession(secondHalfSpot,'Second-half kickoff');
-      showResult('HALFTIME\
-'+scoreLine()+'\
-'+receiverLine,kickoffAction,'Start 3rd Quarter');
+      showResult('HALFTIME\n'+scoreLine()+'\n'+receiverLine,kickoffAction,'Start 3rd Quarter');
     } else {
       showResult('End of the '+ordinalQuarter(ended)+' quarter.',resumeAction,'Start '+ordinalQuarter(game.quarter)+' quarter');
     }
@@ -318,9 +311,7 @@ function handlePlayerTouchdown(){
   game.playerScore+=6;
   const patGood=simulateExtraPoint('player');
   adjustMomentum(0.35);
-  completePlayerPossession('TOUCHDOWN!\
-Extra point '+(patGood?'is good.':'missed.')+'\
-'+scoreLine(),kickoffSpot(),'Kickoff');
+  completePlayerPossession('TOUCHDOWN!\nExtra point '+(patGood?'is good.':'missed.')+'\n'+scoreLine(),kickoffSpot(),'Kickoff');
 }
 export function endPlay(yardGained,label,outOfBounds=false,exactSpot=game.los+yardGained){
   if(game.playResolved)return;
@@ -332,13 +323,11 @@ export function endPlay(yardGained,label,outOfBounds=false,exactSpot=game.los+ya
   }
   if(game.practice){
     if(newLOS>=100){
-      showResult('TOUCHDOWN!\
-Practice rep complete.',()=>startPlayerDrive(20),'Next Rep');
+      showResult('TOUCHDOWN!\nPractice rep complete.',()=>startPlayerDrive(20),'Next Rep');
       return;
     }
     if(label==='INTERCEPTED'){
-      showResult('Intercepted.\
-Reset and try the read again.',()=>startPlayerDrive(20),'Next Rep');
+      showResult('Intercepted.\nReset and try the read again.',()=>startPlayerDrive(20),'Next Rep');
       return;
     }
     if(label==='INCOMPLETE'){
@@ -398,8 +387,7 @@ export function attemptFieldGoal(){
   if(good){
     game.playerScore+=3;
     adjustMomentum(0.12);
-    completePlayerPossession(distance+'-yard field goal is GOOD!\
-'+scoreLine(),kickoffSpot(),'Kickoff');
+    completePlayerPossession(distance+'-yard field goal is GOOD!\n'+scoreLine(),kickoffSpot(),'Kickoff');
   } else {
     adjustMomentum(-0.1);
     completePlayerPossession(distance+'-yard field goal is no good.',clamp(100-game.los,1,99),'Missed field goal');
@@ -482,15 +470,13 @@ function simulateOpponentDrive(startField,reason){
   lines.push(outcome);
   lines.push('Drive time: '+Math.floor(consumedSeconds/60)+':'+String(consumedSeconds%60).padStart(2,'0'));
   lines.push(scoreLine());
-  return {message:lines.join('\
-'),playerStart};
+  return {message:lines.join('\n'),playerStart};
 }
 function finishOpponentPossession(playerStart){
   if(game.overtime){
     if(game.playerScore!==game.cpuScore){finishGame();return;}
     game.otRound+=1;
-    showResult('Overtime remains tied.\
-Starting possession round '+game.otRound+'.',()=>startPlayerDrive(20),'Next possession');
+    showResult('Overtime remains tied.\nStarting possession round '+game.otRound+'.',()=>startPlayerDrive(20),'Next possession');
     return;
   }
   advanceExpiredPeriod(()=>startPlayerDrive(playerStart));
@@ -527,12 +513,24 @@ export function startRunOption(){
   entities.ballCarrier=null;
   entities.runExchange={type:game.runType,startTime:now,duration:(game.runType==='pitch'?240:110)+(play.runDelay||0)};
 }
+export function startScramble(){
+ if(game.paused||game.thrown||!['presnap','live'].includes(game.phase)||entities.ball.inFlight)return false;
+ if(game.phase==='presnap')onSnap();
+ game.scrambling=true;game.thrown=true;game.runActive=true;game.runType='scramble';
+ entities.pendingTapThrow=null;entities.playFake=null;entities.runExchange=null;
+ entities.ballCarrier=entities.players.qb;game.carrierSince=simulationNow();
+ entities.players.qb.action='carry';entities.players.qb.actionStart=simulationNow();
+ interaction.aiming=false;interaction.aimTarget=null;
+ return true;
+}
 export function releaseThrow(t){
   if(game.paused||game.thrown||game.phase!=='live')return;
+  const qb=entities.players.qb;
+  // Judge intent before accuracy scatter: one yard behind the QB commits to a run.
+  if(game.cameraYard*XPX+(BASE_X-t.x)<qb.yfield-XPX)return startScramble();
   game.thrown=true;
   entities.playFake=null;
   game.playFacts.threw=true;feedback('throw');
-  const qb=entities.players.qb;
   const throwStart=simulationNow();
   qb.action='throw';qb.actionStart=throwStart;
   const camPx=game.cameraYard*XPX;
@@ -545,7 +543,7 @@ export function releaseThrow(t){
   const dist=Math.hypot(fLat-qb.x,fDown-qb.yfield);
   const landing={x:fLat,yfield:fDown},profile=throwProfile(qb,landing,game.throwType);
   entities.ball={inFlight:true,fromX:qb.x,fromY:qb.yfield,toX:fLat,toY:fDown,startTime:throwStart+profile.releaseDelay,duration:profile.duration,arcHeight:profile.arcHeight};
-  const read=passingRead({players:entities.players,play:PLAYS[game.playCall],los:game.los,elapsed:throwStart-game.snapTime,landing,kind:game.throwType,difficulty:currentDiff()});
+  const read=passingRead({players:entities.players,play:PLAYS[game.playCall],los:game.los,elapsed:throwStart-game.snapTime,landing,kind:game.throwType,difficulty:currentDiff(),difficultyName:game.difficulty,momentum:game.momentum});
   if(read.target?.reachable){entities.ball.targetKey=read.target.key;game.playFacts.targetId=entities.players[read.target.key].playerId;}
 
 }
@@ -584,7 +582,7 @@ function resolveCatchAtTarget(){
 function resolveTackle(tackler){
   const yardGained=Math.round(entities.ballCarrier.yfield/XPX-game.los);
   let label;
-  if(entities.ballCarrier===entities.players.qb)label=yardGained<0?'Sacked':'Scramble';
+  if(entities.ballCarrier===entities.players.qb)label=!game.scrambling&&yardGained<0?'Sacked':'Scramble';
   else if(game.runActive)label=game.runType==='pitch'?'Pitch':'Run';
   else label='Catch';
   if(!tackler){endPlay(yardGained,label,false,entities.ballCarrier.yfield/XPX);return;}
@@ -600,7 +598,7 @@ function resolveTackle(tackler){
 function resolveOutOfBounds(){
   const yardGained=Math.round(entities.ballCarrier.yfield/XPX-game.los);
   let label;
-  if(entities.ballCarrier===entities.players.qb)label=yardGained<0?'Sacked':'Scramble';
+  if(entities.ballCarrier===entities.players.qb)label=!game.scrambling&&yardGained<0?'Sacked':'Scramble';
   else if(game.runActive)label=game.runType==='pitch'?'Pitch':'Run';
   else label='Catch';
   interaction.steering=false;interaction.steerAnchor=null;interaction.steerCurrent=null;
@@ -676,7 +674,7 @@ function updateSimulation(dt,now){
       }
     });
 
-    if(playDef&&playDef.type!=='run'&&entities.ballCarrier===qb){
+    if(playDef&&playDef.type!=='run'&&entities.ballCarrier===qb&&!game.scrambling){
       Object.keys(playDef.routes).forEach(key=>{
         if(t*1000<(playDef.routeDelays?.[key]||0))return;
         const receiver=entities.players[key],speed=ROUTE_YPS*XPX*SPEED_SCALE*diff.offenseSpeedMult*speedMultiplier(receiver,game.difficulty,game.momentum);
@@ -712,11 +710,11 @@ function updateSimulation(dt,now){
       const reacted=(now-game.carrierSince)/1000>diff.reactionDelay;
       let pursuers=[];
       const releasedDL=DL_KEYS.map(k=>entities.players[k]).filter(dl=>dl.state==='released');
-      if(entities.ballCarrier===qb){
+      if(entities.ballCarrier===qb&&!game.scrambling){
         pursuers=pursuers.concat(releasedDL);
         if(game.blitzer)pursuers.push(entities.players[game.blitzer]);
       } else {
-        if(game.runActive){
+        if(game.runActive&&!game.scrambling){
           if(lb1.state==='approach'){
             if(reacted&&lb1.yfield<=game.centerYfield+3*XPX){
               lb1.state='engaged';
@@ -774,7 +772,7 @@ function updateSimulation(dt,now){
         return !(def.missedUntil>now);
       });
 
-      if(entities.ballCarrier!==qb && entities.ballCarrier.yfield/XPX>=100){
+      if((entities.ballCarrier!==qb||game.scrambling) && entities.ballCarrier.yfield/XPX>=100){
         resolveTackle();
       }
 
@@ -782,7 +780,7 @@ function updateSimulation(dt,now){
         const pursueSpeed=PURSUE_YPS_BASE*diff.pursueMult*XPX*SPEED_SCALE;
         // Receivers and nearby linemen can escort the runner, one blocker per defender.
         const blocked=new Set();
-        if(entities.ballCarrier!==qb){
+        if(entities.ballCarrier!==qb||game.scrambling){
           const blockers=[...new Set([...Object.keys(playDef.routes||{}),...(playDef.blocks||[])]).values()].map(k=>entities.players[k]).concat(entities.decor.filter(d=>d.team===OFF));
           for(const blocker of blockers){
             if(blocker===entities.ballCarrier||blocker===qb)continue;
@@ -811,7 +809,7 @@ function updateSimulation(dt,now){
           const target=pursuitTarget(def,entities.ballCarrier,entities.ballCarrier.velocity||{x:0,yfield:0});
           const blockedMult=now<(def.blockedUntil||0)?0.25:1;
           moveToward(def,clamp(target.x,LAT_MIN,LAT_MAX),target.yfield,pursueSpeed*speedMultiplier(def,game.difficulty,game.momentum)*blockedMult,dt);
-          if(!entities.ball.inFlight&&entities.ballCarrier!==qb&&blockedMult===1&&entities.breakCooldown<=0)startDive(def,entities.ballCarrier,now,diff);
+          if(!entities.ball.inFlight&&(entities.ballCarrier!==qb||game.scrambling)&&blockedMult===1&&entities.breakCooldown<=0)startDive(def,entities.ballCarrier,now,diff);
         }
         if(!entities.ball.inFlight&&entities.breakCooldown<=0){
           let nearest=Infinity,nearestDefender=null;
@@ -840,7 +838,8 @@ function updateSimulation(dt,now){
         }
       }
     }
-    if(game.phase==='live'){
+    // Screen-space aiming must stay stable while the finger is held down.
+    if(game.phase==='live'&&!interaction.aiming){
       game.cameraYard+= ((entities.ballCarrier?entities.ballCarrier.yfield/XPX:game.los)-game.cameraYard)*Math.min(1,dt*4);
     }
   }
