@@ -5,7 +5,7 @@ The career audit identified inflated overall ratings, disappearing season custom
 ## Changes
 - QB attributes are explicitly accuracy, arm, release and speed. Overall is their mean. Loading a legacy save repairs overall without removing earned attributes or points.
 - Upgrades add up to two, cost more at high ratings, and favor the archetype specialty. XP thresholds gradually reach 200. Rewards emphasize efficiency, ball security, scoring and rushing; objectives rotate every week.
-- Tuck & Run commits to a scramble before or after the snap. Existing steering and jukes apply. No pass after tucking. Speed changes movement; rushing stats, touchdowns, sidelines, tackle animation and defense pursuit apply.
+- A throw aimed more than one yard behind the QB commits to a scramble, including after waiting in the pocket. Slingshot players pull toward the opponent’s end zone; direct/tap players aim behind the QB. Existing steering and jukes apply. No pass after tucking. Speed changes movement; rushing stats, touchdowns, sidelines, tackle animation and defense pursuit apply.
 - Mentoring spends three points on a teammate's overall/attributes once per week, between games.
 - Draft round sets rookie expectations, coach confidence and contract length. Players always start. Results change confidence, which affects renewal length; renewals remain automatic.
 - Offseasons preserve team branding/uniforms, archive regular-season results, award milestones, age/develop/decline teammates, decrement contracts, replace retirees with rookies, and move a limited set of same-position free agents. Coaches renew automatically.

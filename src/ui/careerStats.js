@@ -9,8 +9,20 @@ const metrics={
  rushing:[['rushingYards','Rushing yards'],['rushingTD','Touchdowns'],['carries','Carries']]
 };
 const score=(s,key)=>!s?null:key==='completionPct'?(s.attempts?s.completions*100/s.attempts:null):s[key];
+export function renderPlayerStats(c){
+ const root=el('career-qb-stats'),category=root.dataset.category||'passing';
+ const draw=()=>{
+  const rushing=root.dataset.category==='rushing';
+  root.querySelector('.stat-comparison').innerHTML=[['Game',c.lastResult?.stats],['Season',c.seasonStats],['Career',c.totals]].map(([title,s])=>`<section aria-label="${title} ${rushing?'rushing':'passing'}"><h3>${title}</h3>${s?tiles(rushing?[['CAR',s.carries??0],['YDS',s.rushingYards??0],['AVG',rate(s.rushingYards??0,s.carries)],['TD',s.rushingTD??0]]:[['YDS',s.passingYards],['TD',s.passingTD],['CMP',rate(s.completions*100,s.attempts,'%')],['ATT',s.attempts],['INT',s.interceptions],['SACK',s.sacks]]):'<p>No completed game yet.</p>'}</section>`).join('');
+  root.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.category===root.dataset.category)));
+ };
+ root.dataset.category=category;
+ root.innerHTML='<div class="player-stat-categories" role="group" aria-label="Player stat category"><button type="button" data-category="passing">Passing</button><button type="button" data-category="rushing">Rushing</button></div><div class="stat-comparison"></div>';
+ root.querySelectorAll('button').forEach(b=>b.onclick=()=>{root.dataset.category=b.dataset.category;draw();});
+ draw();
+}
 export function renderCareerStats(c){
- el('career-qb-stats').innerHTML='<div class="stat-comparison">'+[['Game',c.lastResult?.stats],['Season',c.seasonStats],['Career',c.totals]].map(([title,s])=>`<section><h3>${title}</h3>${s?tiles([['YDS',s.passingYards],['TD',s.passingTD],['CMP',rate(s.completions*100,s.attempts,'%')],['ATT',s.attempts],['INT',s.interceptions],['SACK',s.sacks],['RUSH',s.rushingYards]]):'<p>No completed game yet.</p>'}</section>`).join('')+'</div>';
+ renderPlayerStats(c);
  const teamId=el('league-stat-team').value,category=el('league-stat-category').value,select=el('league-stat-metric');
  if(select.dataset.category!==category){select.innerHTML=metrics[category].map(([key,label])=>`<option value="${key}">${label}</option>`).join('');select.dataset.category=category;}
  let scope=document.getElementById('league-season-scope');if(!scope){scope=document.createElement('select');scope.id='league-season-scope';scope.setAttribute('aria-label','Season phase');scope.innerHTML='<option value="regular">Regular season</option><option value="playoffs">Playoffs</option>';el('league-stat-category').after(scope);}scope.onchange=()=>renderCareerStats(c);

@@ -523,10 +523,12 @@ export function startScramble(){
 }
 export function releaseThrow(t){
   if(game.paused||game.thrown||game.phase!=='live')return;
+  const qb=entities.players.qb;
+  // Judge intent before accuracy scatter: one yard behind the QB commits to a run.
+  if(game.cameraYard*XPX+(BASE_X-t.x)<qb.yfield-XPX)return startScramble();
   game.thrown=true;
   entities.playFake=null;
   game.playFacts.threw=true;feedback('throw');
-  const qb=entities.players.qb;
   const throwStart=simulationNow();
   qb.action='throw';qb.actionStart=throwStart;
   const camPx=game.cameraYard*XPX;

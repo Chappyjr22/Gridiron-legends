@@ -186,7 +186,10 @@ export function draw(){
       tx=interaction.aimTarget.x;ty=interaction.aimTarget.y;
       showArc=true;
     }
-    if(showArc){
+    if(showArc&&tx>cx+XPX){
+      ctx.save();ctx.font='bold 13px sans-serif';ctx.textAlign='center';ctx.fillStyle='#101e30';
+      ctx.fillRect(cx-72,cy-49,144,24);ctx.fillStyle='#ffdc63';ctx.fillText('Release to scramble',cx,cy-32);ctx.restore();
+    }else if(showArc){
       const previewDist=Math.hypot(tx-cx,ty-cy);
       const previewArc=Math.min(60,previewDist*0.12)*(game.throwType==='bullet'?0.3:1);
       drawArcPath(cx,cy,tx,ty,previewArc,'rgba(255,209,102,0.9)',2.5);

@@ -41,3 +41,22 @@ console.log('QB scrambling crosses the goal line, scores and credits a rushing t
  assert.equal(c.seasonArchive.length,20);assert.ok(c.offseasonNews.length);
 }
 console.log('Twenty seasons preserve identity, unique roster IDs/numbers, archives and readable saves.');
+for(const mode of ['drag','direct','tap']){
+ const h=await harness();await h.load('src/input/pointer.js');
+ h.engine.startNewGame({career:true});h.engine.startPlayerDrive(25);h.engine.choosePlay('trips_slants');h.game.passMode=mode;
+ const qb=h.entities.players.qb;
+ for(const d of [...Object.values(h.entities.players),...h.entities.decor])if(d!==qb){d.x=-10000;d.yfield=-10000;}
+ h.engine.onSnap();for(let i=0;i<45;i++)h.step(16);
+ const {toCanvas}=await h.load('src/rendering/players.js');const {cx,cy}=toCanvas(qb);
+ h.event('pointerdown',{clientX:mode==='tap'?cx+45:cx,clientY:cy+40});
+ if(mode!=='tap'){h.event('pointermove',{clientX:cx+(mode==='drag'?-45:45),clientY:cy+40});h.event('pointerup');}
+ assert.equal(h.game.scrambling,true,mode+' delayed backward gesture');assert.equal(h.entities.ball.inFlight,false);assert.equal(h.game.playFacts.threw,false);
+ h.engine.endPlay(9,'Scramble',false,h.game.los+9);const s=h.engine.matchState.stats.players[qb.playerId];assert.equal(s.carries,1);assert.equal(s.rushingYards,9);assert.equal(s.attempts,0);
+}
+for(const offset of [-60,0]){
+ const h=await harness();h.engine.startNewGame({career:true});h.engine.startPlayerDrive(25);h.engine.choosePlay('trips_slants');h.engine.onSnap();
+ const {toCanvas}=await h.load('src/rendering/players.js');const {cx,cy}=toCanvas(h.entities.players.qb);
+ h.game.paused=true;h.engine.releaseThrow({x:cx+60,y:cy});assert.equal(h.game.scrambling,false);
+ h.game.paused=false;h.engine.releaseThrow({x:cx+offset,y:cy+40});assert.equal(h.entities.ball.inFlight,true);assert.equal(h.game.scrambling,false);assert.equal(h.game.playFacts.threw,true);
+}
+console.log('Backward gestures scramble after pocket time in all three control modes; forward/lateral throws and pause remain safe.');

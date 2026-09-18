@@ -983,3 +983,12 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
 #league-season-scope{min-height:44px;max-width:150px;font:inherit;}
 .league-toolbar{flex-wrap:wrap;}
 #live-career-objective{color:#e8f1ff;line-height:1.4;}
+
+.player-stat-categories{display:flex;gap:6px;margin-bottom:5px;}
+.player-stat-categories button{min-height:44px;min-width:100px;padding:4px 14px;border:1px solid #7495ae;background:#142e50;color:#c6d7e4;font:20px/1 var(--sports-face);}
+.player-stat-categories button[aria-pressed="true"]{background:#ffdc63;color:#142e50;}
+.player-stat-categories button:focus-visible{outline:2px solid white;outline-offset:2px;}
+@media(orientation:landscape) and (max-height:350px){
+ .player-stat-categories{margin-bottom:2px;}
+ #career-qb-stats .stat-tiles{gap:0;margin:0;}
+}
