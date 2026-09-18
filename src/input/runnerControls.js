@@ -1,3 +1,4 @@
+import {startScramble} from '../simulation/engine.js';
 import {feedback} from '../state/feedback.js';
 import {game,entities} from '../state/gameState.js';
 import {simulationNow} from '../state/clock.js';
@@ -10,7 +11,7 @@ export function stickVector(anchor,current){
  return {x:dx*scale,y:dy*scale};
 }
 export function canJuke(){
- return game.phase==='live'&&!game.paused&&!entities.ball.inFlight&&entities.ballCarrier&&entities.ballCarrier!==entities.players.qb;
+ return game.phase==='live'&&!game.paused&&!entities.ball.inFlight&&entities.ballCarrier&&(entities.ballCarrier!==entities.players.qb||game.scrambling);
 }
 export function requestJuke(direction){
  if(!canJuke()||![-1,1].includes(direction))return false;
@@ -27,12 +28,14 @@ export function jukeStep(runner,now){
  return eased===old?0:j.direction*JUKE_DISTANCE*(eased-old);
 }
 export function syncRunnerControls(){
+ const scramble=document.getElementById('btn-scramble');if(scramble)scramble.hidden=game.paused||!['presnap','live'].includes(game.phase)||game.thrown||entities.ball.inFlight;
  const panel=document.getElementById('runner-controls');if(!panel)return;
  panel.hidden=!canJuke();
  const ready=simulationNow()>=(entities.ballCarrier?.jukeReadyAt||0);
  for(const id of ['btn-juke-up','btn-juke-down'])document.getElementById(id).disabled=!ready;
 }
 export function initRunnerControls(){
+ const scramble=document.getElementById('btn-scramble');if(scramble)scramble.onclick=()=>{startScramble();syncRunnerControls();};
  for(const [id,direction] of [['btn-juke-up',-1],['btn-juke-down',1]]){
   const button=document.getElementById(id);
   button.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();requestJuke(direction);syncRunnerControls();});

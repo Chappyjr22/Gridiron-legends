@@ -151,7 +151,7 @@ export function initPlay(){
   game.playCall=null;
   game.formation=null;
   game.playbookView='formations';
-  game.runActive=false;
+  game.runActive=false;game.scrambling=false;
   game.runType='handoff';
   game.activeRunPath=[];
   game.runPathIndex=0;
@@ -511,6 +511,16 @@ export function startRunOption(){
   entities.ballCarrier=null;
   entities.runExchange={type:game.runType,startTime:now,duration:(game.runType==='pitch'?240:110)+(play.runDelay||0)};
 }
+export function startScramble(){
+ if(game.paused||game.thrown||!['presnap','live'].includes(game.phase)||entities.ball.inFlight)return false;
+ if(game.phase==='presnap')onSnap();
+ game.scrambling=true;game.thrown=true;game.runActive=true;game.runType='scramble';
+ entities.pendingTapThrow=null;entities.playFake=null;entities.runExchange=null;
+ entities.ballCarrier=entities.players.qb;game.carrierSince=simulationNow();
+ entities.players.qb.action='carry';entities.players.qb.actionStart=simulationNow();
+ interaction.aiming=false;interaction.aimTarget=null;
+ return true;
+}
 export function releaseThrow(t){
   if(game.paused||game.thrown||game.phase!=='live')return;
   game.thrown=true;
@@ -568,7 +578,7 @@ function resolveCatchAtTarget(){
 function resolveTackle(tackler){
   const yardGained=Math.round(entities.ballCarrier.yfield/XPX-game.los);
   let label;
-  if(entities.ballCarrier===entities.players.qb)label=yardGained<0?'Sacked':'Scramble';
+  if(entities.ballCarrier===entities.players.qb)label=!game.scrambling&&yardGained<0?'Sacked':'Scramble';
   else if(game.runActive)label=game.runType==='pitch'?'Pitch':'Run';
   else label='Catch';
   if(!tackler){endPlay(yardGained,label,false,entities.ballCarrier.yfield/XPX);return;}
@@ -584,7 +594,7 @@ function resolveTackle(tackler){
 function resolveOutOfBounds(){
   const yardGained=Math.round(entities.ballCarrier.yfield/XPX-game.los);
   let label;
-  if(entities.ballCarrier===entities.players.qb)label=yardGained<0?'Sacked':'Scramble';
+  if(entities.ballCarrier===entities.players.qb)label=!game.scrambling&&yardGained<0?'Sacked':'Scramble';
   else if(game.runActive)label=game.runType==='pitch'?'Pitch':'Run';
   else label='Catch';
   interaction.steering=false;interaction.steerAnchor=null;interaction.steerCurrent=null;
@@ -696,11 +706,11 @@ function updateSimulation(dt,now){
       const reacted=(now-game.carrierSince)/1000>diff.reactionDelay;
       let pursuers=[];
       const releasedDL=DL_KEYS.map(k=>entities.players[k]).filter(dl=>dl.state==='released');
-      if(entities.ballCarrier===qb){
+      if(entities.ballCarrier===qb&&!game.scrambling){
         pursuers=pursuers.concat(releasedDL);
         if(game.blitzer)pursuers.push(entities.players[game.blitzer]);
       } else {
-        if(game.runActive){
+        if(game.runActive&&!game.scrambling){
           if(lb1.state==='approach'){
             if(reacted&&lb1.yfield<=game.centerYfield+3*XPX){
               lb1.state='engaged';

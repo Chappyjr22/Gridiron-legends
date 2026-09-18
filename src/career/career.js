@@ -1,3 +1,5 @@
+import {seasonReview,evolveLeague} from './offseason.js';
+import {normalizeQuarterback,upgradeOffer,QB_KEYS,levelThreshold,assessGoal} from './development.js';
 import {careerStorage} from '../cloud/storage.js';
 import {opponentBoxScore} from './leagueStats.js';
 import {validCheckpoint} from './checkpoints.js';
@@ -26,7 +28,7 @@ export function createCareer({name,number=7,teamId='bos',archetype='precision',s
  for(const teammate of team.roster)if(teammate!==player&&teammate.number===number){for(let n=0;n<100;n++)if(!used.has(n)&&n!==number){teammate.number=n;used.add(n);break;}}
  const names=cleanName.split(' ');Object.assign(player,{firstName:names.shift(),lastName:names.join(' '),number,age:21,portrait:Number.isInteger(portrait)&&portrait>=0&&portrait<12?portrait:0,skin:Math.max(0,Math.min(3,Number(skin)||0)),archetype,attributes:{...ARCHETYPES[archetype].attributes}});
  if(schoolId)for(const key of Object.keys(player.attributes))player.attributes[key]+=SCHOOL_TIERS[team.tier].attributeBonus;
- player.rating=Math.round(Object.values(player.attributes).reduce((a,b)=>a+b)/3);
+ normalizeQuarterback(player);
  League.refreshRatings(league);
  return {careerId:`career-${Date.now()}-${Math.random().toString(36).slice(2,10)}`,schemaVersion:1,stage:schoolId?'college':'pro',teamId,playerId:player.id,league,settings:{difficulty:['easy','medium','hard','gridiron'].includes(difficulty)?difficulty:'medium',quarterMinutes:[2,3,4,5].includes(Number(quarterMinutes))?Number(quarterMinutes):2},xp:0,level:1,points:0,totals:emptyStats(),seasonStats:emptyStats(),history:[],awards:[],postseason:null,lastResult:null,activeMatch:null,checkpoint:null};
 }
@@ -45,6 +47,7 @@ export function parseCareer(raw){
   if(c.activeMatch&&![...c.league.schedule,...(c.postseason?.games||[])].some(g=>g.id===c.activeMatch&&g.status==='scheduled'))return null;
   if(!['easy','medium','hard','gridiron'].includes(c.settings.difficulty)||![2,3,4,5].includes(c.settings.quarterMinutes))return null;
   if(c.checkpoint&&(!c.activeMatch||!validCheckpoint(c.checkpoint,c)))return null;
+  normalizeQuarterback(p);League.refreshRatings(c.league);
   return c;
  }catch{return null;}
 }
@@ -55,9 +58,19 @@ export function nextMatch(c){
  return League.getWeekGames(c.league).find(g=>g.status==='scheduled'&&(g.homeTeamId===c.teamId||g.awayTeamId===c.teamId))||null;
 }
 export function upgrade(c,attribute){
- const p=careerPlayer(c);if(c.activeMatch||c.points<1||!Object.hasOwn(p.attributes,attribute)||p.attributes[attribute]>=95)return false;
- p.attributes[attribute]=Math.min(95,p.attributes[attribute]+2);p.rating=Math.round(Object.values(p.attributes).reduce((a,b)=>a+b)/3);c.points--;
+ const p=normalizeQuarterback(careerPlayer(c));if(c.activeMatch||!QB_KEYS.includes(attribute))return false;
+ const offer=upgradeOffer(p,attribute);if(!offer.gain||c.points<offer.cost)return false;
+ p.attributes[attribute]+=offer.gain;c.points-=offer.cost;normalizeQuarterback(p);
  League.refreshRatings(c.league);return true;
+}
+export function mentorTeammate(c,id){
+ if(c.activeMatch||c.points<3)return false;
+ const key=`${c.stage}-${c.league.season}-${c.league.week}-${c.postseason?.round||0}`;
+ if(c.lastMentoring===key)return false;
+ const p=League.findTeamState(c.league,c.teamId).roster.find(p=>p.id===id&&p.id!==c.playerId);
+ if(!p||p.rating>=95)return false;
+ p.rating++;if(p.attributes)for(const k of Object.keys(p.attributes))p.attributes[k]=Math.min(97,p.attributes[k]+1);
+ c.points-=3;c.lastMentoring=key;League.refreshRatings(c.league);return true;
 }
 function bracketGame(c,home,away,round,index){return {id:`s${c.league.season}-p${round}-${index}`,week:(c.stage==='college'?12:17)+round,round,homeTeamId:home,awayTeamId:away,status:'scheduled',homeScore:null,awayScore:null};}
 function seedPlayoffs(c){
@@ -98,15 +111,21 @@ export function completeCareerGame(c,gameId,userScore,cpuScore,matchStats){
   match.boxScore.teamSources={[c.teamId]:'played',[opponent.id]:'simulated'};
  }
  const assessment=c.stage==='college'?collegeGameAssessment(c,stats,userScore>cpuScore,opponent):null;
- const breakdown=xpBreakdown(stats,userScore>cpuScore);
- if(assessment)breakdown.push({label:'Weekly development goal',xp:assessment.goal.xp});
+ const previousProjection=c.stage==='college'?draftProjection(c):null;
+ const goal=assessGoal(c,stats,userScore>cpuScore);
+ const breakdown=xpBreakdown(stats,userScore>cpuScore,c.matchContext||c.settings);
+ if(assessment)assessment.goal=goal;
+ breakdown.push({label:'Weekly objective',xp:goal.xp});
  const xp=breakdown.reduce((sum,item)=>sum+item.xp,0);
- c.xp+=xp;let gained=0;while(c.xp>=100){c.xp-=100;c.level++;c.points++;gained++;}
+ c.xp+=xp;let gained=0;while(c.xp>=levelThreshold(c.level)){c.xp-=levelThreshold(c.level);c.level++;c.points++;gained++;}
  c.lastResult={gameId,season:c.league.season,week:match.week,userScore,cpuScore,xp,levels:gained,stats,opponentId:home?match.awayTeamId:match.homeTeamId};
- Object.assign(c.lastResult,{xpBreakdown:breakdown,playerStats:structuredClone(match.boxScore.players),keyMoments:captureMoments(matchStats.plays)});
+ Object.assign(c.lastResult,{goal,previousProjection,xpBreakdown:breakdown,playerStats:structuredClone(match.boxScore.players),keyMoments:captureMoments(matchStats.plays)});
  if(assessment)c.lastResult.collegeAssessment=assessment;
  c.pendingRecapGameId=gameId;c.history.push(c.lastResult);
  if(assessment)c.lastResult.draftProjection=draftProjection(c);
+ c.coachConfidence=Math.max(0,Math.min(100,(c.coachConfidence??50)+(userScore>cpuScore?3:-2)+(goal.met?2:0)-Math.min(6,stats.interceptions*2)));
+ c.lastResult.coachConfidence=c.coachConfidence;
+ for(const [threshold,title,key] of [[1000,'1,000 career passing yards','passingYards'],[10000,'10,000 career passing yards','passingYards'],[100,'100 career passing touchdowns','passingTD'],[100,'100 career rushing yards','rushingYards']])if(c.totals[key]>=threshold&&!c.awards.some(a=>a.title===title))c.awards.push({season:c.league.season,title});
  if(c.history.length===1)c.awards.push({season:c.league.season,title:c.stage==='college'?'Senior season debut':'Rookie debut'});
  c.activeMatch=null;c.checkpoint=null;c.matchContext=null;
  if(!match.round){League.simulateWeek(c.league,c.league.week,c.teamId);if(c.league.week<(c.stage==='college'?12:17))League.advanceWeek(c.league);else if(c.stage==='college')seedCollegePostseason(c);else seedPlayoffs(c);}
@@ -114,8 +133,9 @@ export function completeCareerGame(c,gameId,userScore,cpuScore,matchStats){
 }
 export function startNextSeason(c){
  if(c.stage==='college'||c.activeMatch||!c.postseason?.champion)return false;
+ seasonReview(c);
  const old=c.league,next=League.createFranchise(c.teamId,old.season+1);
  // Keep the people and development. Only schedule and standings restart.
- next.teams.forEach(t=>{const prior=League.findTeamState(old,t.id);t.roster=prior.roster;t.coaches=prior.coaches;t.roster.forEach(p=>p.age++);});
+ evolveLeague(c,next);
  c.league=next;c.seasonStats=emptyStats();c.postseason=null;c.lastResult=null;c.pendingRecapGameId=null;League.refreshRatings(c.league);return true;
 }

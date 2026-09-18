@@ -136,6 +136,7 @@ export function beginProCareer(c){
  const next=c.draft.league,team=League.findTeamState(next,c.draft.teamId),index=team.roster.findIndex(p=>p.slot==='QB');
  const occupied=new Set(team.roster.filter((_,i)=>i!==index).map(p=>p.number));
  for(const teammate of team.roster)if(teammate!==team.roster[index]&&teammate.number===player.number){for(let n=0;n<100;n++)if(!occupied.has(n)&&n!==player.number){teammate.number=n;occupied.add(n);break;}}
- team.roster[index]={...player,attributes:{...player.attributes},age:22,contractYears:4};
+ team.roster[index]={...player,attributes:{...player.attributes},age:22,contractYears:c.draft.round<=2?4:c.draft.round<=4?3:2};
+ c.proEntry={round:c.draft.round,pick:c.draft.pick,expectation:c.draft.round<=2?'Lead a winning season':c.draft.round<=4?'Establish yourself as a starter':'Prove you belong'};c.coachConfidence=c.draft.round<=2?65:c.draft.round<=4?50:40;
  c.teamId=team.id;next.userTeamId=team.id;c.league=next;c.stage='pro';c.totals=emptyStats();c.seasonStats=emptyStats();c.history=[];c.awards=[];c.postseason=null;c.lastResult=null;c.pendingRecapGameId=null;c.matchContext=null;c.draft=null;League.refreshRatings(next);return true;
 }
