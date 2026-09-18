@@ -1,4 +1,4 @@
-import {normalizeQuarterback,upgradeOffer,levelThreshold,weeklyGoal,QB_KEYS} from '../career/development.js';
+import {normalizeQuarterback,upgradeOffer,levelThreshold,weeklyGoal,QB_KEYS,assessGoal} from '../career/development.js';
 import {paintPlayerPortrait} from './playerPortrait.js';
 import {initPortraitPicker,openPortraitPicker} from './portraitPicker.js';
 import {initEnrollment,resetEnrollment} from './enrollment.js';
@@ -29,7 +29,7 @@ function persist(){
 }
 function restoreExhibition(){
  if(exhibition){Object.assign(teamState,exhibition.teams);Object.assign(game,exhibition.game);exhibition=null;syncMatchupUI();}
- game.career=false;
+ game.career=false;el('live-career-objective')?.remove();
 }
 function showCareer(){
  el('career-gateway').classList.remove('show');el('career-list-screen').classList.remove('show');
@@ -139,7 +139,7 @@ function launch(){
  persist();ensureLoopStarted();
 }
 export function initCareer(){
- initCareerExperience(()=>career,persist);initEnrollment();initPortraitPicker();
+ initCareerExperience(()=>career,persist,render);initEnrollment();initPortraitPicker();
  el('career-edit-face').onclick=()=>{const player=normalizeQuarterback(Career.careerPlayer(career)),team=League.findTeamState(career.league,career.teamId);openPortraitPicker(player,team,choice=>{Object.assign(player,choice);persist();render();});};
  for(const [open,dialog,close] of [['career-menu-open','career-options','career-options-close'],['league-filters-open','league-filters','league-filters-close'],['scouting-info-open','scouting-info','scouting-info-close']]){
   el(open).onclick=()=>el(dialog).showModal();el(close).onclick=()=>el(dialog).close();
@@ -258,7 +258,12 @@ export function initCareer(){
   const raw=career?JSON.stringify(career,null,2):careerStorage().getItem(Career.CAREER_KEY);if(!raw)return;
   const url=URL.createObjectURL(new Blob([raw],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='gridiron-career-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
  });
- uiHooks.checkpoint=saved=>{if(career?.activeMatch){career.checkpoint=saved;persist();}};
+ uiHooks.checkpoint=saved=>{if(career?.activeMatch){career.checkpoint=saved;persist();
+ const s=saved.stats.players[career.playerId]||{attempts:0,completions:0,passingYards:0,interceptions:0,rushingYards:0,passingTD:0,rushingTD:0};
+ const g=assessGoal(career,s,game.playerScore>game.cpuScore);
+ let note=el('live-career-objective');if(!note){note=document.createElement('p');note.id='live-career-objective';note.className='experience-note';el('pause-overlay').querySelector('.pause-scroll')?.append(note);if(!note.isConnected)el('pause-overlay').append(note);}
+ note.textContent=`Objective: ${g.label}. Current: ${s.completions}/${s.attempts} passing, ${s.interceptions} INT, ${s.rushingYards} rushing yards, ${s.passingTD+s.rushingTD} TD. ${g.met?'On track.':''} Evaluated at final whistle.`;
+ }};
  uiHooks.careerSettingsChanged=()=>{
   if(!career?.activeMatch||!game.career)return;
   const rank=['easy','medium','hard','gridiron'];

@@ -63,7 +63,7 @@ export function playerFrame(e,isDecor){
     return {row:0,col:elapsed<90?2:elapsed<180?3:4};
   }
   if(game.phase==='live'){
-    if(entities.ballCarrier===e&&e!==entities.players.qb){
+    if(entities.ballCarrier===e&&(e!==entities.players.qb||game.scrambling)){
       const frameMs=now<(e.breakSlowUntil||0)?180:90;
       return {row:2,col:Math.floor(now/frameMs)%5};
     }

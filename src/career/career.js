@@ -27,6 +27,7 @@ export function createCareer({name,number=7,teamId='bos',archetype='precision',s
  const used=new Set(team.roster.map(p=>p.number));
  for(const teammate of team.roster)if(teammate!==player&&teammate.number===number){for(let n=0;n<100;n++)if(!used.has(n)&&n!==number){teammate.number=n;used.add(n);break;}}
  const names=cleanName.split(' ');Object.assign(player,{firstName:names.shift(),lastName:names.join(' '),number,age:21,portrait:Number.isInteger(portrait)&&portrait>=0&&portrait<12?portrait:0,skin:Math.max(0,Math.min(3,Number(skin)||0)),archetype,attributes:{...ARCHETYPES[archetype].attributes}});
+ league.careerQuarterMinutes=[2,3,4,5].includes(Number(quarterMinutes))?Number(quarterMinutes):2;
  if(schoolId)for(const key of Object.keys(player.attributes))player.attributes[key]+=SCHOOL_TIERS[team.tier].attributeBonus;
  normalizeQuarterback(player);
  League.refreshRatings(league);
@@ -47,7 +48,7 @@ export function parseCareer(raw){
   if(c.activeMatch&&![...c.league.schedule,...(c.postseason?.games||[])].some(g=>g.id===c.activeMatch&&g.status==='scheduled'))return null;
   if(!['easy','medium','hard','gridiron'].includes(c.settings.difficulty)||![2,3,4,5].includes(c.settings.quarterMinutes))return null;
   if(c.checkpoint&&(!c.activeMatch||!validCheckpoint(c.checkpoint,c)))return null;
-  normalizeQuarterback(p);League.refreshRatings(c.league);
+  normalizeQuarterback(p);c.league.careerQuarterMinutes=c.settings.quarterMinutes;League.refreshRatings(c.league);
   return c;
  }catch{return null;}
 }
@@ -136,6 +137,6 @@ export function startNextSeason(c){
  seasonReview(c);
  const old=c.league,next=League.createFranchise(c.teamId,old.season+1);
  // Keep the people and development. Only schedule and standings restart.
- evolveLeague(c,next);
+ evolveLeague(c,next);next.careerQuarterMinutes=c.settings.quarterMinutes;
  c.league=next;c.seasonStats=emptyStats();c.postseason=null;c.lastResult=null;c.pendingRecapGameId=null;League.refreshRatings(c.league);return true;
 }

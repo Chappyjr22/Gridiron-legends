@@ -968,3 +968,18 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
  #result-overlay:not(.compact-result) .msg{grid-column:1;grid-row:2;margin:0;text-align:left;font:15px/1.35 Arial,sans-serif;max-height:52dvh}
  #result-overlay:not(.compact-result) #btn-continue{grid-column:2;grid-row:1/3;align-self:center;margin:0}
 }
+/* Four QB attributes remain reachable on short landscape screens. */
+@media(orientation:landscape){
+ #career-screen #career-upgrades{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 18px;}
+ #career-screen #career-upgrades button{min-height:54px;gap:3px 5px;}
+ #career-screen #career-upgrades button>span:first-child{font-size:19px;}
+ #career-screen #career-upgrades .upgrade-cost{min-width:64px;font-size:16px;}
+}
+@media(orientation:landscape) and (max-height:350px){
+ #career-screen #career-upgrades{gap:4px 14px;}
+ #career-screen #career-upgrades button{min-height:44px;}
+ #career-screen .player-section-heading{display:none;}
+}
+#league-season-scope{min-height:44px;max-width:150px;font:inherit;}
+.league-toolbar{flex-wrap:wrap;}
+#live-career-objective{color:#e8f1ff;line-height:1.4;}

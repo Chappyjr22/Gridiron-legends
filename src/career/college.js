@@ -138,5 +138,6 @@ export function beginProCareer(c){
  for(const teammate of team.roster)if(teammate!==team.roster[index]&&teammate.number===player.number){for(let n=0;n<100;n++)if(!occupied.has(n)&&n!==player.number){teammate.number=n;occupied.add(n);break;}}
  team.roster[index]={...player,attributes:{...player.attributes},age:22,contractYears:c.draft.round<=2?4:c.draft.round<=4?3:2};
  c.proEntry={round:c.draft.round,pick:c.draft.pick,expectation:c.draft.round<=2?'Lead a winning season':c.draft.round<=4?'Establish yourself as a starter':'Prove you belong'};c.coachConfidence=c.draft.round<=2?65:c.draft.round<=4?50:40;
+ next.careerQuarterMinutes=c.settings.quarterMinutes;
  c.teamId=team.id;next.userTeamId=team.id;c.league=next;c.stage='pro';c.totals=emptyStats();c.seasonStats=emptyStats();c.history=[];c.awards=[];c.postseason=null;c.lastResult=null;c.pendingRecapGameId=null;c.matchContext=null;c.draft=null;League.refreshRatings(next);return true;
 }

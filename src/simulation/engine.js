@@ -670,7 +670,7 @@ function updateSimulation(dt,now){
       }
     });
 
-    if(playDef&&playDef.type!=='run'&&entities.ballCarrier===qb){
+    if(playDef&&playDef.type!=='run'&&entities.ballCarrier===qb&&!game.scrambling){
       Object.keys(playDef.routes).forEach(key=>{
         if(t*1000<(playDef.routeDelays?.[key]||0))return;
         const receiver=entities.players[key],speed=ROUTE_YPS*XPX*SPEED_SCALE*diff.offenseSpeedMult*speedMultiplier(receiver,game.difficulty,game.momentum);
@@ -768,7 +768,7 @@ function updateSimulation(dt,now){
         return !(def.missedUntil>now);
       });
 
-      if(entities.ballCarrier!==qb && entities.ballCarrier.yfield/XPX>=100){
+      if((entities.ballCarrier!==qb||game.scrambling) && entities.ballCarrier.yfield/XPX>=100){
         resolveTackle();
       }
 
@@ -776,7 +776,7 @@ function updateSimulation(dt,now){
         const pursueSpeed=PURSUE_YPS_BASE*diff.pursueMult*XPX*SPEED_SCALE;
         // Receivers and nearby linemen can escort the runner, one blocker per defender.
         const blocked=new Set();
-        if(entities.ballCarrier!==qb){
+        if(entities.ballCarrier!==qb||game.scrambling){
           const blockers=[...new Set([...Object.keys(playDef.routes||{}),...(playDef.blocks||[])]).values()].map(k=>entities.players[k]).concat(entities.decor.filter(d=>d.team===OFF));
           for(const blocker of blockers){
             if(blocker===entities.ballCarrier||blocker===qb)continue;
@@ -805,7 +805,7 @@ function updateSimulation(dt,now){
           const target=pursuitTarget(def,entities.ballCarrier,entities.ballCarrier.velocity||{x:0,yfield:0});
           const blockedMult=now<(def.blockedUntil||0)?0.25:1;
           moveToward(def,clamp(target.x,LAT_MIN,LAT_MAX),target.yfield,pursueSpeed*speedMultiplier(def,game.difficulty,game.momentum)*blockedMult,dt);
-          if(!entities.ball.inFlight&&entities.ballCarrier!==qb&&blockedMult===1&&entities.breakCooldown<=0)startDive(def,entities.ballCarrier,now,diff);
+          if(!entities.ball.inFlight&&(entities.ballCarrier!==qb||game.scrambling)&&blockedMult===1&&entities.breakCooldown<=0)startDive(def,entities.ballCarrier,now,diff);
         }
         if(!entities.ball.inFlight&&entities.breakCooldown<=0){
           let nearest=Infinity,nearestDefender=null;
