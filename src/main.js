@@ -68,7 +68,7 @@ initPracticeGuide();
 initOverlayFocus();
 
 document.addEventListener('visibilitychange',()=>{
-  if(document.hidden&&['presnap','live','tackle','kicking','result'].includes(game.phase)){
+  if(document.hidden&&['presnap','live','tackle','deadball','kicking','result'].includes(game.phase)){
     document.getElementById('btn-pause').click();
   }
 });

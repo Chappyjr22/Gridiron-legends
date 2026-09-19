@@ -262,6 +262,6 @@ function drawScene(){
     const k=game.kick,now=simulationNow(),width=Math.min(300,canvas.width*.6),left=(canvas.width-width)/2;
     const value=k.stage==='power'?(Math.sin((now-k.start)/300-Math.PI/2)+1)/2:(Math.sin((now-k.start)/400)+1)/2;
     ctx.fillStyle='#081b2c';ctx.fillRect(left-12,30,width+24,80);ctx.fillStyle='#f5ead1';ctx.font='bold 16px monospace';ctx.textAlign='center';ctx.fillText(k.stage==='power'?'TAP: POWER':'TAP: AIM AT CENTER',canvas.width/2,53);
-    ctx.fillStyle='#bb5839';ctx.fillRect(left,67,width,22);ctx.fillStyle='#58b46b';ctx.fillRect(left+width*(k.stage==='power'?.7:.35),67,width*.3,22);ctx.fillStyle='#fff';ctx.fillRect(left+width*value-2,63,4,30);
+    ctx.fillStyle='#bb5839';ctx.fillRect(left,67,width,22);ctx.fillStyle='#58b46b';ctx.fillRect(left+width*(k.stage==='power'?k.powerRequired:(1-k.aimTolerance)/2),67,width*(k.stage==='power'?1-k.powerRequired:k.aimTolerance),22);ctx.fillStyle='#fff';ctx.fillRect(left+width*value-2,63,4,30);
   }
 }

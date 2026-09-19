@@ -33,11 +33,14 @@ export function jukeStep(runner,now){
 export function syncRunnerControls(){
  const panel=document.getElementById('runner-controls');if(!panel)return;
  panel.hidden=!canJuke();
- const ready=simulationNow()>=(entities.ballCarrier?.jukeReadyAt||0);
+ const ready=!entities.ballCarrier?.runnerDive&&simulationNow()>=(entities.ballCarrier?.jukeReadyAt||0);
+ const dive=document.getElementById('btn-dive');if(dive){dive.textContent=entities.ballCarrier===entities.players.qb?'SLIDE':'DIVE';dive.disabled=!!entities.ballCarrier?.runnerDive;}
  for(const id of ['btn-juke-up','btn-juke-down'])document.getElementById(id).disabled=!ready;
 }
 export function initRunnerControls(){
- document.getElementById('btn-dive')?.addEventListener('click',requestDive);
+ const dive=document.getElementById('btn-dive');
+ dive?.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();requestDive();syncRunnerControls();});
+ dive?.addEventListener('click',e=>{if(e.detail===0){requestDive();syncRunnerControls();}});
  for(const [id,direction] of [['btn-juke-up',-1],['btn-juke-down',1]]){
   const button=document.getElementById(id);
   button.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();requestJuke(direction);syncRunnerControls();});

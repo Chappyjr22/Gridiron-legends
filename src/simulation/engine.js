@@ -386,7 +386,8 @@ export function endPlay(yardGained,label,outOfBounds=false,exactSpot=game.los+ya
 export function attemptFieldGoal(){
  if(game.phase!=='decision'||117-game.los>=65)return;
  hideAllOverlays();game.phase='kicking';
- game.kick={stage:'power',start:simulationNow(),distance:Math.round(117-game.los),power:0,aim:0};
+ const distance=Math.round(117-game.los),rating=positionRating(teamState.userTeam,'K','offense');
+ game.kick={stage:'power',start:simulationNow(),distance,power:0,aim:0,powerRequired:clamp((distance-15)/65,.18,.72),aimTolerance:clamp(.72-(distance-20)*.009+(rating-75)*.004,.2,.85)};
 }
 export function kickInput(){
  const k=game.kick;if(game.paused||game.phase!=='kicking'||!k)return;
@@ -394,8 +395,7 @@ export function kickInput(){
  if(k.stage==='power'){k.power=(Math.sin((now-k.start)/300-Math.PI/2)+1)/2;k.stage='aim';k.start=now;return;}
  if(k.stage!=='aim')return;
  k.aim=Math.sin((now-k.start)/400);k.stage='flight';k.start=now;
- const rating=positionRating(teamState.userTeam,'K','offense');
- k.good=k.power>clamp((k.distance-15)/65,.18,.72)&&Math.abs(k.aim)<clamp(.72-(k.distance-20)*.009+(rating-75)*.004,.2,.85);
+ k.good=k.power>k.powerRequired&&Math.abs(k.aim)<k.aimTolerance;
  entities.ball={inFlight:true,fromX:190,fromY:(game.los-7)*XPX,toX:190+k.aim*170,toY:Math.min(110,game.los-7+20+k.power*80)*XPX,startTime:now,duration:1400,arcHeight:45+k.power*40};
 }
 function finishKick(){
@@ -586,6 +586,7 @@ function advanceFumble(dt,now){
    const spot=clamp(Math.min(b.yfield/XPX,f.spot),1,99); // No forward progress from a loose ball.
    b.live=false;entities.ballCarrier=f.carrier;game.fumble=null;
    endPlay(Math.round(spot-game.los),lost?'FUMBLE LOST':'Fumble recovered',outside,spot);
+   if(!outside&&closest){b.loose=false;b.settled=true;closest.action='carry';closest.actionStart=now;entities.ballCarrier=closest;}
  }
 }
 function resolveCatchAtTarget(){
@@ -667,7 +668,19 @@ function updateSimulation(dt,now){
   if(!game.paused){
     if(game.phase==='result'&&game.drivePresentation){const d=game.drivePresentation;const count=Math.min(d.lines.length,2+Math.floor((now-d.start)/1000));document.getElementById('overlay-msg').textContent=d.lines.slice(0,count).join('\n');}
     advanceLooseBall(entities.ball,dt);
-    if(game.phase==='kicking'){if(game.kick.stage==='flight'&&now-game.kick.start>=1400)finishKick();return;}
+    if(game.phase==='deadball'){
+      if(!game.practice&&!game.overtime)game.clock=Math.max(0,game.clock-dt);
+      updateHUD();
+      if(entities.ball.bounces>0)endPlay(0,'INCOMPLETE');
+      return;
+    }
+    if(game.phase==='kicking'){
+      if(game.kick.stage==='flight'){
+        game.cameraYard+=(flightPosition(entities.ball,now).yfield/XPX-game.cameraYard)*Math.min(1,dt*3);
+        if(now-game.kick.start>=1400)finishKick();
+      }
+      return;
+    }
     if(game.phase==='result'&&!highlights.playing&&game.autoContinueAt&&now>=game.autoContinueAt){game.autoContinueAt=0;continueResult({automatic:true});}
   }
   if(!game.paused&&!game.overtime&&game.phase==='live'){
@@ -763,7 +776,7 @@ function updateSimulation(dt,now){
       const position=flightPosition(entities.ball,now);
       if(p>.12&&p<.88&&position.height<18){
         const defender=[...['cb1','cb2','s1','lb1',...DL_KEYS].map(k=>entities.players[k])].find(d=>!d.dive&&!(d.missedUntil>now)&&separation(d,position)<12);
-        if(defender){defender.action='deflect';defender.actionStart=now;entities.ball.toX=position.x;entities.ball.toY=position.yfield;game.passFeedback='Deflected in the passing lane.';dropBall(true);endPlay(0,'INCOMPLETE');}
+        if(defender){defender.action='deflect';defender.actionStart=now;entities.ball.toX=position.x;entities.ball.toY=position.yfield;game.passFeedback='Deflected in the passing lane.';dropBall(true);game.phase='deadball';}
       }
       if(p>=1&&entities.ball.inFlight){entities.ball.inFlight=false;resolveCatchAtTarget();}
     }

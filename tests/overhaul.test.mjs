@@ -24,6 +24,13 @@ await test('RB route tap queues a pass, not an exchange',async()=>{
  h.engine.startPractice();h.game.passMode='tap';h.engine.choosePlay(id);const rb=h.entities.players.rb;const {BASE_X}=await h.load('src/state/constants.js');const {SCENE_TOP}=await h.load('src/rendering/sceneLayout.js');
  h.event('pointerdown',{clientX:BASE_X-(rb.yfield-h.game.cameraYard*28),clientY:rb.x+SCENE_TOP});h.event('pointerup');h.step(260);assert.equal(h.entities.runExchange,null);assert.equal(h.game.playFacts.threw,true);
 });
+await test('a mid-flight deflection reaches the turf before becoming incomplete',async()=>{
+ const h=await harness();h.engine.startNewGame();h.engine.startPlayerDrive(25);h.engine.choosePlay('trips_verticals');h.engine.onSnap();
+ h.entities.ball={inFlight:true,fromX:190,fromY:25*28,toX:190,toY:35*28,startTime:h.now-500,duration:1000,arcHeight:10};h.game.thrown=true;
+ Object.assign(h.entities.players.cb1,{x:190,yfield:30*28});h.step();
+ assert.equal(h.game.phase,'deadball');assert.equal(h.entities.ball.loose,true);assert.equal(h.entities.ball.bounces,0);
+ h.step(100);assert.equal(h.game.phase,'deadball');h.step(700);assert.equal(h.game.phase,'result');assert.match(h.game.message,/Incomplete/);
+});
 await test('kick has two timing stages, visible flight and a single scoring result',async()=>{
  const h=await harness();h.engine.startNewGame();h.engine.startPlayerDrive(80);h.game.down=4;h.hud.showFourthDown();h.engine.attemptFieldGoal();assert.equal(h.game.phase,'kicking');
  h.step(940);h.engine.kickInput();assert.ok(h.game.kick.power>.99);h.engine.kickInput();assert.equal(h.game.kick.stage,'flight');assert.ok(h.entities.ball.inFlight);
