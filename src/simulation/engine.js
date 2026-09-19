@@ -321,7 +321,7 @@ export function endPlay(yardGained,label,outOfBounds=false,exactSpot=game.los+ya
   const newLOS=clamp(exactSpot,0,100);
   if(!game.practice){
     const facts=game.playFacts||{};
-    recordPlay(matchState.stats,{id:String(matchState.stats.plays.length+1),qbId:entities.players.qb.playerId,carrierId:entities.ballCarrier?.playerId,threw:!!facts.threw,targetId:facts.targetId,receiverId:facts.receiverId,yards:Math.round(newLOS-game.los),touchdown:newLOS>=100,intercepted:label==='INTERCEPTED',sacked:label==='Sacked',fumbled:!!facts.fumbled,fumbleLost:label==='FUMBLE LOST',play:game.playCall});
+    recordPlay(matchState.stats,{id:String(matchState.stats.plays.length+1),qbId:entities.players.qb.playerId,carrierId:entities.ballCarrier?.playerId,threw:!!facts.threw,targetId:facts.targetId,receiverId:facts.receiverId,yards:Math.round(newLOS-game.los),touchdown:newLOS>=100,intercepted:label==='INTERCEPTED',sacked:label==='Sacked'||!!facts.sacked,fumbled:!!facts.fumbled,fumbleLost:label==='FUMBLE LOST',play:game.playCall});
   }
   if(game.practice){
     if(label==='FUMBLE LOST'){showResult('Fumble lost. Protect the ball with a dive or slide.',()=>startPlayerDrive(20),'Next Rep');return;}
@@ -608,7 +608,7 @@ function resolveCatchAtTarget(){
   let nearestDefender=null,dist=Infinity;
   for(const defender of defenders){const distance=separation(best,defender);if(distance<dist){dist=distance;nearestDefender=defender;}}
   const outcome=catchOutcome({error:bestD,tolerance:bestTol,defenderDistance:dist,ballDefenderDistance:nearestDefender?separation(nearestDefender,{x:entities.ball.toX,yfield:entities.ball.toY}):Infinity,receiverRating:attributeRating(best,'catching'),defenderRating:nearestDefender?.rating},Math.random());
-  if(outcome==='interception'){endPlay(0,'INTERCEPTED');return;}
+  if(outcome==='interception'){entities.ballCarrier=nearestDefender;nearestDefender.action='carry';nearestDefender.actionStart=simulationNow();endPlay(0,'INTERCEPTED');return;}
   if(outcome!=='catch'){
     game.passFeedback=outcome==='breakup'?'Pass broken up.':'Dropped pass.';
     best.action='drop';best.actionStart=simulationNow();
@@ -630,7 +630,7 @@ function resolveTackle(tackler){
   if(!tackler){endPlay(yardGained,label,false,entities.ballCarrier.yfield/XPX);return;}
   const now=simulationNow();
   if(!entities.ballCarrier.runnerDive&&!game.playFacts.fumbled&&entities.ballCarrier.yfield/XPX>2&&entities.ballCarrier.yfield/XPX<98&&Math.random()<fumbleChance(entities.ballCarrier,tackler)){
-    const carrier=entities.ballCarrier;game.playFacts.fumbled=true;game.fumble={carrier,spot:carrier.yfield/XPX,start:now};
+    const carrier=entities.ballCarrier;game.playFacts.fumbled=true;game.playFacts.sacked=label==='Sacked';game.fumble={carrier,spot:carrier.yfield/XPX,start:now};
     entities.ball=looseBall({x:carrier.x,yfield:carrier.yfield,height:12},{vx:(carrier.x-tackler.x)*3,vy:45,vz:120,live:true,now});
     entities.ballCarrier=null;carrier.action='tackled';carrier.actionStart=now;interaction.steering=false;return;
   }

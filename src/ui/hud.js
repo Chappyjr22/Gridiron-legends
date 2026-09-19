@@ -86,8 +86,9 @@ export function showResult(message,nextAction,buttonLabel='Continue'){
   const kicker=document.getElementById('result-kicker');
   const upper=message.toUpperCase();
   resultCard.classList.remove('scoring','turnover');
-  if(upper.includes('TOUCHDOWN')||upper.includes('FIELD GOAL')){kicker.textContent='Scoring Play';resultCard.classList.add('scoring');}
-  else if(upper.includes('INTERCEPT')||upper.includes('TURNOVER')||upper.includes('SAFETY')){kicker.textContent='Change of Possession';resultCard.classList.add('turnover');}
+  if(upper.includes('FIELD GOAL')&&upper.includes('NO GOOD')){kicker.textContent='Missed Field Goal';}
+  else if(upper.includes('TOUCHDOWN')||upper.includes('FIELD GOAL')){kicker.textContent='Scoring Play';resultCard.classList.add('scoring');}
+  else if(upper.includes('INTERCEPT')||upper.includes('TURNOVER')||upper.includes('SAFETY')||upper.includes('FUMBLE LOST')){kicker.textContent='Change of Possession';resultCard.classList.add('turnover');}
   else if(upper.includes('FINAL')){kicker.textContent='Final Score';}
   else if(upper.includes('HALFTIME')){kicker.textContent='Halftime';}
   else if(upper.includes('QUARTER')){kicker.textContent='Quarter Break';}

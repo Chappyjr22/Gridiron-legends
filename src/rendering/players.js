@@ -28,6 +28,7 @@ export function drawHelmet(cx,cy,team){
 }
 export function playerFrame(e,isDecor){
   const now=simulationNow();
+  if(e.action==='carry'&&game.phase==='result')return {row:2,col:0};
   if(e.action==='drop')return {row:4,col:2};
   if(e.action==='deflect')return {row:4,col:1};
   if(e.action==='diveWindup')return {row:1,col:4};

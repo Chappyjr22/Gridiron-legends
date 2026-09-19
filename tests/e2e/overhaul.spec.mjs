@@ -1,5 +1,15 @@
 import {test,expect} from '@playwright/test';
 
+test('three runner actions stay in one thumb-sized row on short landscape',async({browser})=>{
+ const context=await browser.newContext({viewport:{width:844,height:304},hasTouch:true}),page=await context.newPage();
+ await page.goto('/');await page.locator('#btn-practice').tap();await page.locator('.play-btn').first().tap();
+ await page.evaluate(async()=>{const {game,entities}=await import('/src/state/gameState.js');game.phase='live';entities.ballCarrier=entities.players.wr1;entities.ball.inFlight=false;});
+ const controls=page.locator('#runner-controls');await expect(controls).toBeVisible();
+ for(const button of await controls.getByRole('button').all())await expect(button).toBeInViewport({ratio:1});
+ expect((await controls.boundingBox()).height).toBeLessThan(60);
+ await page.screenshot({path:'test-results/overhaul-runner-controls-mobile.png'});await context.close();
+});
+
 test('recorded replay keeps the result intact and offers a reachable skip control',async({browser})=>{
  const context=await browser.newContext({viewport:{width:844,height:304},hasTouch:true});
  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
