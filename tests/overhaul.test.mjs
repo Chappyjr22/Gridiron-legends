@@ -45,6 +45,17 @@ await test('runner dive ends the rep and cannot be extended by repeated taps',as
  for(const p of Object.values(h.entities.players))if(p!==h.entities.players.rb)p.yfield=-10000;h.entities.decor.forEach(p=>p.yfield=-10000);
  const controls=await h.load('src/input/runnerControls.js');assert.ok(controls.requestDive());assert.equal(controls.requestDive(),false);h.step(320);assert.equal(h.game.phase,'result');assert.ok(!h.game.fumble);
 });
+await test('nearby lineman wins the block assignment and contact holds until release',async()=>{
+ const h=await harness();h.engine.startPractice();h.engine.choosePlay('trips_inside');h.engine.startRunOption();h.step(150);
+ const runner=h.entities.players.rb,def=h.entities.decor[6],line=h.entities.decor[0],receiver=h.entities.players.wr1;
+ for(const p of [...Object.values(h.entities.players),...h.entities.decor]){p.x=300;p.yfield=-10000;}
+ h.game.activeRunPath=[];h.game.carrierSince=h.now-1000;
+ Object.assign(runner,{x:190,yfield:600});Object.assign(def,{x:190,yfield:650});Object.assign(line,{x:190,yfield:645});Object.assign(receiver,{x:190,yfield:730});
+ h.step();assert.equal(line.isBlocking,true);assert.equal(receiver.isBlocking,false);assert.ok(def.blockedUntil>h.now);
+ runner.yfield=def.yfield-10;h.step();assert.equal(h.game.phase,'live');
+ line.yfield=-10000;receiver.yfield=-10000;def.blockedUntil=h.now-1;def.x=runner.x;def.yfield=runner.yfield+2;
+ h.step();assert.equal(h.game.phase,'tackle');
+});
 await test('recorded replay does not mutate score, clock, entities or stats',async()=>{
  const h=await harness();h.engine.startPractice();h.engine.choosePlay('trips_verticals');h.engine.onSnap();h.step(200);
  const r=await h.load('src/simulation/highlights.js');h.engine.endPlay(25,'Catch');const before=JSON.stringify({g:h.game,e:h.entities,s:h.engine.matchState});r.toggleReplay();assert.ok(r.highlights.playing);assert.ok(r.replayFrame());assert.equal(JSON.stringify({g:h.game,e:h.entities,s:h.engine.matchState}),before);r.toggleReplay();assert.equal(r.highlights.playing,false);

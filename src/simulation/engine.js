@@ -696,7 +696,7 @@ function updateSimulation(dt,now){
     const screenMult=(playDef?.type==='screen'&&t<1.3)?0.25:1;
     entities.breakCooldown=Math.max(0,entities.breakCooldown-dt);
     for(const p of Object.values(entities.players))p.isBlocking=false;
-    if(playDef&&(entities.ballCarrier===qb||game.runActive))advanceSkillBlocks({players:entities.players,defenders:[cb1,cb2,s1,lb1,...DL_KEYS.map(k=>entities.players[k]),...entities.decor.filter(p=>p.team===DEF)],play:playDef,los:game.los,elapsed:now-game.snapTime,now,dt,moveToward});
+    if(playDef&&entities.ballCarrier===qb&&!game.scrambling)advanceSkillBlocks({players:entities.players,defenders:[cb1,cb2,s1,lb1,...DL_KEYS.map(k=>entities.players[k]),...entities.decor.filter(p=>p.team===DEF)],play:playDef,los:game.los,elapsed:now-game.snapTime,now,dt,moveToward});
     if(entities.playFake){
       const fake=entities.playFake,progress=clamp((now-fake.start)/fake.duration,0,1),rb=entities.players.rb;
       const reach=Math.sin(progress*Math.PI);
@@ -731,7 +731,7 @@ function updateSimulation(dt,now){
             dl.engageStart=now;
             const matchup=(dl.blockRating||68)-(dl.rating||68);
             const blockWinChance=clamp(diff.blockWinChance+matchup*0.006,0.02,0.82);
-            const baseDuration=diff.engageMin+Math.random()*(diff.engageMax-diff.engageMin);
+            const baseDuration=(diff.engageMin+Math.random()*(diff.engageMax-diff.engageMin))*(game.runActive&&!game.scrambling?1.5:1);
             dl.engageDur=Math.random()<blockWinChance?baseDuration*1.7:baseDuration*clamp(1+matchup/55,0.55,1.55);
           }
         }
@@ -859,20 +859,27 @@ function updateSimulation(dt,now){
         const blocked=new Set();
         if(entities.ballCarrier!==qb||game.scrambling){
           const blockers=[...new Set([...Object.keys(playDef.routes||{}),...(playDef.blocks||[])]).values()].map(k=>entities.players[k]).concat(entities.decor.filter(d=>d.team===OFF));
+          const assignedBlockers=new Set(),pairs=[];
           for(const blocker of blockers){
             if(blocker===entities.ballCarrier||blocker===qb)continue;
-            let target=null,distance=110;
             for(const def of pursuers){
-              const d=separation(blocker,def);
-              if(!blocked.has(def)&&!def.dive&&def.yfield>=entities.ballCarrier.yfield-28&&d<distance){target=def;distance=d;}
+              const distance=separation(blocker,def);
+              if(!def.dive&&def.yfield>=entities.ballCarrier.yfield-28&&distance<110)pairs.push({blocker,def,distance});
             }
-            if(!target)continue;
-            blocked.add(target);
-            moveToward(blocker,target.x,target.yfield,ROUTE_YPS*XPX*SPEED_SCALE*0.9,dt);
+          }
+          // The closest available blocker takes a matchup, regardless of roster order.
+          pairs.sort((a,b)=>a.distance-b.distance);
+          for(const {blocker,def} of pairs){
+            if(assignedBlockers.has(blocker)||blocked.has(def))continue;
+            assignedBlockers.add(blocker);blocked.add(def);
+            moveToward(blocker,def.x,def.yfield,ROUTE_YPS*XPX*SPEED_SCALE*0.9,dt);
             blocker.isBlocking=true;
-            if(touching(blocker,target)&&now>=(target.nextBlockAt||0)){
-              target.blockedUntil=now+clamp(650+((blocker.rating||75)-(target.rating||75))*8,300,1000);
-              target.nextBlockAt=now+1800;
+            if(touching(blocker,def)&&now>=(def.nextBlockAt||0)){
+              const strength=blocker.attributes?.blocking??blocker.attributes?.strength??blocker.rating??75;
+              const runBlock=game.runActive&&!game.scrambling;
+              const hold=clamp((runBlock?1400:650)+(strength-(def.attributes?.strength??def.rating??75))*12,runBlock?850:300,runBlock?2200:1100);
+              def.blockedUntil=now+hold;
+              def.nextBlockAt=now+hold+700;
             }
           }
         }
@@ -884,14 +891,14 @@ function updateSimulation(dt,now){
             continue;
           }
           const target=pursuitTarget(def,entities.ballCarrier,entities.ballCarrier.velocity||{x:0,yfield:0});
-          const blockedMult=now<(def.blockedUntil||0)?0.25:1;
+          const blockedMult=now<(def.blockedUntil||0)?0:1;
           moveToward(def,clamp(target.x,LAT_MIN,LAT_MAX),target.yfield,pursueSpeed*speedMultiplier(def,game.difficulty,game.momentum)*blockedMult,dt);
           if(!entities.ball.inFlight&&(entities.ballCarrier!==qb||game.scrambling)&&blockedMult===1&&entities.breakCooldown<=0)startDive(def,entities.ballCarrier,now,diff);
         }
         if(!entities.ball.inFlight&&entities.breakCooldown<=0){
           let nearest=Infinity,nearestDefender=null;
           pursuers.forEach(def=>{
-            if(def.missedUntil>now)return;
+            if(def.missedUntil>now||def.blockedUntil>now)return;
             const distance=Math.hypot(def.x-entities.ballCarrier.x,def.yfield-entities.ballCarrier.yfield);
             if(distance<nearest){nearest=distance;nearestDefender=def;}
           });

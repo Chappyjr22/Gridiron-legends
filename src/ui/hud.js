@@ -10,7 +10,7 @@ import { momentumLabel } from '../state/difficulty.js';
 export const resultFlow={continueAction:null,readyAt:0};
 export function continueResult(event={}){
   if(highlights.playing||game.paused)return;
-  if(event.detail>1||performance.now()<resultFlow.readyAt)return;
+  if(performance.now()<resultFlow.readyAt)return;
   game.autoContinueAt=0;
   const action=resultFlow.continueAction;
   resultFlow.continueAction=null;
