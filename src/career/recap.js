@@ -1,6 +1,10 @@
 import {emptyStats,addStats} from './stats.js';
-export function xpBreakdown(stats,won){
- return [{label:'Game completed',xp:40},{label:'Win bonus',xp:won?30:0},{label:'Passing yards',xp:Math.min(60,Math.floor(Math.max(0,stats.passingYards)/10))},{label:'Passing touchdowns',xp:Math.min(60,stats.passingTD*15)}];
+export function xpBreakdown(stats,won,settings={}){
+ const a=stats.attempts||0,ints=stats.interceptions||0;
+ const efficiency=a>=6?Math.round(Math.max(0,Math.min(1,stats.completions/a))*20+Math.min(10,Math.max(0,stats.passingYards/a))*2):0;
+ const security=a>=6?Math.max(0,20-ints*10):0;
+ const impact=Math.min(20,(stats.passingTD||0)*5+(stats.rushingTD||0)*5+Math.floor(Math.max(0,stats.rushingYards||0)/10));
+ return [{label:'Game completed',xp:30},{label:'Win bonus',xp:won?20:0},{label:'Passing efficiency',xp:efficiency},{label:'Ball security',xp:security},{label:'Scoring and rushing',xp:impact},{label:'Difficulty',xp:{easy:0,medium:3,hard:6,gridiron:9}[settings.difficulty]||0}];
 }
 export function captureMoments(plays=[]){
  return plays.map((p,i)=>({play:i+1,yards:p.yards||0,touchdown:!!p.touchdown,intercepted:!!p.intercepted,sacked:!!p.sacked,receiverId:p.receiverId||null}))

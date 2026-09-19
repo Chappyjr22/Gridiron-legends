@@ -17,7 +17,7 @@ for(let week=1;week<=3;week++){
  assert.ok(C.saveCareer(c));c=C.loadCareer();assert.equal(c.playerId,id);
 }
 assert.equal(c.totals.games,3);assert.equal(storage.get('gridironLegendsFranchiseV1'),'legacy-exhibition');
-assert.ok(c.points>0);const before=C.careerPlayer(c).attributes.accuracy;assert.ok(C.upgrade(c,'accuracy'));assert.equal(C.careerPlayer(c).attributes.accuracy,before+2);
+assert.ok(c.points>0);c.points=2;const before=C.careerPlayer(c).attributes.accuracy;assert.ok(C.upgrade(c,'accuracy'));assert.equal(C.careerPlayer(c).attributes.accuracy,before+2);
 c.activeMatch=C.nextMatch(c).id;assert.equal(C.upgrade(c,'arm'),false);c.activeMatch=null;
 // A full winning season reaches all three playoff rounds and preserves identity next season.
 while(!c.postseason?.champion){const g=C.nextMatch(c);assert.ok(g);c.activeMatch=g.id;assert.ok(C.completeCareerGame(c,g.id,28,7,emptyMatch()));}
@@ -60,7 +60,7 @@ console.log('Slot migration, isolation, failed-write protection and simulated bo
 
 {
  const {xpBreakdown,captureMoments,playerGameLog}=await import('../src/career/recap.js');
- assert.equal(xpBreakdown({passingYards:250,passingTD:3},true).reduce((s,x)=>s+x.xp,0),140);
+ assert.equal(xpBreakdown({attempts:25,completions:18,passingYards:250,passingTD:3,interceptions:0},true).reduce((s,x)=>s+x.xp,0),119);
  assert.deepEqual(captureMoments([{yards:3},{yards:25,receiverId:'wr'},{intercepted:true}]).map(m=>m.play),[2,3]);
  const c=C.createCareer({name:'Recap Rookie',teamId:'bos'});
  const match=C.nextMatch(c),wr=c.league.teams.find(t=>t.id===c.teamId).roster.find(p=>p.slot==='WR1');
@@ -121,3 +121,5 @@ await import('./college.test.mjs');
  const before=data.get(SLOTS_KEY);assert.throws(()=>importSlotArchive({...store,setItem(){throw Error('Quota');}},C.parseCareer,C.CAREER_KEY,archive));assert.equal(data.get(SLOTS_KEY),before);
  console.log('Full saved-data archives restore as separate careers with atomic writes.');
 }
+
+await import("./career-depth.test.mjs");

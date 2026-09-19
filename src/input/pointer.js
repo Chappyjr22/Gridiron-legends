@@ -1,3 +1,5 @@
+import {slingshotTarget} from './aim.js';
+import {requestDive,requestJuke} from './runnerControls.js';
 import { simulationNow } from '../state/clock.js';
 import { canvas } from '../rendering/canvas.js';
 import { SCENE_TOP } from '../rendering/sceneLayout.js';
@@ -6,7 +8,7 @@ import { game, entities } from '../state/gameState.js';
 import { XPX, BASE_X, MIN_PULL, clamp } from '../state/constants.js';
 import { OFFENSE_SKILL_KEYS } from '../data/formations.js';
 import { PLAYS } from '../data/plays.js';
-import { onSnap, startRunOption, releaseThrow } from '../simulation/engine.js';
+import { kickInput, onSnap, startRunOption, releaseThrow } from '../simulation/engine.js';
 import { interaction } from './interactionState.js';
 import { editState } from './editState.js';
 import { findNearEntity, updateEditJSON } from './editControls.js';
@@ -29,8 +31,9 @@ function beginTapPass(point){
   });
   entities.pendingTapThrow={pointerId:activePointer,playerKey:best<=36?playerKey:null,target:{x:point.x,y:point.y},releaseAt:simulationNow()+240};
 }
-let activePointer=null,pendingRunTap=null;
+let activePointer=null,pendingRunTap=null,gestureStart=null;
 canvas.addEventListener('pointerdown',ev=>{
+  if(game.phase==='kicking'){kickInput();return;}
   if(activePointer!==null)return;
   if(editState.editMode){
     activePointer=ev.pointerId;
@@ -42,6 +45,7 @@ canvas.addEventListener('pointerdown',ev=>{
   activePointer=ev.pointerId;
   canvas.setPointerCapture(ev.pointerId);
   const p=pointerPos(ev);
+  gestureStart={...p,time:simulationNow()};
   if(game.phase==='presnap'){
     if(PLAYS[game.playCall]?.type==='run'){
       startRunOption();
@@ -49,7 +53,7 @@ canvas.addEventListener('pointerdown',ev=>{
       return;
     }
     const rb=toCanvas(entities.players.rb),qb=toCanvas(entities.players.qb);
-    if(pointNearPlayer(p,entities.players.rb)&&Math.hypot(p.x-rb.cx,p.y-rb.cy)<Math.hypot(p.x-qb.cx,p.y-qb.cy)){
+    if(!PLAYS[game.playCall]?.routes?.rb&&pointNearPlayer(p,entities.players.rb)&&Math.hypot(p.x-rb.cx,p.y-rb.cy)<Math.hypot(p.x-qb.cx,p.y-qb.cy)){
       pendingRunTap={point:p,screen:{x:ev.clientX,y:ev.clientY}};return;
     }
     onSnap();
@@ -63,7 +67,9 @@ canvas.addEventListener('pointerdown',ev=>{
     } else {
       interaction.aiming=true;interaction.aimStartedAt=simulationNow();interaction.aimTarget=p;
     }
-  } else if(entities.ballCarrier&&entities.ballCarrier!==entities.players.qb){
+  } else if(entities.ball.inFlight){
+    interaction.steering=true;interaction.steerAnchor={...p};interaction.steerCurrent={...p};
+  } else if(entities.ballCarrier&&(entities.ballCarrier!==entities.players.qb||game.scrambling)){
     interaction.steering=true;interaction.steerAnchor={x:p.x,y:p.y};interaction.steerCurrent={x:p.x,y:p.y};
   }
 });
@@ -107,8 +113,7 @@ canvas.addEventListener('pointerup',ev=>{
         const {cx,cy}=toCanvas(entities.players.qb);
         const pullDist=Math.hypot(interaction.aimTarget.x-cx,interaction.aimTarget.y-cy);
         if(pullDist>=MIN_PULL){
-          const mx=cx*2-interaction.aimTarget.x, my=cy*2-interaction.aimTarget.y;
-          releaseThrow({x:mx,y:my});
+          releaseThrow(slingshotTarget({cx,cy},interaction.aimTarget,entities.players.qb.attributes?.arm??entities.players.qb.rating,game.throwType));
         }
       } else {
         releaseThrow(interaction.aimTarget);
@@ -116,7 +121,12 @@ canvas.addEventListener('pointerup',ev=>{
     }
     interaction.aimTarget=null;
   }
-  interaction.steering=false;
+  if(interaction.steering&&gestureStart&&simulationNow()-gestureStart.time<280){
+    const p=pointerPos(ev),dx=p.x-gestureStart.x,dy=p.y-gestureStart.y;
+    if(dx<-45&&Math.abs(dx)>Math.abs(dy)*1.4)requestDive();
+    else if(Math.abs(dy)>40&&Math.abs(dy)>Math.abs(dx)*1.4)requestJuke(Math.sign(dy));
+  }
+  gestureStart=null;interaction.steering=false;
 });
 function cancelPointer(ev){
   if(ev&&activePointer!==null&&ev.pointerId!==activePointer)return;
