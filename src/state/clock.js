@@ -24,3 +24,7 @@ export function advanceSimulation(update){
     }
   }finally{frameTime=null;}
 }
+
+let renderTime=null;
+export function setRenderTime(value){renderTime=value;}
+export function renderNow(){return renderTime??simulationNow();}

@@ -1,4 +1,4 @@
-import { simulationNow } from '../state/clock.js';
+import { renderNow as simulationNow } from '../state/clock.js';
 import { canvas, ctx } from './canvas.js';
 import { game, entities } from '../state/gameState.js';
 import { XPX, BASE_X, MISSED_TACKLE_DIVE_MS, MISSED_TACKLE_DOWN_MS, SPRITE_CELL, SPRITE_DRAW, SPRITE_ANCHOR_X, SPRITE_ANCHOR_Y, OFF, DEF } from '../state/constants.js';

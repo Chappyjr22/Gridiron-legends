@@ -1,9 +1,12 @@
+import {slingshotTarget} from '../input/aim.js';
+import {flightPosition} from '../simulation/ballMotion.js';
+import {replayFrame,highlights} from '../simulation/highlights.js';
 import {playingRoster} from '../career/roster.js';
 import {passingRead} from '../simulation/passing.js';
 import {brandArt} from './brand.js';
 import {stickVector,STICK_TRAVEL} from '../input/runnerControls.js';
 import {catchTolerance} from '../simulation/receiving.js';
-import { simulationNow } from '../state/clock.js';
+import { renderNow as simulationNow, setRenderTime } from '../state/clock.js';
 import { canvas, ctx } from './canvas.js';
 import { game, entities, teamState } from '../state/gameState.js';
 import { XPX, BASE_X, LAT_MIN, LAT_MAX, DL_KEYS, OFF, DEF,  MIN_PULL, clamp, ratingMultiplier } from '../state/constants.js';
@@ -74,6 +77,20 @@ function drawPresnapLineupTags(){
   ctx.restore();
 }
 export function draw(){
+ const frame=replayFrame();
+ document.getElementById('result-overlay')?.classList.toggle('replaying',!!frame);
+ const button=document.getElementById('btn-replay');if(button)button.textContent=frame?'Skip replay':'Replay';
+ if(!frame){drawScene();return;}
+ const savedEntities={...entities},savedGame={...game};
+ try{
+   const copy=JSON.parse(JSON.stringify(frame));
+   copy.decor.forEach((player,index)=>{player.team=savedEntities.decor[index]?.team;});
+   entities.players=copy.players;entities.decor=copy.decor;entities.ball=copy.ball;entities.ballCarrier=copy.players[copy.carrierKey]||null;entities.runExchange=null;entities.playFake=null;
+   Object.assign(game,{cameraYard:copy.cameraYard,los:copy.los,firstDownYard:copy.firstDownYard,scrambling:copy.scrambling,phase:copy.phase,tackle:null});
+   setRenderTime(frame.time);drawScene();
+ }finally{Object.assign(entities,savedEntities);Object.assign(game,savedGame);setRenderTime(null);}
+}
+function drawScene(){
   const w=canvas.width;
   ctx.setTransform(1,0,0,1,0,SCENE_TOP);
   const camPx=game.cameraYard*XPX;
@@ -118,6 +135,17 @@ export function draw(){
   if(fdX>=0&&fdX<=w){
     ctx.fillStyle='#edca3a';
     ctx.fillRect(fdX-1,LAT_MIN,3,LAT_MAX-LAT_MIN);
+  }
+  if(game.drivePresentation&&game.possession==='cpu'){
+    const drive=game.drivePresentation,progress=Math.min(1,(simulationNow()-drive.start)/4500);
+    const left=w*.12,width=w*.76,top=(LAT_MIN+LAT_MAX)/2;
+    ctx.fillStyle='rgba(9,28,47,.94)';ctx.fillRect(left-14,top-42,width+28,94);
+    ctx.fillStyle='#486480';ctx.fillRect(left,top,width,12);
+    ctx.fillStyle='#f4c542';ctx.fillRect(left+width*drive.startField/100,top,width*drive.gain/100*progress,12);
+    ctx.fillStyle='#fff4d4';ctx.font='16px monospace';ctx.textAlign='left';ctx.fillText('OPPONENT DRIVE',left,top-15);
+    ctx.font='12px monospace';ctx.fillText('OWN GOAL',left,top+35);ctx.textAlign='right';ctx.fillText('YOUR GOAL',left+width,top+35);
+    ctx.textAlign='left';
+    return;
   }
   // Show actual close contact, not the entire blocking assignment or pursuit path.
   if(game.phase==='live'){
@@ -173,7 +201,7 @@ export function draw(){
     const {cx,cy}=toCanvas(entities.players.qb);
     let tx,ty,showArc;
     if(game.passMode==='drag'){
-      const mx=cx*2-interaction.aimTarget.x, my=cy*2-interaction.aimTarget.y;
+      const target=slingshotTarget({cx,cy},interaction.aimTarget,entities.players.qb.attributes?.arm??entities.players.qb.rating);const mx=target.x,my=target.y;
       ctx.strokeStyle='rgba(255,255,255,0.55)';ctx.lineWidth=2;ctx.setLineDash([4,4]);
       ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(interaction.aimTarget.x,interaction.aimTarget.y);ctx.stroke();
       ctx.setLineDash([]);
@@ -221,18 +249,19 @@ export function draw(){
     ctx.fillStyle='#fff';
     ctx.beginPath();ctx.arc(thumb.x,thumb.y,9,0,7);ctx.fill();
   }
-  if(entities.ball.inFlight&&simulationNow()>=entities.ball.startTime){
-    const p=Math.min(1,(simulationNow()-entities.ball.startTime)/entities.ball.duration);
-    const bx=entities.ball.fromX+(entities.ball.toX-entities.ball.fromX)*p;
-    const byf=entities.ball.fromY+(entities.ball.toY-entities.ball.fromY)*p;
-    const {cx,cy}=toCanvas({x:bx,yfield:byf});
-    const arc=entities.ball.arcHeight*Math.sin(Math.PI*p);
-    ctx.fillStyle='rgba(0,0,0,0.22)';
-    ctx.beginPath();ctx.ellipse(cx,cy,5+arc*0.04,3,0,0,7);ctx.fill();
-    const bcy=cy-arc;
-    ctx.fillStyle='#7a4a26';
-    ctx.beginPath();ctx.ellipse(cx,bcy,5.5,3.3,0.5,0,7);ctx.fill();
-    ctx.strokeStyle='#fff';ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(cx-2,bcy);ctx.lineTo(cx+2,bcy);ctx.stroke();
+  const ball=entities.ball;
+  if((ball.inFlight&&simulationNow()>=ball.startTime)||ball.loose){
+    const position=ball.loose?ball:flightPosition(ball,simulationNow());
+    const {cx,cy}=toCanvas(position),height=position.height||0;
+    ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(cx,cy+4,5,2.5,0,0,7);ctx.fill();
+    ctx.save();ctx.translate(Math.round(cx),Math.round(cy-height));ctx.rotate(ball.loose?ball.spin:simulationNow()/110);
+    ctx.fillStyle='#341d12';ctx.fillRect(-6,-3,12,6);ctx.fillStyle='#ad6735';ctx.fillRect(-5,-2,10,4);ctx.fillStyle='#fff3d6';ctx.fillRect(-2,-1,4,2);ctx.restore();
+  }
+  if(game.fumble){ctx.fillStyle='#101e30';ctx.fillRect(canvas.width/2-90,28,180,30);ctx.fillStyle='#ffdb65';ctx.font='bold 18px monospace';ctx.textAlign='center';ctx.fillText('LOOSE BALL!',canvas.width/2,50);}
+  if(game.phase==='kicking'&&game.kick.stage!=='flight'){
+    const k=game.kick,now=simulationNow(),width=Math.min(300,canvas.width*.6),left=(canvas.width-width)/2;
+    const value=k.stage==='power'?(Math.sin((now-k.start)/300-Math.PI/2)+1)/2:(Math.sin((now-k.start)/400)+1)/2;
+    ctx.fillStyle='#081b2c';ctx.fillRect(left-12,30,width+24,80);ctx.fillStyle='#f5ead1';ctx.font='bold 16px monospace';ctx.textAlign='center';ctx.fillText(k.stage==='power'?'TAP: POWER':'TAP: AIM AT CENTER',canvas.width/2,53);
+    ctx.fillStyle='#bb5839';ctx.fillRect(left,67,width,22);ctx.fillStyle='#58b46b';ctx.fillRect(left+width*(k.stage==='power'?.7:.35),67,width*.3,22);ctx.fillStyle='#fff';ctx.fillRect(left+width*value-2,63,4,30);
   }
 }

@@ -176,7 +176,15 @@
 </style>
 <link rel="stylesheet" href="./src/ui/stadium.css">
 <link rel="preload" href="./assets/ui/Jersey10-Regular.ttf" as="font" type="font/ttf" crossorigin>
-</head>
+<style>
+#result-overlay.replaying{background:transparent;pointer-events:none;align-items:flex-end;}
+#result-overlay.replaying .result-card{background:transparent;border:0;box-shadow:none;}
+#result-overlay.replaying .result-kicker,#result-overlay.replaying .msg,#result-overlay.replaying #btn-continue{display:none;}
+#result-overlay.replaying #btn-replay{pointer-events:auto;}
+#btn-replay[hidden]{display:none;}
+#btn-replay{min-height:44px;margin-right:8px;}
+#btn-dive{font-size:12px;min-height:44px;}
+</style></head>
 <body>
 <div class="app">
   <div class="rotate-hint">Rotate your phone to landscape for the full field view</div>
@@ -435,7 +443,7 @@
   <div class="momentum-label" id="momentum-label"></div>
   <div class="field-container"><aside id="practice-coach" hidden aria-live="polite"><strong id="practice-coach-title"></strong><span id="practice-coach-text"></span><button id="practice-coach-next" hidden>Try a juke</button><button id="practice-coach-close" aria-label="End guided practice">×</button></aside>
     <canvas id="field" width="800" height="380" tabindex="0" aria-label="Football field. Use the Practice guide for controls."></canvas>
-<div id="runner-controls" hidden aria-label="Ball carrier moves"><button id="btn-juke-up" aria-label="Juke up">▲ JUKE</button><button id="btn-juke-down" aria-label="Juke down">▼ JUKE</button></div>
+<div id="runner-controls" hidden aria-label="Ball carrier moves"><button id="btn-juke-up" aria-label="Juke up">▲ JUKE</button><button id="btn-dive" aria-label="Dive or slide to protect the ball">DIVE / SLIDE</button><button id="btn-juke-down" aria-label="Juke down">▼ JUKE</button></div>
     <div id="presnap-hint" class="presnap-hint" style="display:none">Drag from QB to pass <span>|</span> Tap RB to run</div>
     <div id="edit-panel" style="display:none;position:absolute;left:0;right:0;bottom:0;background:#1b2126;border-top:1px solid #333c43;padding:10px;border-radius:0 0 12px 12px;">
       <p style="font-size:12px;color:#9aa1a8;margin:0 0 8px;text-align:center">Drag any player to reposition. x = lateral position, y = yards from the line of scrimmage.</p>
@@ -460,7 +468,7 @@
         <div class="card-body">
           <div class="result-kicker" id="result-kicker">Play Result</div>
           <p class="msg" id="overlay-msg"></p>
-          <button class="btn-primary" id="btn-continue">Continue</button>
+          <button id="btn-replay" hidden>Replay</button><button class="btn-primary" id="btn-continue">Continue</button>
         </div>
       </div>
     </div>
@@ -486,7 +494,7 @@
           <div><p class="card-title">Game Paused</p><p class="card-subtitle">Gridiron Legends</p></div>
           <button class="card-close" id="btn-close-settings" aria-label="Close">&#10005;</button>
         </div>
-        <div class="card-body pause-scroll"><p class="experience-note">Aim a throw backward and release to scramble, even after waiting in the pocket. With slingshot controls, pull toward the opponent’s end zone. Drag to steer; use the juke buttons to cut. You cannot pass after tucking.</p>
+        <div class="card-body pause-scroll"><p class="experience-note">Aim a throw backward and release to scramble, even after waiting in the pocket. With slingshot controls, pull toward the opponent’s end zone. Drag to steer; swipe up/down to juke or forward to dive. QBs slide to protect the ball. Move buttons are also available. You cannot pass after tucking.</p>
           <p class="settings-section">Gameplay</p>
           <div class="settings-row">
             <span class="label">Difficulty</span>

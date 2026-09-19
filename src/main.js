@@ -1,3 +1,4 @@
+import {toggleReplay} from './simulation/highlights.js';
 import {initCloud} from './cloud/sync.js';
 import {initAudio} from './audio/gameAudio.js';
 import {initPracticeGuide} from './ui/practiceGuide.js';
@@ -34,6 +35,7 @@ uiHooks.returnToMainMenu=returnToMainMenu;
 document.getElementById('btn-league-hub').addEventListener('click',openLeagueHub);
 document.getElementById('btn-start-editor').addEventListener('click',enterFormationLab);
 
+document.getElementById('btn-replay').addEventListener('click',toggleReplay);
 document.getElementById('btn-continue').addEventListener('click',continueResult);
 document.getElementById('btn-go-for-it').addEventListener('click',initPlay);
 document.getElementById('btn-field-goal').addEventListener('click',attemptFieldGoal);
@@ -66,7 +68,7 @@ initPracticeGuide();
 initOverlayFocus();
 
 document.addEventListener('visibilitychange',()=>{
-  if(document.hidden&&['presnap','live','tackle'].includes(game.phase)){
+  if(document.hidden&&['presnap','live','tackle','kicking','result'].includes(game.phase)){
     document.getElementById('btn-pause').click();
   }
 });
