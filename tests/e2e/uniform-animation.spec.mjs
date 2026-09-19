@@ -31,12 +31,12 @@ test('all 33 uniform poses preserve protected pixels and alpha through palettes 
 
 test('runtime uses independent materials on all sheets and preserves saved pants variants',async({page})=>{
  await page.setViewportSize({width:844,height:390});await page.goto('/');
- await expect.poll(()=>page.evaluate(async()=>{const s=await import('/src/rendering/spriteSheets.js');return Object.values(s.uniformMaskStatus).filter(v=>v==='verified').length;})).toBe(3);
+ await expect.poll(()=>page.evaluate(async()=>{const s=await import('/src/rendering/spriteSheets.js');return Object.values(s.uniformMaskStatus).filter(v=>v==='verified').length;})).toBe(4);
  const check=await page.evaluate(async()=>{
   const s=await import('/src/rendering/spriteSheets.js'),{OFF,DEF}=await import('/src/state/constants.js'),{recolorPixels}=await import('/tools/uniform-pilot.mjs');
   const team={colors:{primary:'#ff0000',secondary:'#00ff00',accent:'#ffff00'},uniforms:{home:{jersey:'#00cccc',helmet:'#ff0044',stripe:'#dddd00',pants:'#aa00cc'}},uniformPreference:'home'};
   s.applyUniform(team,OFF);s.applyUniform(team,DEF);s.rebuildSpriteSheets();let errors=0,checked=0;
-  for(const [name,image,sheets] of [['sprites',s.spriteImage,s.spriteSheets.off],['presnap-offense',s.presnapSpriteImage,s.presnapSpriteSheets.off],['presnap-defense',s.defensePresnapSpriteImage,s.defensePresnapSpriteSheets]]){
+  for(const [name,image,sheets] of [['sprites',s.spriteImage,s.spriteSheets.off],['presnap-offense',s.presnapSpriteImage,s.presnapSpriteSheets.off],['presnap-defense',s.defensePresnapSpriteImage,s.defensePresnapSpriteSheets],['runner-actions',s.runnerSpriteImage,s.runnerSpriteSheets.off]]){
    const mask=await(await fetch(`/assets/masks/${name}-uniform.json`)).json(),labels=new Uint8Array(mask.width*mask.height);for(const [start,length,id]of mask.runs)labels.fill(id,start,start+length);
    const c=document.createElement('canvas');c.width=image.width;c.height=image.height;c.getContext('2d').drawImage(image,0,0);const original=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
    const expected=recolorPixels(original,labels,{1:[255,0,68],2:[221,221,0],3:[0,204,204],4:[170,0,204]});
