@@ -14,7 +14,7 @@ export function canJuke(){
 }
 export function requestDive(){
  if(!canJuke()||entities.ballCarrier.runnerDive)return false;
- const runner=entities.ballCarrier;runner.runnerDive={start:simulationNow()};runner.action=runner===entities.players.qb?'tackled':'dive';runner.actionStart=simulationNow();runner.juke=null;return true;
+ const runner=entities.ballCarrier;runner.runnerDive={start:simulationNow()};runner.action=runner===entities.players.qb?'runnerSlide':'runnerDive';runner.actionStart=simulationNow();runner.juke=null;return true;
 }
 export function requestJuke(direction){
  if(!canJuke()||![-1,1].includes(direction))return false;

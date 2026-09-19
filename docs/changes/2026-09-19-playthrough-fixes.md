@@ -1,0 +1,12 @@
+# Playthrough corrections
+
+Follow-up to the 106-second mobile recording (ScreenRecording_09-19-2026 00-16-10_1.mp4).
+
+- Passing: one radial air-distance cap from the QB applies at release, after accuracy scatter, and in previews for all three controls. Arm 60/75/90 gives 30/39/48 yards on lobs, with bullets at 82% of that range. Short drags still allow short throws; extreme diagonal aims cannot bypass the cap. Only elite arms reach 50+ air yards.
+- Routes: vertical/post/crossing routes retain their final direction after the last waypoint. Crossers turn upfield before the boundary. Short single-point hitches work laterally at their depth. Prediction uses the same movement; receivers stop at the back of the end zone rather than leaving the field.
+- Replays: explicitly remove the overlay backdrop blur, including full touchdown results. Interpolate player, camera, and loose-ball positions between recorded samples. Store only render data, removing repeated full-roster JSON serialization from capture and playback. No new simulation or scoring occurs in replay.
+- Art: eight new generated offensive ball-carrying poses, four diving and four feet-first sliding, separate from the defender tackle animation. Every pose holds the football. Sprite material masks support helmet, stripe, jersey, pants, and explicit skin regions while protecting the ball. Failed/missing art masks fall back to a carrying pose, not a tackle pose.
+
+Source: built-in image generation using public/assets/sprites.png as the character/style reference. Prompt requested a transparent 4x2 sheet: left-facing four-stage offensive dive holding the ball in the forward hand, four-stage QB feet-first slide cradling the ball, consistent helmet/facemask/body proportions/skin, navy helmet, blue jersey, white pants, no scenery or text. Generated source is preserved in public/assets/source/runner-actions-generated.png. scripts/build-runner-actions.py reproducibly packs it into 64px cells and labels pose-specific materials. Runtime asset: public/assets/runner-actions.png.
+
+Validation: 16 overhaul regression checks (including 30 arm/control/throw combinations), 40 existing gameplay checks; browser regressions cover full TD replay blur and every new pose across four skin palettes. CI provides the final browser/build result. Actual-device replay smoothness still needs the user's feedback; interpolation reduces sampling judder but is not a measured iPhone frame-rate guarantee.

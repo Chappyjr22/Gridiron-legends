@@ -113,7 +113,7 @@ canvas.addEventListener('pointerup',ev=>{
         const {cx,cy}=toCanvas(entities.players.qb);
         const pullDist=Math.hypot(interaction.aimTarget.x-cx,interaction.aimTarget.y-cy);
         if(pullDist>=MIN_PULL){
-          releaseThrow(slingshotTarget({cx,cy},interaction.aimTarget,entities.players.qb.attributes?.arm??entities.players.qb.rating));
+          releaseThrow(slingshotTarget({cx,cy},interaction.aimTarget,entities.players.qb.attributes?.arm??entities.players.qb.rating,game.throwType));
         }
       } else {
         releaseThrow(interaction.aimTarget);

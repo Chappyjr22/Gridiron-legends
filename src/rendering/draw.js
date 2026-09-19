@@ -1,4 +1,4 @@
-import {slingshotTarget} from '../input/aim.js';
+import {slingshotTarget,limitThrowTarget} from '../input/aim.js';
 import {flightPosition} from '../simulation/ballMotion.js';
 import {replayFrame,highlights} from '../simulation/highlights.js';
 import {playingRoster} from '../career/roster.js';
@@ -83,7 +83,7 @@ export function draw(){
  if(!frame){drawScene();return;}
  const savedEntities={...entities},savedGame={...game};
  try{
-   const copy=JSON.parse(JSON.stringify(frame));
+   const copy=frame; // replayFrame already returns disposable render objects.
    copy.decor.forEach((player,index)=>{player.team=savedEntities.decor[index]?.team;});
    entities.players=copy.players;entities.decor=copy.decor;entities.ball=copy.ball;entities.ballCarrier=copy.players[copy.carrierKey]||null;entities.runExchange=null;entities.playFake=null;
    Object.assign(game,{cameraYard:copy.cameraYard,los:copy.los,firstDownYard:copy.firstDownYard,scrambling:copy.scrambling,phase:copy.phase,tackle:null});
@@ -201,7 +201,7 @@ function drawScene(){
     const {cx,cy}=toCanvas(entities.players.qb);
     let tx,ty,showArc;
     if(game.passMode==='drag'){
-      const target=slingshotTarget({cx,cy},interaction.aimTarget,entities.players.qb.attributes?.arm??entities.players.qb.rating);const mx=target.x,my=target.y;
+      const target=slingshotTarget({cx,cy},interaction.aimTarget,entities.players.qb.attributes?.arm??entities.players.qb.rating,game.throwType);const mx=target.x,my=target.y;
       ctx.strokeStyle='rgba(255,255,255,0.55)';ctx.lineWidth=2;ctx.setLineDash([4,4]);
       ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(interaction.aimTarget.x,interaction.aimTarget.y);ctx.stroke();
       ctx.setLineDash([]);
@@ -218,6 +218,8 @@ function drawScene(){
       ctx.save();ctx.font='bold 13px sans-serif';ctx.textAlign='center';ctx.fillStyle='#101e30';
       ctx.fillRect(cx-72,cy-49,144,24);ctx.fillStyle='#ffdc63';ctx.fillText('Release to scramble',cx,cy-32);ctx.restore();
     }else if(showArc){
+      const limited=limitThrowTarget({cx,cy},{x:tx,y:ty},entities.players.qb.attributes?.arm??entities.players.qb.rating,game.throwType);
+      tx=limited.x;ty=limited.y;
       const previewDist=Math.hypot(tx-cx,ty-cy);
       const previewArc=Math.min(60,previewDist*0.12)*(game.throwType==='bullet'?0.3:1);
       drawArcPath(cx,cy,tx,ty,previewArc,'rgba(255,209,102,0.9)',2.5);

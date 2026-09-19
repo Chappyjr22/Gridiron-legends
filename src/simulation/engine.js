@@ -1,3 +1,4 @@
+import {limitThrowTarget} from '../input/aim.js';
 import {flightPosition,looseBall,advanceLooseBall,fumbleChance} from './ballMotion.js';
 import {captureHighlight,resetHighlight,highlights} from './highlights.js';
 import {feedback} from '../state/feedback.js';
@@ -184,7 +185,7 @@ export function choosePlay(p){
   game.playCall=p;
   game.phase='presnap';
   document.getElementById('callsheet-overlay').classList.remove('show');
-  Object.values(entities.players).forEach(player=>{player.routeIdx=0;});
+  Object.values(entities.players).forEach(player=>{player.routeIdx=0;delete player.routeOrigin;delete player.routeExit;});
   const hint=document.getElementById('presnap-hint');
   hint.innerHTML=(play.type==='run'?'Tap the field to run':game.passMode==='tap'?'Tap a receiver to pass':'Drag from QB to pass')+(play.routes?.rb?' <span>|</span> RB is a receiver':' <span>|</span> Tap RB to '+play.runOption);
   hint.style.display='block';
@@ -556,12 +557,16 @@ export function releaseThrow(t,explicitReceiver=false){
   const throwStart=simulationNow();
   qb.action='throw';qb.actionStart=throwStart;
   const camPx=game.cameraYard*XPX;
+  const origin={cx:BASE_X-(qb.yfield-camPx),cy:qb.x};
+  const arm=qb.attributes?.arm??qb.rating??75;
+  t=limitThrowTarget(origin,t,arm,game.throwType);
   const aimDistance=Math.hypot(t.y-qb.x,camPx+(BASE_X-t.x)-qb.yfield);
   const accuracyError=clamp((94-(qb.attributes?.accuracy??qb.rating??75))*0.14,0,6)*clamp(aimDistance/(25*XPX),0.5,1.5);
   const lateralError=(Math.random()+Math.random()-1)*accuracyError;
   const depthError=(Math.random()+Math.random()-1)*accuracyError*1.25;
-  const fLat=clamp(t.y+lateralError,LAT_MIN,LAT_MAX);
-  const fDown=camPx+(BASE_X-t.x)+depthError;
+  const scattered=limitThrowTarget(origin,{x:t.x-depthError,y:clamp(t.y+lateralError,LAT_MIN,LAT_MAX)},arm,game.throwType);
+  const fLat=scattered.y;
+  const fDown=camPx+(BASE_X-scattered.x);
   const dist=Math.hypot(fLat-qb.x,fDown-qb.yfield);
   const landing={x:fLat,yfield:fDown},profile=throwProfile(qb,landing,game.throwType);
   entities.ball={inFlight:true,fromX:qb.x,fromY:qb.yfield,toX:fLat,toY:fDown,startTime:throwStart+profile.releaseDelay,duration:profile.duration,arcHeight:profile.arcHeight};
@@ -636,7 +641,7 @@ function resolveTackle(tackler){
   }
   game.phase='tackle';feedback('tackle');
   game.tackle={startTime:now,carrier:entities.ballCarrier,tackler,yardGained,label,exactSpot:entities.ballCarrier.yfield/XPX};
-  entities.ballCarrier.action='tackled';entities.ballCarrier.actionStart=now;
+  if(!entities.ballCarrier.runnerDive){entities.ballCarrier.action='tackled';entities.ballCarrier.actionStart=now;}
   if(Math.abs(entities.ballCarrier.yfield-tackler.yfield)>0.5)tackler.facing=entities.ballCarrier.yfield>tackler.yfield?'left':'right';
   tackler.dive=null;
   tackler.action='tackle';tackler.actionStart=now;
