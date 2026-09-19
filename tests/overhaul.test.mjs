@@ -17,7 +17,7 @@ await test('all passing modes enforce arm distance from release including diagon
   const yards=Math.hypot(b.toX-qb.x,b.toY-qb.yfield)/28;
   assert.ok(yards<=maxThrowYards(arm,kind)+.0001);assert.ok(yards>maxThrowYards(arm,kind)-1);
  }
- assert.equal(maxThrowYards(60),30);assert.ok(maxThrowYards(75)<40);assert.ok(maxThrowYards(99)>50);
+ assert.ok(maxThrowYards(60)<22);assert.ok(maxThrowYards(68)<27);assert.ok(maxThrowYards(75)<31);assert.equal(maxThrowYards(99),50);
 });
 await test('vertical and crossing routes continue after their final waypoint and stay in bounds',()=>{
  const vertical={x:39,yfield:20*28,routeIdx:0};advanceRoute(vertical,[{x:39,y:22}],140,8,20);assert.ok(vertical.yfield>42*28);assert.equal(vertical.x,39);
@@ -74,6 +74,33 @@ await test('contact during an offensive dive preserves its pose and skin through
  runner.skin=3;h.game.carrierSince=h.now-1000;Object.assign(def,{x:runner.x,yfield:runner.yfield+2});
  const controls=await h.load('src/input/runnerControls.js');controls.requestDive();h.step();assert.equal(h.game.phase,'tackle');
  h.step(1000);assert.equal(h.game.phase,'result');assert.equal(runner.action,'runnerDive');assert.equal(runner.skin,3);
+});
+await test('scrambling preserves engaged linemen until their original block expires',async()=>{
+ const h=await harness();h.engine.startPractice();h.engine.choosePlay('trips_verticals');h.engine.onSnap();
+ const {DL_KEYS}=await h.load('src/state/constants.js');
+ for(const p of [...Object.values(h.entities.players),...h.entities.decor])if(p!==h.entities.players.qb)p.yfield=-10000;
+ for(const key of DL_KEYS)Object.assign(h.entities.players[key],{state:'engaged',engageStart:h.now,engageDur:900});
+ assert.ok(h.engine.startScramble());h.step(300);
+ for(const key of DL_KEYS)assert.equal(h.entities.players[key].state,'engaged');
+ h.step(650);for(const key of DL_KEYS)assert.equal(h.entities.players[key].state,'released');
+});
+await test('a clean scramble lane lets both slower and faster QBs advance using their speed attribute',async()=>{
+ const gains=[];
+ for(const speed of [55,85]){
+  const h=await harness();h.engine.startPractice();h.engine.choosePlay('trips_verticals');h.engine.onSnap();
+  const qb=h.entities.players.qb;qb.attributes.speed=speed;
+  for(const p of [...Object.values(h.entities.players),...h.entities.decor])if(p!==qb)p.yfield=-10000;
+  h.engine.startScramble();for(let i=0;i<150;i++)h.step(16);
+  gains.push(qb.yfield/28-h.game.los);assert.equal(h.game.phase,'live');
+ }
+ assert.ok(gains[0]>2);assert.ok(gains[1]>gains[0]+2);
+});
+await test('scramble recognition is brief and ends immediately when the QB crosses the line',async()=>{
+ const h=await harness();h.engine.startPractice();h.engine.choosePlay('trips_verticals');h.engine.onSnap();
+ const qb=h.entities.players.qb;
+ for(const p of [...Object.values(h.entities.players),...h.entities.decor])if(p!==qb)p.yfield=-10000;
+ h.engine.startScramble();h.step(300);const extra=h.entities.decor[5];
+ assert.notEqual(extra.isPursuing,true);qb.yfield=h.game.los*28+1;h.step();assert.equal(extra.isPursuing,true);
 });
 await test('nearby lineman wins the block assignment and contact holds until release',async()=>{
  const h=await harness();h.engine.startPractice();h.engine.choosePlay('trips_inside');h.engine.startRunOption();h.step(150);

@@ -542,6 +542,7 @@ export function startScramble(){
  game.scrambling=true;game.thrown=true;game.runActive=true;game.runType='scramble';
  entities.pendingTapThrow=null;entities.playFake=null;entities.runExchange=null;
  entities.ballCarrier=entities.players.qb;game.carrierSince=simulationNow();
+ game.scrambleReadAt=simulationNow()+700+currentDiff().reactionDelay*1000;
  entities.players.qb.action='carry';entities.players.qb.actionStart=simulationNow();
  interaction.aiming=false;interaction.aimTarget=null;
  return true;
@@ -746,7 +747,8 @@ function updateSimulation(dt,now){
       }
     });
 
-    if(playDef&&playDef.type!=='run'&&entities.ballCarrier===qb&&!game.scrambling){
+    const readingScramble=game.scrambling&&now<game.scrambleReadAt&&qb.yfield<game.los*XPX;
+    if(playDef&&playDef.type!=='run'&&entities.ballCarrier===qb&&(!game.scrambling||readingScramble)){
       Object.keys(playDef.routes).forEach(key=>{
         if(t*1000<(playDef.routeDelays?.[key]||0))return;
         const receiver=entities.players[key],speed=ROUTE_YPS*XPX*SPEED_SCALE*diff.offenseSpeedMult*speedMultiplier(receiver,game.difficulty,game.momentum);
@@ -760,6 +762,7 @@ function updateSimulation(dt,now){
       ['cb1','cb2','s1','lb1'].forEach((dk,index)=>{
         if(coverAssign[dk]&&dk!==game.blitzer&&t>diff.reactionDelay){
           const recv=entities.players[coverAssign[dk]],defender=entities.players[dk];
+          if(readingScramble&&separation(defender,qb)<40)return;
           let tx=recv.x,ty=recv.yfield+8;
           if(game.coverage==='zone'){
             const zoneX=[65,310,170,210][index],depth=[7,7,16,5][index];
@@ -771,7 +774,7 @@ function updateSimulation(dt,now){
           moveToward(defender,tx,ty,COVER_YPS*XPX*SPEED_SCALE*sMult*(now<(defender.blockedUntil||0)?.25:1)*speedMultiplier(defender,game.difficulty,game.momentum),dt);
         }
       });
-      if(game.blitzer&&t>0.25&&now>=(game.blitzBlockedUntil||0)){
+      if(!game.scrambling&&game.blitzer&&t>0.25&&now>=(game.blitzBlockedUntil||0)){
         const blitzer=entities.players[game.blitzer];
         moveToward(blitzer,qb.x,qb.yfield,RUSH_SPEED_BLITZ*screenMult*(now<(blitzer.blockedUntil||0)?.25:1)*speedMultiplier(blitzer,game.difficulty,game.momentum),dt);
       }
@@ -811,6 +814,15 @@ function updateSimulation(dt,now){
             if(lb1.state!=='engaged')pursuers.push(lb1);
           }
           pursuers=pursuers.concat(releasedDL);
+        } else if(game.scrambling){
+          // Tucking the ball does not magically defeat the existing pass protection.
+          // Linemen keep their original engagement timers; free defenders react normally.
+          pursuers=pursuers.concat(releasedDL);
+          if(reacted){
+            const extras=entities.decor.filter(d=>d.team===DEF);
+            const reacting=[cb1,cb2,s1,lb1,...extras].filter(d=>!readingScramble||d===entities.players[game.blitzer]||separation(d,qb)<40);
+            reacting.forEach(d=>{d.isPursuing=true;});pursuers.push(...reacting);
+          }
         } else if(reacted){
           const extraDefenders=entities.decor.filter(d=>d.team===DEF);
           extraDefenders.forEach(d=>{d.isPursuing=true;});
@@ -862,6 +874,7 @@ function updateSimulation(dt,now){
       if(game.phase==='live'){
         const pursueSpeed=PURSUE_YPS_BASE*diff.pursueMult*XPX*SPEED_SCALE;
         // Receivers and nearby linemen can escort the runner, one blocker per defender.
+        pursuers=[...new Set(pursuers)];
         const blocked=new Set();
         if(entities.ballCarrier!==qb||game.scrambling){
           const blockers=[...new Set([...Object.keys(playDef.routes||{}),...(playDef.blocks||[])]).values()].map(k=>entities.players[k]).concat(entities.decor.filter(d=>d.team===OFF));
