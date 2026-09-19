@@ -659,7 +659,8 @@ function resolveOutOfBounds(){
 function finishTackle(){
   const tackle=game.tackle;
   if(!tackle)return;
-  tackle.carrier.action='';tackle.tackler.action='';
+  if(!tackle.carrier.runnerDive)tackle.carrier.action='';
+  tackle.tackler.action='';
   game.tackle=null;
   endPlay(tackle.yardGained,tackle.label,false,tackle.exactSpot);
 }

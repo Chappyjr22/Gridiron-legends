@@ -67,6 +67,14 @@ await test('runner dive ends the rep and cannot be extended by repeated taps',as
  for(const p of Object.values(h.entities.players))if(p!==h.entities.players.rb)p.yfield=-10000;h.entities.decor.forEach(p=>p.yfield=-10000);
  const controls=await h.load('src/input/runnerControls.js');assert.ok(controls.requestDive());assert.equal(h.entities.players.rb.action,'runnerDive');assert.equal(controls.requestDive(),false);h.step(320);assert.equal(h.game.phase,'result');assert.ok(!h.game.fumble);
 });
+await test('contact during an offensive dive preserves its pose and skin through the result',async()=>{
+ const h=await harness();h.engine.startPractice();h.engine.choosePlay('trips_inside');h.engine.startRunOption();h.step(200);
+ const runner=h.entities.players.rb,def=h.entities.players.cb1;
+ for(const p of [...Object.values(h.entities.players),...h.entities.decor])if(p!==runner)p.yfield=-10000;
+ runner.skin=3;h.game.carrierSince=h.now-1000;Object.assign(def,{x:runner.x,yfield:runner.yfield+2});
+ const controls=await h.load('src/input/runnerControls.js');controls.requestDive();h.step();assert.equal(h.game.phase,'tackle');
+ h.step(1000);assert.equal(h.game.phase,'result');assert.equal(runner.action,'runnerDive');assert.equal(runner.skin,3);
+});
 await test('nearby lineman wins the block assignment and contact holds until release',async()=>{
  const h=await harness();h.engine.startPractice();h.engine.choosePlay('trips_inside');h.engine.startRunOption();h.step(150);
  const runner=h.entities.players.rb,def=h.entities.decor[6],line=h.entities.decor[0],receiver=h.entities.players.wr1;
