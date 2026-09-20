@@ -30,7 +30,7 @@ test('recorded replay keeps the result intact and offers a reachable skip contro
  await page.getByRole('button',{name:'Skip replay',exact:true}).tap();
  await expect(page.locator('#overlay-msg')).toHaveText(message);
  await expect(page.locator('#result-overlay')).not.toHaveClass(/replaying/);
- await page.waitForFunction(async()=>{const {resultFlow}=await import('/src/ui/hud.js');return performance.now()>=resultFlow.readyAt;});
+ await expect.poll(()=>page.evaluate(async()=>{const {resultFlow}=await import('/src/ui/hud.js');return performance.now()>=resultFlow.readyAt;})).toBe(true);
  await page.getByRole('button',{name:'Next Rep',exact:true}).tap();
  await expect(page.locator('#callsheet-overlay')).toBeVisible();expect(errors).toEqual([]);await context.close();
 });
