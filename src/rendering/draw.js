@@ -201,13 +201,14 @@ function drawScene(){
     const {cx,cy}=toCanvas(entities.players.qb);
     let tx,ty,showArc;
     if(game.passMode==='drag'){
-      const target=slingshotTarget({cx,cy},interaction.aimTarget,entities.players.qb.attributes?.arm??entities.players.qb.rating,game.throwType);const mx=target.x,my=target.y;
+      const anchor=interaction.aimAnchor??{x:cx,y:cy};
+      const target=slingshotTarget({cx,cy},interaction.aimTarget,entities.players.qb.attributes?.arm??entities.players.qb.rating,game.throwType,anchor);const mx=target.x,my=target.y;
       ctx.strokeStyle='rgba(255,255,255,0.55)';ctx.lineWidth=2;ctx.setLineDash([4,4]);
-      ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(interaction.aimTarget.x,interaction.aimTarget.y);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(anchor.x,anchor.y);ctx.lineTo(interaction.aimTarget.x,interaction.aimTarget.y);ctx.stroke();
       ctx.setLineDash([]);
       ctx.fillStyle='rgba(255,255,255,0.7)';
       ctx.beginPath();ctx.arc(interaction.aimTarget.x,interaction.aimTarget.y,6,0,7);ctx.fill();
-      const pullDist=Math.hypot(interaction.aimTarget.x-cx,interaction.aimTarget.y-cy);
+      const pullDist=Math.hypot(interaction.aimTarget.x-anchor.x,interaction.aimTarget.y-anchor.y);
       showArc=pullDist>=MIN_PULL;
       tx=mx;ty=my;
     } else {

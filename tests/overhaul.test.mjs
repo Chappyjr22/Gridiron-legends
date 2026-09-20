@@ -7,7 +7,46 @@ import {runnerActionFrame} from '../src/rendering/runnerFrames.js';
 let checks=0;
 async function test(name,fn){await fn();console.log('ok - '+name);checks++;}
 await test('comfortable slingshot throws reach deep and preserve backward intent',()=>{
- for(const width of [800,1200,1600]){const qb={cx:width-185,cy:190};const t=slingshotTarget(qb,{x:qb.cx+130,y:190},80);assert.ok((qb.cx-t.x)/28>30);assert.ok(t.y===190);assert.ok(slingshotTarget(qb,{x:qb.cx-30,y:190}).x>qb.cx+28);}
+ for(const width of [800,1200,1600]){const qb={cx:width-185,cy:190};const t=slingshotTarget(qb,{x:qb.cx+140,y:190},80);assert.ok((qb.cx-t.x)/28>30);assert.ok(t.y===190);assert.ok(slingshotTarget(qb,{x:qb.cx-30,y:190}).x>qb.cx+28);}
+});
+await test('short pulls ease into distance and longer pulls increase smoothly to the arm limit',()=>{
+ const qb={cx:615,cy:190};
+ for(const arm of [40,68,80,99])for(const kind of ['lob','bullet']){
+  const yards=pull=>(qb.cx-slingshotTarget(qb,{x:qb.cx+pull,y:190},arm,kind).x)/28;
+  const max=maxThrowYards(arm,kind);
+  assert.ok(yards(20)<max*.05);assert.ok(yards(40)<max*.15);
+  assert.ok(yards(70)>max*.3&&yards(70)<max*.35);
+  let previous=0;
+  for(let pull=1;pull<=140;pull++){
+   const next=yards(pull);assert.ok(next>previous);assert.ok(next-previous<max*.012);previous=next;
+  }
+  assert.ok(Math.abs(yards(140)-max)<1e-9);assert.equal(yards(200),yards(140));
+ }
+});
+await test('off-center touches stay neutral and holding still does not build throw power',async()=>{
+ const h=await harness();await h.load('src/input/pointer.js');h.engine.startPractice();h.engine.choosePlay('trips_verticals');h.game.passMode='drag';
+ h.event('pointerdown',{clientX:690,clientY:220});
+ const anchor={...h.interaction.aimAnchor};
+ // Simulate pocket/camera movement while the finger remains still.
+ h.entities.players.qb.yfield-=56;h.game.cameraYard+=1;
+ const {toCanvas}=await h.load('src/rendering/players.js');const qb=toCanvas(h.entities.players.qb);
+ const target=slingshotTarget(qb,h.interaction.aimTarget,75,'lob',anchor);
+ assert.equal(target.x,qb.cx);assert.equal(target.y,qb.cy);
+ h.event('pointerup');assert.equal(h.game.thrown,false);assert.equal(h.interaction.aimAnchor,null);
+});
+await test('pointer release matches anchored preview and a backward pull still scrambles',async()=>{
+ for(const pull of [25,60,100,140,-30]){
+  const h=await harness();await h.load('src/input/pointer.js');h.engine.startPractice();h.engine.choosePlay('trips_verticals');h.game.passMode='drag';h.setRandom(.5);
+  h.event('pointerdown',{clientX:650,clientY:231});
+  h.event('pointermove',{clientX:650+pull,clientY:231});
+  const {toCanvas}=await h.load('src/rendering/players.js');const qb=h.entities.players.qb,pos=toCanvas(qb);
+  const target=slingshotTarget(pos,h.interaction.aimTarget,qb.attributes.arm,h.game.throwType,h.interaction.aimAnchor);
+  h.event('pointerup',{clientX:650+pull,clientY:231});
+  if(pull<0){assert.equal(h.game.scrambling,true);continue;}
+  assert.equal(h.entities.ball.inFlight,true);
+  assert.ok(Math.abs((h.entities.ball.toY-qb.yfield)-(pos.cx-target.x))<1e-8);
+  assert.ok(Math.abs(h.entities.ball.toX-target.y)<1e-8);
+ }
 });
 await test('all passing modes enforce arm distance from release including diagonal scatter',async()=>{
  for(const mode of ['drag','direct','tap'])for(const arm of [40,60,75,90,99])for(const kind of ['lob','bullet']){

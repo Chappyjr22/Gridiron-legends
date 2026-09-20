@@ -46,6 +46,7 @@ canvas.addEventListener('pointerdown',ev=>{
   canvas.setPointerCapture(ev.pointerId);
   const p=pointerPos(ev);
   gestureStart={...p,time:simulationNow()};
+  interaction.aimAnchor={...p};
   if(game.phase==='presnap'){
     if(PLAYS[game.playCall]?.type==='run'){
       startRunOption();
@@ -111,15 +112,16 @@ canvas.addEventListener('pointerup',ev=>{
     if(interaction.aimTarget){
       if(game.passMode==='drag'){
         const {cx,cy}=toCanvas(entities.players.qb);
-        const pullDist=Math.hypot(interaction.aimTarget.x-cx,interaction.aimTarget.y-cy);
+        const anchor=interaction.aimAnchor??{x:cx,y:cy};
+        const pullDist=Math.hypot(interaction.aimTarget.x-anchor.x,interaction.aimTarget.y-anchor.y);
         if(pullDist>=MIN_PULL){
-          releaseThrow(slingshotTarget({cx,cy},interaction.aimTarget,entities.players.qb.attributes?.arm??entities.players.qb.rating,game.throwType));
+          releaseThrow(slingshotTarget({cx,cy},interaction.aimTarget,entities.players.qb.attributes?.arm??entities.players.qb.rating,game.throwType,anchor));
         }
       } else {
         releaseThrow(interaction.aimTarget);
       }
     }
-    interaction.aimTarget=null;
+    interaction.aimTarget=null;interaction.aimAnchor=null;
   }
   if(interaction.steering&&gestureStart&&simulationNow()-gestureStart.time<280){
     const p=pointerPos(ev),dx=p.x-gestureStart.x,dy=p.y-gestureStart.y;
@@ -134,7 +136,7 @@ function cancelPointer(ev){
   activePointer=null;pendingRunTap=null;
   editState.dragEntity=null;
   interaction.aiming=false;interaction.steering=false;
-  interaction.aimTarget=null;interaction.steerAnchor=null;interaction.steerCurrent=null;
+  interaction.aimTarget=null;interaction.aimAnchor=null;interaction.steerAnchor=null;interaction.steerCurrent=null;
 }
 canvas.addEventListener('pointercancel',cancelPointer);
 canvas.addEventListener('lostpointercapture',cancelPointer);

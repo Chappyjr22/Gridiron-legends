@@ -544,7 +544,7 @@ export function startScramble(){
  entities.ballCarrier=entities.players.qb;game.carrierSince=simulationNow();
  game.scrambleReadAt=simulationNow()+700+currentDiff().reactionDelay*1000;
  entities.players.qb.action='carry';entities.players.qb.actionStart=simulationNow();
- interaction.aiming=false;interaction.aimTarget=null;
+ interaction.aiming=false;interaction.aimTarget=null;interaction.aimAnchor=null;
  return true;
 }
 export function releaseThrow(t,explicitReceiver=false){

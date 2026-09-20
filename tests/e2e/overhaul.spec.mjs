@@ -102,3 +102,39 @@ test('every new runner pose preserves ball pixels and supports all four skin pal
  for(const f of checks.result){expect(f.skin,f.name).toBeGreaterThan(5);expect(f.protectedPixels,f.name).toBeGreaterThan(10);expect(f.wrongSkin,f.name).toBe(0);expect(f.changedProtected,f.name).toBe(0);}
  await page.screenshot({path:'test-results/runner-actions-four-skin-palettes.png'});
 });
+
+for(const viewport of [{width:844,height:304},{width:932,height:430}])test(`drag aiming starts neutral and progresses from short to deep at ${viewport.width}x${viewport.height}`,async({browser})=>{
+ const context=await browser.newContext({viewport,hasTouch:true}),page=await context.newPage(),errors=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/');await page.locator('#btn-practice').tap();await page.locator('.play-btn').first().tap();
+ const origin=await page.evaluate(async()=>{
+  const {game,entities}=await import('/src/state/gameState.js'),{toCanvas}=await import('/src/rendering/players.js');
+  const {SCENE_TOP}=await import('/src/rendering/sceneLayout.js');
+  game.passMode='drag';entities.players.qb.attributes.arm=68;
+  for(const p of [...Object.values(entities.players),...entities.decor])if(p!==entities.players.qb)p.yfield=-10000;
+  const qb=toCanvas(entities.players.qb),canvas=document.querySelector('#field'),r=canvas.getBoundingClientRect();
+  return {x:r.left+(qb.cx+20)*r.width/canvas.width,y:r.top+(qb.cy+SCENE_TOP-10)*r.height/canvas.height,scale:r.width/canvas.width};
+ });
+ await page.mouse.move(origin.x,origin.y);await page.mouse.down();
+ async function readAim(){return page.evaluate(async()=>{
+  const {interaction}=await import('/src/input/interactionState.js'),{game,entities}=await import('/src/state/gameState.js');
+  const {toCanvas}=await import('/src/rendering/players.js'),{slingshotTarget,maxThrowYards}=await import('/src/input/aim.js');
+  const qb=toCanvas(entities.players.qb),t=slingshotTarget(qb,interaction.aimTarget,68,game.throwType,interaction.aimAnchor);
+  return {yards:(qb.cx-t.x)/28,max:maxThrowYards(68,game.throwType)};
+ });}
+ expect((await readAim()).yards).toBe(0);
+ const distances=[];
+ for(const pull of [30,70,140]){
+  await page.mouse.move(origin.x+pull*origin.scale,origin.y,{steps:8});const aim=await readAim();distances.push(aim.yards);
+  if(pull===30)expect(aim.yards).toBeLessThan(3);
+  if(pull===70)expect(aim.yards).toBeLessThan(aim.max*.35);
+  if(pull===140)expect(aim.yards).toBeCloseTo(aim.max,1);
+ }
+ expect(distances[1]).toBeGreaterThan(distances[0]);expect(distances[2]).toBeGreaterThan(distances[1]);
+ // Returning to a short pull must also lower power immediately.
+ await page.mouse.move(origin.x+30*origin.scale,origin.y,{steps:8});expect((await readAim()).yards).toBeLessThan(3);
+ await page.screenshot({path:`test-results/progressive-short-pass-${viewport.width}.png`});
+ await page.mouse.up();
+ expect(await page.evaluate(async()=>{const {game}=await import('/src/state/gameState.js');return game.playFacts.threw;})).toBe(true);
+ expect(errors).toEqual([]);await context.close();
+});
