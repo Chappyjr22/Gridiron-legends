@@ -120,7 +120,8 @@ function render(){
   const opp=League.findTeamState(career.league,last.opponentId);
   el('career-result-title').textContent=`${last.userScore>last.cpuScore?'WIN':'LOSS'} · ${team.abbr} ${last.userScore} – ${opp.abbr} ${last.cpuScore}`;
   el('career-result-stats').textContent=`${last.stats.completions}/${last.stats.attempts} · ${last.stats.passingYards} YDS · ${last.stats.passingTD} TD · ${last.stats.interceptions} INT`;
-  el('career-result-xp').textContent=`+${last.xp} XP${last.levels?` · ${last.levels} upgrade point earned`:''}`;
+  const earned=last.pointsEarned??last.levels;
+  el('career-result-xp').textContent=`+${last.xp} XP${earned?` · ${earned} upgrade ${earned===1?'point':'points'} earned`:''}`;
  }
  const teammates=playingRoster(team).filter(p=>['RB','WR1','WR2','WR3','TE'].includes(p.slot));
  el('career-teammates').innerHTML=teammates.map(p=>`<div class="career-list-row"><span>${escape(p.slot)} · #${p.number} ${escape(rosterName(p))}</span><b>${p.rating}</b></div>`).join('');
