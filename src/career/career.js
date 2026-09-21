@@ -1,3 +1,4 @@
+import {settlePreparation,seasonStakes,stakesResult} from './weekly.js';
 import {seasonReview,evolveLeague} from './offseason.js';
 import {normalizeQuarterback,upgradeOffer,QB_KEYS,assessGoal,DEVELOPMENT,applyDevelopment,awardExperience} from './development.js';
 import {careerStorage} from '../cloud/storage.js';
@@ -104,6 +105,7 @@ export function completeCareerGame(c,gameId,userScore,cpuScore,matchStats){
  const match=[...c.league.schedule,...(c.postseason?.games||[])].find(g=>g.id===gameId);
  if(!match||match.status==='completed'||c.activeMatch!==gameId)return false;
  if(![userScore,cpuScore].every(n=>Number.isInteger(n)&&n>=0)||userScore===cpuScore)return false;
+ const stakesBefore=seasonStakes(c);
  const home=match.homeTeamId===c.teamId,homeScore=home?userScore:cpuScore,awayScore=home?cpuScore:userScore;
  if(match.round)Object.assign(match,{homeScore,awayScore,status:'completed',source:'player'});
  else if(!League.recordGameResult(c.league,gameId,homeScore,awayScore,'player'))return false;
@@ -117,25 +119,29 @@ export function completeCareerGame(c,gameId,userScore,cpuScore,matchStats){
  }
  const assessment=c.stage==='college'?collegeGameAssessment(c,stats,userScore>cpuScore,opponent):null;
  const previousProjection=c.stage==='college'?draftProjection(c):null;
- const goal=assessGoal(c,stats,userScore>cpuScore);
+ const goal=assessGoal(c,stats,userScore>cpuScore,matchStats.players);
+ const preparationResult=settlePreparation(c,goal);
  const breakdown=applyDevelopment(xpBreakdown(stats,userScore>cpuScore,c.matchContext||c.settings),c);
  if(assessment)assessment.goal=goal;
  breakdown.push({label:'Weekly objective',xp:goal.xp});
  const xp=breakdown.reduce((sum,item)=>sum+item.xp,0);
  const reward=awardExperience(c,xp);
  c.lastResult={gameId,season:c.league.season,week:match.week,userScore,cpuScore,xp,levels:reward.levels,pointsEarned:reward.points,stats,opponentId:home?match.awayTeamId:match.homeTeamId};
- Object.assign(c.lastResult,{goal,previousProjection,xpBreakdown:breakdown,playerStats:structuredClone(match.boxScore.players),keyMoments:captureMoments(matchStats.plays)});
+ Object.assign(c.lastResult,{goal,preparationResult,previousProjection,xpBreakdown:breakdown,playerStats:structuredClone(match.boxScore.players),keyMoments:captureMoments(matchStats.plays)});
  if(assessment)c.lastResult.collegeAssessment=assessment;
  c.pendingRecapGameId=gameId;c.history.push(c.lastResult);
  if(assessment)c.lastResult.draftProjection=draftProjection(c);
- c.coachConfidence=Math.max(0,Math.min(100,(c.coachConfidence??50)+(userScore>cpuScore?3:-2)+(goal.met?2:0)-Math.min(6,stats.interceptions*2)));
+ c.coachConfidence=Math.max(0,Math.min(100,(c.coachConfidence??50)+(userScore>cpuScore?3:-2)+(goal.met?2:0)+(goal.kind==='challenge'&&goal.met?2:0)-Math.min(6,stats.interceptions*2)));
  c.lastResult.coachConfidence=c.coachConfidence;
  for(const [threshold,title,key] of [[1000,'1,000 career passing yards','passingYards'],[10000,'10,000 career passing yards','passingYards'],[100,'100 career passing touchdowns','passingTD'],[100,'100 career rushing yards','rushingYards']])if(c.totals[key]>=threshold&&!c.awards.some(a=>a.title===title))c.awards.push({season:c.league.season,title});
  for(let mark=2000;mark<=c.totals.passingYards;mark+=1000)if(!c.awards.some(a=>a.title===`${mark.toLocaleString('en-US')} career passing yards`))c.awards.push({season:c.league.season,title:`${mark.toLocaleString('en-US')} career passing yards`});
  if(c.history.length===1)c.awards.push({season:c.league.season,title:c.stage==='college'?'Senior season debut':'Rookie debut'});
  c.activeMatch=null;c.checkpoint=null;c.matchContext=null;
  if(!match.round){League.simulateWeek(c.league,c.league.week,c.teamId);if(c.league.week<(c.stage==='college'?12:17))League.advanceWeek(c.league);else if(c.stage==='college')seedCollegePostseason(c);else seedPlayoffs(c);}
- progressPostseason(c);return c.lastResult;
+ progressPostseason(c);
+ c.lastResult.stakes={before:stakesBefore,after:seasonStakes(c)};
+ c.lastResult.stakes.summary=stakesResult(stakesBefore,c.lastResult.stakes.after);
+ return c.lastResult;
 }
 export function startNextSeason(c){
  if(c.stage==='college'||c.activeMatch||!c.postseason?.champion)return false;

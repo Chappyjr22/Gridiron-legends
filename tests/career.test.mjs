@@ -136,3 +136,43 @@ await import("./career-depth.test.mjs");
 }
 
 await import("./progression.test.mjs");
+
+// Weekly preparation is saved, locks at kickoff and settles only once per game.
+{
+ const {choosePreparation,preparationTargets,seasonStakes}=await import('../src/career/weekly.js');
+ const {weeklyGoal}=await import('../src/career/development.js');
+ for(const schoolId of [null,'bgs']){
+  const school=schoolId?(await import('../src/career/collegeData.js')).COLLEGE_TEAMS[0].id:null;
+  let c=C.createCareer({name:'Weekly Rookie',schoolId:school});
+  const baseline=weeklyGoal(c);assert.equal(choosePreparation(c,'invalid'),false);
+  assert.equal(choosePreparation(c,'teammate',c.playerId),false);
+  const target=preparationTargets(c)[0],catching=target.attributes.catching;
+  assert.ok(choosePreparation(c,'teammate',target.id));
+  c=C.parseCareer(JSON.stringify(c));assert.equal(weeklyGoal(c).playerId,target.id);
+  const game=C.nextMatch(c);c.activeMatch=game.id;assert.equal(choosePreparation(c,'challenge'),false);
+  const stats={players:{[c.playerId]:{...emptyStats(),attempts:6,completions:4,passingYards:60,passingTD:2},[target.id]:{...emptyStats(),receptions:3}},plays:[]};
+  const result=C.completeCareerGame(c,game.id,21,7,stats);
+  assert.equal(result.goal.xp,0);assert.ok(result.preparationResult.met);
+  assert.equal(c.league.teams.find(t=>t.id===c.teamId).roster.find(p=>p.id===target.id).attributes.catching,catching+1);
+  const saved=JSON.stringify(c);assert.equal(C.completeCareerGame(c,game.id,21,7,stats),false);assert.equal(JSON.stringify(c),saved);
+  assert.notEqual(weeklyGoal(c).kind,'teammate');assert.equal(result.stakes.after.remaining,school?11:16);
+  assert.equal(seasonStakes(c).cutoff,school?2:4);
+  assert.ok(choosePreparation(c,'challenge'));assert.equal(weeklyGoal(c).xp,Math.round(baseline.xp*1.5));
+  const next=C.nextMatch(c);c.activeMatch=next.id;const confidence=c.coachConfidence;
+  const challenge=C.completeCareerGame(c,next.id,21,7,stats);assert.ok(challenge.goal.met);assert.equal(c.coachConfidence,confidence+7);
+  assert.ok(choosePreparation(c,'challenge'));const failed=C.nextMatch(c);c.activeMatch=failed.id;
+  stats.players[c.playerId].interceptions=1;assert.equal(C.completeCareerGame(c,failed.id,21,7,stats).goal.xp,0);
+  assert.ok(choosePreparation(c,'teammate',target.id));const missed=C.nextMatch(c);c.activeMatch=missed.id;stats.players[target.id].receptions=2;
+  const before=c.league.teams.find(t=>t.id===c.teamId).roster.find(p=>p.id===target.id).attributes.catching;
+  assert.equal(C.completeCareerGame(c,missed.id,21,7,stats).preparationResult.met,false);
+  assert.equal(c.league.teams.find(t=>t.id===c.teamId).roster.find(p=>p.id===target.id).attributes.catching,before);
+ }
+ const legacy=C.createCareer({name:'Legacy weekly'});delete legacy.progressionVersion;delete legacy.settings.development;
+ assert.ok(C.parseCareer(JSON.stringify(legacy)));assert.equal(weeklyGoal(legacy).xp,25);
+ const target=preparationTargets(legacy)[0];target.attributes.catching=97;assert.equal(choosePreparation(legacy,'teammate',target.id),false);
+ const stakes=seasonStakes(legacy);assert.equal(stakes.remaining,17);assert.equal(stakes.contenders.some(t=>t.abbr===legacy.league.teams.find(t=>t.id===legacy.teamId).abbr),false);
+ legacy.postseason={round:3,games:[{round:3,status:'scheduled',homeTeamId:legacy.teamId,awayTeamId:'dal'}]};
+ assert.equal(seasonStakes(legacy).detail,'One win from the title.');
+ legacy.postseason.champion=legacy.teamId;assert.equal(seasonStakes(legacy).title,'Champions');assert.equal(choosePreparation(legacy,'personal'),false);
+}
+console.log('Weekly preparation: college/pro rewards, locks, reloads, misses, caps, legacy defaults, postseason stakes and duplicate prevention passed.');

@@ -109,3 +109,13 @@
   .career-header-context { max-width: 36%; }
   #career-screen #career-season { font-size: 11px; }
 }
+
+/* Weekly choices stay inside the scrolling Home cards on landscape phones. */
+#career-screen .career-preparation { margin: 12px 0; border-top: 1px solid #2878b9; padding-top: 10px; }
+#career-screen .career-preparation label { display: block; color: #d5e5ff; font-size: 13px; margin: 6px 0; }
+#career-screen .career-preparation select { width: 100%; max-width: 100%; min-height: 44px; background: #062f68; color: #fff; border: 1px solid #399fff; border-radius: 4px; padding: 8px; font-size: 14px; }
+#career-screen .career-preparation select:disabled { opacity: .7; }
+#career-screen .preparation-reward, #career-screen .career-stakes p { font-size: 13px; line-height: 1.45; color: #e0eeff; overflow-wrap: anywhere; }
+#career-screen .preparation-status { color: #b4cfee; font-size: 12px; line-height: 1.4; }
+#career-screen .career-stakes { border-bottom: 1px solid #2878b9; margin-bottom: 12px; padding-bottom: 8px; }
+#career-screen .career-stakes h3 { font-size: 18px; margin: 8px 0; }
