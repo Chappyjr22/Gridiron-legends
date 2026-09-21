@@ -34,7 +34,7 @@ for i,poly in enumerate(polys):
    blue=b>r*1.22 and b>g*1.08
    neutral=min(r,g,b)>120 and max(r,g,b)-min(r,g,b)<65
    skin=r>110 and r>g*1.1 and g>b*1.1
-   label=5 if skin else (1 if y<helmetBottom else 4 if y>=pantsTop else 3) if blue else (2 if y<helmetBottom-3 else 4 if y>=pantsTop else 10) if neutral else 10
+   label=5 if skin else (1 if y<helmetBottom and x<=[30,32,32,32][i] else 4 if y>=pantsTop else 3) if blue else (2 if y<helmetBottom-3 else 4 if y>=pantsTop else 10) if neutral else 10
    labels[at[1]*128+at[0]]=label
 sheet.save(ROOT/'public/assets/kicking.png')
 (ROOT/'public/assets/kicking-materials.json').write_text(json.dumps({'labels':labels},separators=(',',':')))

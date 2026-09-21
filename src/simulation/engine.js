@@ -405,7 +405,7 @@ export function kickInput(){
 }
 function finishKick(){
  const k=game.kick;consumeClock(5);
- if(game.practice){showResult(k.distance+'-yard field goal: '+k.reason+'.',()=>practiceFieldGoal(k.distance),'Kick again');return;}
+ if(game.practice){showResult(k.distance+'-yard field goal '+(k.good?'is GOOD!':'is no good: '+k.reason+'.'),()=>practiceFieldGoal(k.distance),'Kick again');return;}
  if(k.good){game.playerScore+=3;adjustMomentum(.12);completePlayerPossession(k.distance+'-yard field goal is GOOD!\n'+scoreLine(),kickoffSpot(),'Kickoff');}
  else{adjustMomentum(-.1);completePlayerPossession(k.distance+'-yard field goal is no good: '+k.reason+'.',clamp(100-game.los,1,99),'Missed field goal');}
 }

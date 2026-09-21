@@ -20,7 +20,7 @@ function teamSheet(skin){
 export function drawKick(ctx,width,game,entities,now){
  const k=game.kick,goalX=width*.43,goalY=210,originX=width*.73,originY=318;
  const distance=k.distance,elapsed=now-k.start,air=['flight','settle'].includes(k.stage)||game.phase==='result';
- ctx.fillStyle='#153c31';ctx.fillRect(0,0,width,380);
+ ctx.fillStyle='#153c31';ctx.fillRect(0,-16,width,396);
  ctx.fillStyle='#2e713d';ctx.beginPath();ctx.moveTo(goalX-125,145);ctx.lineTo(goalX+125,145);ctx.lineTo(width,380);ctx.lineTo(0,380);ctx.fill();
  ctx.strokeStyle='rgba(240,244,224,.4)';ctx.lineWidth=2;
  for(let i=0;i<5;i++){const y=210+i*36;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(width,y);ctx.stroke();}

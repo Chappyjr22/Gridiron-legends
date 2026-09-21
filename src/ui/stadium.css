@@ -1011,3 +1011,5 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
 }
 
 .topbar .score-helmet{color:var(--helmet-color,var(--team-primary,#326591));}
+
+.kick-practice-setup{padding-top:12px;border-top:1px solid #b9a681}.kick-practice-setup label{margin-right:8px}.kick-practice-setup select{min-height:44px;font-size:16px;margin-right:8px}.kick-practice-setup button{min-height:44px;margin-top:8px}
