@@ -117,6 +117,20 @@ await test('rear-diagonal pursuit cannot bypass the no-rear-dive rule',async h=>
   assert.equal(c.startDive({x:100+lateral,yfield:100-gap},runner,1000),false,`rear diagonal ${lateral}, ${gap}`);
  }
 });
+for(const frameMs of [16.0001,16.001,16.01,16.5,1000/60,32.001])await test(`fractional ${frameMs} ms frames preserve runner velocity and rear pursuit`,async h=>{
+ h.engine.startPractice();h.game.difficulty='medium';h.engine.choosePlay('trips_slants');h.engine.onSnap();h.game.carrierSince=h.now-2000;
+ const runner=h.entities.players.wr1,def=h.entities.players.cb1;h.entities.ballCarrier=runner;
+ for(const p of [...Object.values(h.entities.players),...h.entities.decor])Object.assign(p,{x:300,yfield:-10000,state:'released'});
+ Object.assign(runner,{x:150,yfield:30*28,attributes:{speed:50,strength:50}});
+ Object.assign(def,{x:150,yfield:runner.yfield-25,attributes:{speed:100,tackling:100}});
+ h.step(16);const expectedVelocity=runner.velocity.yfield;
+ for(let i=0;i<400&&h.game.phase==='live';i++){
+  h.step(frameMs);
+  assert.ok(Math.abs(runner.velocity.yfield-expectedVelocity)<0.0001,'velocity must not depend on substep duration');
+  assert.ok(!def.dive,'fractional substeps must not permit rear dives');
+ }
+ assert.equal(h.game.phase,'tackle');assert.ok(runner.yfield<40*28);
+});
 await test('a dive must reach the moving runner after its windup',async h=>{
  const c=await h.load('src/simulation/contact.js'),{DIFFICULTIES}=await h.load('src/state/difficulty.js');
  for(const timing of Object.values(DIFFICULTIES)){
