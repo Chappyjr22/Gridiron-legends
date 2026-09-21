@@ -175,6 +175,7 @@
 
 </style>
 <link rel="stylesheet" href="./src/ui/stadium.css">
+<link rel="stylesheet" href="./src/ui/mobileCareer.css">
 <link rel="preload" href="./assets/ui/Jersey10-Regular.ttf" as="font" type="font/ttf" crossorigin>
 <style>
 #result-overlay.replaying{backdrop-filter:none;-webkit-backdrop-filter:none;background:transparent;pointer-events:none;align-items:flex-end;}
@@ -333,7 +334,7 @@
 
   <section id="career-screen" class="screen setup-screen" aria-label="Career Mode">
  <div class="setup-panel career-panel">
-  <header class="career-header"><div class="career-header-identity"><h2 id="career-header-name">My Career</h2><span id="career-header-level"></span></div><span id="career-season"></span><button id="career-menu-open" class="career-icon-button" aria-label="Career menu" aria-haspopup="dialog">☰<span id="career-menu-alert" hidden aria-label="Save needs attention">!</span></button></header>
+  <header class="career-header"><canvas id="career-header-portrait" width="64" height="64" aria-hidden="true" hidden></canvas><div class="career-header-identity"><h2 id="career-header-name">My Career</h2><span id="career-header-level"></span></div><div class="career-header-context"><strong id="career-page-title">Career</strong><span id="career-season"></span></div><button id="career-menu-open" class="career-icon-button" aria-label="Career menu" aria-haspopup="dialog">☰<span id="career-menu-alert" hidden aria-label="Save needs attention">!</span></button></header>
   <dialog id="career-options" class="sports-dialog" aria-labelledby="career-options-title"><h2 id="career-options-title">Career menu</h2><button id="career-open-backups" class="career-save-indicator" aria-label="Save &amp; backup" title="Saved on this device"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18h11a4 4 0 0 0 .5-8 6.5 6.5 0 0 0-12-2A5 5 0 0 0 7 18Z"/><path d="m9 13 2 2 4-4"/></svg><span id="career-save-label">Device</span></button><button id="career-back" class="sports-button blue">Main menu</button><button id="career-options-close" class="sports-button blue">Back to career</button></dialog>
   <dialog id="portrait-dialog" class="sports-dialog experience-dialog" aria-labelledby="portrait-heading"><header><h2 id="portrait-heading">Choose your face</h2><label for="portrait-tone">Skin tone</label><select id="portrait-tone"><option value="0">Light</option><option value="1">Tan</option><option value="2">Brown</option><option value="3">Deep brown</option></select></header><div class="experience-body"><div id="portrait-grid"></div></div><footer><button id="portrait-cancel" type="button" class="sports-button blue">Cancel</button><button id="portrait-confirm" type="button" class="sports-button gold">Use this face</button></footer></dialog>
   <form id="career-create" class="career-enrollment">
@@ -364,6 +365,7 @@
        <div id="career-last-result" hidden><span class="board-kicker">Last game</span><h3 id="career-result-title"></h3><p id="career-result-stats"></p><p id="career-result-xp"></p><button id="career-review-game" class="recap-link">View recap</button></div>
        <div id="career-season-snapshot"><span class="board-kicker">Season so far</span><div id="career-season-summary"></div></div><p class="rookie-motto" id="career-home-motto" hidden></p>
      </section>
+     <section class="career-home-standings paper-board" aria-label="Conference snapshot"><span class="board-kicker">Conference standings</span><div id="career-home-standings"></div><button id="career-view-standings" class="flat-action" type="button">View standings</button></section>
     </div>
     <section id="career-player-panel" class="career-page paper-board career-scroll" role="tabpanel" aria-labelledby="career-player-tab" hidden>
       <div class="player-toolbar" aria-label="Player sections"><button class="sports-button gold" data-player-view="upgrades" aria-pressed="true">Upgrades</button><button class="sports-button blue" data-player-view="stats" aria-pressed="false">Stats</button><button id="career-open-progress" class="sports-button blue">Career story</button></div>

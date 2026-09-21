@@ -51,6 +51,7 @@ function updateTitle(){
 }
 function setCareerTab(tab){
  el('career-hub').dataset.view=tab;
+ el('career-page-title').textContent={home:'Career',player:'Player',team:'My Team',league:'League'}[tab];
  if(tab==='player')setPlayerView('upgrades');
  for(const button of document.querySelectorAll('[data-career-tab]')){
   const active=button.dataset.careerTab===tab;
@@ -72,6 +73,7 @@ function setPlayerView(view){
 }
 function render(){
  updateTitle();
+ el('career-header-portrait').hidden=!career||creating;
  el('career-create').hidden=!!career&&!creating;el('career-hub').hidden=!career||creating;
  if(!career||creating){el('career-season').textContent='New career';el('career-header-name').textContent='My Career';el('career-header-level').textContent='';return;}
  const player=normalizeQuarterback(Career.careerPlayer(career)),team=League.findTeamState(career.league,career.teamId),match=Career.nextMatch(career);
@@ -80,6 +82,7 @@ function render(){
  el('career-screen').style.setProperty('--career-color',team.colors.primary);
  el('career-jersey-number').textContent=player.number;
  paintMenuPlayer(el('career-player-sprite'),team,player.skin,match?match.homeTeamId===career.teamId:true);
+ paintPlayerPortrait(el('career-header-portrait'),team,player);
  paintPlayerPortrait(el('qb-profile-sprite'),team,player);el('qb-profile-name').textContent=rosterName(player);el('qb-profile-detail').textContent=`#${player.number} · QB · LV ${career.level}`;el('qb-profile-xp').value=career.xp;
  el('career-user-abbr').textContent=team.abbr;el('career-user-record').textContent=recordLabel(team);
  el('career-open-player').textContent=career.points?`${career.points} upgrade ${career.points===1?'point':'points'}`:'View your player';
@@ -124,6 +127,9 @@ function render(){
  el('career-standings').innerHTML=(career.stage==='college'?collegeStandings(career,team.conference):League.standings(career.league,team.conference)).map((t,i)=>`<div class="career-list-row ${t.id===team.id?'career-selected':''}"><span>${i+1}. ${escape(t.abbr)} ${escape(t.name)}</span><b>${recordLabel(t)}</b></div>`).join('');
  el('career-history').innerHTML=career.history.slice(-8).reverse().map(r=>`<div class="career-list-row"><span>S${r.season} · ${r.week>(career.stage==='college'?12:17)?'Playoffs':`Week ${r.week}`}</span><b>${r.userScore}–${r.cpuScore}</b></div>`).join('')||'<p>Your first game is waiting.</p>';
  renderCollegeCareer(career);renderCareerStats(career);renderMyTeam(career);
+ const standings=career.stage==='college'?collegeStandings(career,team.conference):League.standings(career.league,team.conference);
+ const rank=standings.findIndex(t=>t.id===team.id),start=rank>3?rank-3:0;
+ el('career-home-standings').innerHTML=standings.slice(start,start+4).map((t,i)=>`<div class="career-list-row ${t.id===team.id?'career-selected':''}"><span>${start+i+1}. ${escape(t.abbr)}</span><b>${recordLabel(t)}</b></div>`).join('');
  const objective=weeklyGoal(career);
  if(match){el('career-weekly-goal').textContent=objective.label;el('career-goal-reward').textContent=`+${objective.xp} XP`;}
  let journey=el('career-journey');if(!journey){journey=document.createElement('section');journey.id='career-journey';el('career-awards').after(journey);}
@@ -146,6 +152,7 @@ function launch(){
  persist();ensureLoopStarted();
 }
 export function initCareer(){
+ el('career-view-standings').onclick=()=>{setCareerTab('league');el('career-league-tab').focus();document.querySelector('[data-league-jump=standings-heading]').click();};
  initCareerExperience(()=>career,persist,render);initEnrollment();initPortraitPicker();
  el('career-edit-face').onclick=()=>{const player=normalizeQuarterback(Career.careerPlayer(career)),team=League.findTeamState(career.league,career.teamId);openPortraitPicker(player,team,choice=>{Object.assign(player,choice);persist();render();});};
  for(const [open,dialog,close] of [['career-menu-open','career-options','career-options-close'],['league-filters-open','league-filters','league-filters-close'],['scouting-info-open','scouting-info','scouting-info-close']]){
