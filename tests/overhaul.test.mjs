@@ -217,4 +217,48 @@ await test('goal camera holds the scoring crossing, including kicks landing outs
  }
  const boundary=kickTrajectory(82,99,1,44/(35*3));assert.equal(kickOutcome(boundary).good,false,'ball must fully clear the post');
 });
+async function touchdown(h){
+ h.engine.startPlayerDrive(95);h.entities.ballCarrier=h.entities.players.wr1;h.entities.ballCarrier.yfield=100*28;
+ h.engine.endPlay(5,'Catch',false,100);
+ assert.equal(h.game.playerScore,6);assert.equal(h.element('btn-continue').textContent,'Kick extra point');
+ h.engine.endPlay(5,'Catch',false,100);assert.equal(h.game.playerScore,6);
+ h.step(450);h.hud.continueResult();assert.equal(h.game.kick.kind,'extraPoint');assert.equal(h.game.kick.distance,33);
+}
+function resolvePAT(h,good){
+ if(good)h.step(940);
+ h.engine.kickInput();h.step(628);h.engine.kickInput();h.step(560);
+ for(let i=0;i<4;i++)h.step(1000);
+ assert.equal(h.game.phase,'result');h.step(450);
+}
+for(const good of [true,false])await test(`player extra point ${good?'scores one':'misses'} and both outcomes lead to kickoff`,async()=>{
+ const h=await harness();h.engine.startNewGame();await touchdown(h);const clock=h.game.clock;
+ resolvePAT(h,good);assert.equal(h.game.playerScore,good?7:6);assert.equal(h.game.clock,clock);
+ assert.match(h.game.message,good?/Extra point is GOOD/:/Extra point is no good/);
+ h.engine.kickInput();h.step(1000);assert.equal(h.game.playerScore,good?7:6);
+ h.hud.continueResult();assert.equal(h.game.possession,'cpu');assert.equal(h.game.kick,null);
+ assert.match(h.game.message,/Kickoff/);assert.equal(h.engine.matchState.stats.plays.length,1);
+});
+for(const quarter of [2,4])await test(`expired quarter ${quarter} waits for the extra point`,async()=>{
+ const h=await harness();h.engine.startNewGame();h.game.quarter=quarter;h.game.clock=0;h.game.cpuScore=6;
+ await touchdown(h);assert.equal(h.game.quarter,quarter);resolvePAT(h,true);assert.equal(h.game.clock,0);
+ h.hud.continueResult();assert.match(h.game.message,quarter===2?/HALFTIME/:/FINAL/);
+ assert.equal(h.game.playerScore,7);
+});
+await test('missed final PAT can send a tied game into overtime',async()=>{
+ const h=await harness();h.engine.startNewGame();h.game.quarter=4;h.game.clock=0;h.game.cpuScore=6;
+ await touchdown(h);resolvePAT(h,false);h.hud.continueResult();assert.equal(h.game.overtime,true);
+});
+await test('overtime touchdown still requires a PAT before the opponent possession',async()=>{
+ const h=await harness();h.engine.startNewGame();h.game.overtime=true;h.game.quarter=5;
+ await touchdown(h);resolvePAT(h,true);h.hud.continueResult();assert.equal(h.game.possession,'cpu');
+});
+await test('career reload preserves a pending PAT and never re-awards a completed kick',async()=>{
+ const h=await harness();let saved;h.engine.uiHooks.checkpoint=s=>saved=structuredClone(s);
+ h.engine.startNewGame({career:true});await touchdown(h);assert.equal(saved.resume.type,'extraPoint');
+ h.engine.kickInput();h.engine.restoreCheckpoint(saved);assert.equal(h.game.playerScore,6);
+ assert.equal(h.element('btn-continue').textContent,'Kick extra point');h.step(450);h.hud.continueResult();
+ assert.equal(h.game.kick.stage,'power');resolvePAT(h,true);assert.equal(saved.resume.type,'turnover');
+ h.engine.restoreCheckpoint(saved);assert.equal(h.game.playerScore,7);h.step(450);h.hud.continueResult();
+ assert.equal(h.game.possession,'cpu');assert.equal(h.game.playerScore,7);assert.equal(h.engine.matchState.stats.plays.length,1);
+});
 console.log(`${checks} overhaul checks passed.`);

@@ -36,7 +36,7 @@ export function updateHUD(){
   for(const side of ['user','cpu'])document.getElementById('hud-'+side+'-team')?.classList.toggle('has-ball',game.possession===(side==='user'?'player':'cpu'));
   const dn=['','1st','2nd','3rd','4th'][game.down];
   const distanceLabel=game.firstDownYard>=100?'Goal':Math.max(1,Math.round(game.distance));
-  document.getElementById('hud-down').innerHTML='<strong>'+(game.possession==='cpu'?'Opponent ball':!dn?'Turnover':dn+' &amp; '+distanceLabel)+'</strong>';
+  document.getElementById('hud-down').innerHTML='<strong>'+(game.phase==='kicking'&&game.kick?.kind==='extraPoint'?'Extra point':game.possession==='cpu'?'Opponent ball':!dn?'Turnover':dn+' &amp; '+distanceLabel)+'</strong>';
   document.getElementById('hud-ball').textContent=formatFieldPosition(game.los);
   document.getElementById('hud-user-score').textContent=game.playerScore;
   document.getElementById('hud-cpu-score').textContent=game.cpuScore;
@@ -86,7 +86,8 @@ export function showResult(message,nextAction,buttonLabel='Continue'){
   const kicker=document.getElementById('result-kicker');
   const upper=message.toUpperCase();
   resultCard.classList.remove('scoring','turnover');
-  if(upper.includes('FIELD GOAL')&&upper.includes('NO GOOD')){kicker.textContent='Missed Field Goal';}
+  if(upper.startsWith('EXTRA POINT')){kicker.textContent=upper.includes('NO GOOD')?'Missed Extra Point':'Extra Point';if(upper.includes('IS GOOD'))resultCard.classList.add('scoring');}
+  else if(upper.includes('FIELD GOAL')&&upper.includes('NO GOOD')){kicker.textContent='Missed Field Goal';}
   else if(upper.includes('TOUCHDOWN')||upper.includes('FIELD GOAL')){kicker.textContent='Scoring Play';resultCard.classList.add('scoring');}
   else if(upper.includes('INTERCEPT')||upper.includes('TURNOVER')||upper.includes('SAFETY')||upper.includes('FUMBLE LOST')){kicker.textContent='Change of Possession';resultCard.classList.add('turnover');}
   else if(upper.includes('FINAL')){kicker.textContent='Final Score';}

@@ -21,7 +21,7 @@ import {
   BALL_SPEED_LOB, BALL_SPEED_BULLET,
   RUSH_SPEED, RUSH_SPEED_BLITZ, BASE_RUN_YPS, LATERAL_YPS, PURSUE_YPS_BASE, ROUTE_YPS, COVER_YPS,
   TACKLE_RESULT_DELAY, BREAK_SLOW_MS, BREAK_SPEED_MULT, MISSED_TACKLE_RECOVERY_MS,
-  SPRITE_GROUND_Y_OFFSET, SIDELINE_STEP_DEPTH, BETWEEN_PLAY_RUNOFF, PAT_CHANCE, SKIN_PALETTES,
+  SPRITE_GROUND_Y_OFFSET, BETWEEN_PLAY_RUNOFF, PAT_CHANCE, SKIN_PALETTES,
   clamp, fieldGoalChance
 } from '../state/constants.js';
 import { currentDiff, adjustMomentum } from '../state/difficulty.js';
@@ -50,7 +50,8 @@ export function restoreCheckpoint(saved){
  const r=saved.resume;
  if(r.type==='offense'){game.phase='callsheet';updateHUD();return;}
  let action;
- if(r.type==='afterPlay')action=afterPlayerPlay;
+ if(r.type==='extraPoint')action=attemptExtraPoint;
+ else if(r.type==='afterPlay')action=afterPlayerPlay;
  else if(r.type==='turnover')action=()=>advanceExpiredPeriod(()=>startOpponentPossession(r.cpuStart,r.reason));
  else if(r.type==='cpuResult')action=()=>finishOpponentPossession(r.playerStart);
  else if(r.type==='kickoff')action=r.receiver==='player'?()=>startPlayerDrive(r.spot):()=>startOpponentPossession(r.spot,'Opening kickoff');
@@ -314,9 +315,10 @@ function simulateExtraPoint(team){
 function handlePlayerTouchdown(){
   feedback('score');
   game.playerScore+=6;
-  const patGood=simulateExtraPoint('player');
   adjustMomentum(0.35);
-  completePlayerPossession('TOUCHDOWN!\n'+(entities.ballCarrier?.slot||'Player')+' · '+Math.round(entities.ballCarrier.yfield/XPX-game.los)+' yards\nExtra point '+(patGood?'is good.':'missed.')+'\n'+scoreLine(),kickoffSpot(),'Kickoff');
+  const message='TOUCHDOWN!\n'+(entities.ballCarrier?.slot||'Player')+' · '+Math.round(entities.ballCarrier.yfield/XPX-game.los)+' yards\n'+scoreLine();
+  showResult(message,attemptExtraPoint,'Kick extra point');
+  checkpoint({type:'extraPoint',message,buttonLabel:'Kick extra point'});
 }
 export function endPlay(yardGained,label,outOfBounds=false,exactSpot=game.los+yardGained){
   if(game.playResolved)return;
@@ -392,10 +394,21 @@ export function practiceFieldGoal(distance=35){
 }
 export function attemptFieldGoal(){
  if(game.phase!=='decision'||117-game.los>=65)return;
+ beginKick('fieldGoal');
+}
+function attemptExtraPoint(){
+ // Keep the six-point touchdown saved until the kick has resolved.
+ game.los=84;game.cameraYard=game.los;
+ resetHighlight();
+ beginKick('extraPoint');
+ checkpoint({type:'extraPoint',message:'Extra point pending.\n'+scoreLine(),buttonLabel:'Kick extra point'});
+}
+function beginKick(kind){
  hideAllOverlays();game.phase='kicking';
  interaction.aiming=false;interaction.steering=false;entities.ball={};
  const distance=Math.round(117-game.los),rating=positionRating(teamState.userTeam,'K','offense');
- game.kick={stage:'power',start:simulationNow(),distance,rating,skin:rosterPlayer(teamState.userTeam,'K')?.skin??0,power:0,aim:0,...kickWindow(game.los,rating)};
+ game.kick={kind,stage:'power',start:simulationNow(),distance,rating,skin:rosterPlayer(teamState.userTeam,'K')?.skin??0,power:0,aim:0,...kickWindow(game.los,rating)};
+ updateHUD();
 }
 export function kickInput(){
  const k=game.kick;if(game.paused||game.phase!=='kicking'||!k)return;
@@ -405,7 +418,13 @@ export function kickInput(){
  k.aim=kickMeter('aim',elapsed,game.difficulty);k.stage='approach';k.start=now;
 }
 function finishKick(){
- const k=game.kick;consumeClock(5);
+ const k=game.kick;
+ if(k.kind==='extraPoint'){
+  if(k.good){game.playerScore+=1;adjustMomentum(.05);}
+  completePlayerPossession('Extra point '+(k.good?'is GOOD!':'is no good: '+k.reason+'.')+'\n'+scoreLine(),kickoffSpot(),'Kickoff');
+  return;
+ }
+ consumeClock(5);
  if(game.practice){showResult(k.distance+'-yard field goal '+(k.good?'is GOOD!':'is no good: '+k.reason+'.'),()=>practiceFieldGoal(k.distance),'Kick again');return;}
  if(k.good){game.playerScore+=3;adjustMomentum(.12);completePlayerPossession(k.distance+'-yard field goal is GOOD!\n'+scoreLine(),kickoffSpot(),'Kickoff');}
  else{adjustMomentum(-.1);completePlayerPossession(k.distance+'-yard field goal is no good: '+k.reason+'.',clamp(100-game.los,1,99),'Missed field goal');}
@@ -608,7 +627,7 @@ function resolveCatchAtTarget(){
   routeKeys.forEach(k=>{
     const r=entities.players[k];
     const feet=r.x+SPRITE_GROUND_Y_OFFSET;
-    if(feet<=LAT_MIN-SIDELINE_STEP_DEPTH||feet>=LAT_MAX+SIDELINE_STEP_DEPTH||r.yfield/XPX<=-10||r.yfield/XPX>=110)return;
+    if(feet<=LAT_MIN||feet>=LAT_MAX||r.yfield/XPX<=-10||r.yfield/XPX>=110)return;
     const d=Math.hypot(r.x-entities.ball.toX,r.yfield-entities.ball.toY);
     const tolerance=catchTolerance(r,diff);
     const score=d/tolerance;
@@ -848,6 +867,11 @@ function updateSimulation(dt,now){
         const normalize=1/Math.max(1,Math.hypot(fwdMult,jy*LATERAL_YPS/BASE_RUN_YPS));
         const breakSlowMult=now<(entities.ballCarrier.breakSlowUntil||0)?BREAK_SPEED_MULT:1;
         const carrierSpeedMult=speedMultiplier(entities.ballCarrier,game.difficulty,game.momentum);
+        // Feet touching the sideline end the play, including runners already outside.
+        const sidelineMin=LAT_MIN-SPRITE_GROUND_Y_OFFSET;
+        const sidelineMax=LAT_MAX-SPRITE_GROUND_Y_OFFSET;
+        const previousX=entities.ballCarrier.x,previousY=entities.ballCarrier.yfield;
+        if(previousX<=sidelineMin||previousX>=sidelineMax){resolveOutOfBounds();return;}
         if(game.runActive&&entities.ballCarrier===entities.players.rb&&game.activeRunPath?.length){
           const runPath=game.activeRunPath;
           while(game.runPathIndex<runPath.length-1&&entities.ballCarrier.yfield/XPX-game.los>=runPath[game.runPathIndex].y)game.runPathIndex++;
@@ -855,19 +879,23 @@ function updateSimulation(dt,now){
           const laneAssist=interaction.steering&&Math.abs(jy)>.1?0:2.2;
           entities.ballCarrier.x+=clamp(lane.x-entities.ballCarrier.x,-laneAssist,laneAssist)*dt*8;
         }
-        const previousX=entities.ballCarrier.x,previousY=entities.ballCarrier.yfield;
         entities.ballCarrier.facing='left';
         entities.ballCarrier.yfield += BASE_RUN_YPS*fwdMult*normalize*(entities.ballCarrier.runnerDive?1.2:1)*XPX*SPEED_SCALE*diff.offenseSpeedMult*carrierSpeedMult*breakSlowMult*dt;
         const jukeDelta=jukeStep(entities.ballCarrier,now);
-        const nextX=previousX+(jukeDelta??(jy*normalize*(entities.ballCarrier.runnerDive?0:1)*LATERAL_YPS*XPX*SPEED_SCALE*diff.offenseSpeedMult*carrierSpeedMult*breakSlowMult*dt));
-        const sidelineMin=LAT_MIN-SPRITE_GROUND_Y_OFFSET-SIDELINE_STEP_DEPTH;
-        const sidelineMax=LAT_MAX-SPRITE_GROUND_Y_OFFSET+SIDELINE_STEP_DEPTH;
+        const nextX=entities.ballCarrier.x+(jukeDelta??(jy*normalize*(entities.ballCarrier.runnerDive?0:1)*LATERAL_YPS*XPX*SPEED_SCALE*diff.offenseSpeedMult*carrierSpeedMult*breakSlowMult*dt));
         entities.ballCarrier.x=clamp(nextX,sidelineMin,sidelineMax);
         entities.ballCarrier.velocity={x:(entities.ballCarrier.x-previousX)/Math.max(dt,0.001),yfield:(entities.ballCarrier.yfield-previousY)/Math.max(dt,0.001)};
-        if(entities.ballCarrier.runnerDive&&now-entities.ballCarrier.runnerDive.start>=300&&entities.ballCarrier.yfield/XPX<100)resolveTackle();
         if(nextX<=sidelineMin||nextX>=sidelineMax){
-          if(entities.ballCarrier.yfield/XPX<100)resolveOutOfBounds();
+          const boundary=nextX<=sidelineMin?sidelineMin:sidelineMax;
+          const fraction=clamp((boundary-previousX)/(nextX-previousX),0,1);
+          const crossingY=previousY+(entities.ballCarrier.yfield-previousY)*fraction;
+          // Spot the ball where it leaves the field, before awarding a corner TD.
+          if(crossingY<100*XPX){
+            entities.ballCarrier.x=boundary;entities.ballCarrier.yfield=crossingY;
+            resolveOutOfBounds();return;
+          }
         }
+        if(entities.ballCarrier.runnerDive&&now-entities.ballCarrier.runnerDive.start>=300&&entities.ballCarrier.yfield/XPX<100){resolveTackle();return;}
       }
 
       pursuers=pursuers.filter(def=>{
