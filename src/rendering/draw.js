@@ -98,7 +98,6 @@ function drawScene(){
   const camPx=game.cameraYard*XPX;
   const xAt=(yard)=>BASE_X-(yard*XPX-camPx);
   ctx.imageSmoothingEnabled=false;
-  if(game.kick&&['kicking','result'].includes(game.phase)){drawPixelStadium(xAt,w);drawKick(ctx,w,game,entities,simulationNow());return;}
   drawPixelTurf(xAt,w);
   drawPixelStadium(xAt,w);
   for(let yard=0;yard<=100;yard+=5){
@@ -132,6 +131,7 @@ function drawScene(){
   ctx.fillRect(0,LAT_MAX-1,w,3);
   drawPixelEndZone(xAt,0,-10,END_ZONE_STYLE.near,-Math.PI/2);
   drawPixelEndZone(xAt,100,110,END_ZONE_STYLE.far,Math.PI/2);
+  if(game.kick&&['kicking','result'].includes(game.phase)){drawKick(ctx,w,game,entities,simulationNow());return;}
   const losX=Math.round(xAt(game.los));
   ctx.fillStyle='#2f70df';ctx.fillRect(losX-1,LAT_MIN,3,LAT_MAX-LAT_MIN);
   const fdX=Math.round(xAt(game.firstDownYard));

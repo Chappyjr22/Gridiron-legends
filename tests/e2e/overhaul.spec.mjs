@@ -145,3 +145,17 @@ test('kicking practice is reachable through controls and preserves its chosen di
  await expect.poll(()=>page.evaluate(async()=>{const {game}=await import('/src/state/gameState.js');return [game.practice,game.kick?.distance,game.kick?.stage];})).toEqual([true,50,'power']);
  await page.screenshot({path:'test-results/kick-practice-50.png'});
 });
+
+for(const viewport of [{width:844,height:304},{width:932,height:430}])test(`goal crossing remains visible after landing at ${viewport.width}`,async({browser})=>{
+ const context=await browser.newContext({viewport,hasTouch:true}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/');await page.locator('#btn-practice').tap();
+ await page.evaluate(async()=>{
+  const e=await import('/src/simulation/engine.js'),{game,entities}=await import('/src/state/gameState.js');
+  const {kickTrajectory,kickOutcome}=await import('/src/simulation/kicking.js'),{simulationNow}=await import('/src/state/clock.js');
+  e.practiceFieldGoal(20);const now=simulationNow();const ball=kickTrajectory(game.los,99,1,.6,now-2100);
+  Object.assign(game.kick,{flight:ball,stage:'flight',start:ball.startTime,...kickOutcome(ball)});entities.ball=ball;
+ });
+ await expect.poll(()=>page.evaluate(async()=>{const {game}=await import('/src/state/gameState.js');return game.kick.stage;})).toBe('settle');
+ await page.screenshot({path:`test-results/goal-crossing-${viewport.width}.png`});
+ await expect(page.locator('#overlay-msg')).toContainText('GOOD');expect(errors).toEqual([]);await context.close();
+});

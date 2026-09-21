@@ -1,5 +1,6 @@
+import {flightPosition} from './ballMotion.js';
 import {clamp,XPX} from '../state/constants.js';
-export const KICK_GOAL={yard:110,center:190,halfWidth:46,barHeight:32};
+export const KICK_GOAL={yard:110,center:190,halfWidth:46,barHeight:32,ballRadius:6};
 export function kickMeter(stage,elapsed,difficulty='medium'){
  const speed={easy:.85,medium:1,hard:1.15,gridiron:1.2}[difficulty]||1;
  return stage==='power'?(1-Math.cos(elapsed*speed/300))/2:-Math.cos(elapsed*speed/400);
@@ -12,12 +13,21 @@ export function kickOutcome(ball){
  const p=(KICK_GOAL.yard*XPX-ball.fromY)/(ball.toY-ball.fromY);
  const height=ball.arcHeight*Math.sin(Math.PI*clamp(p,0,1));
  const offset=(ball.toX-ball.fromX)*p;
- const reason=p>=1||height<KICK_GOAL.barHeight?'SHORT':Math.abs(offset)>KICK_GOAL.halfWidth?(offset<0?'WIDE LEFT':'WIDE RIGHT'):'GOOD';
+ const reason=p>=1||height<KICK_GOAL.barHeight+KICK_GOAL.ballRadius?'SHORT':Math.abs(offset)>KICK_GOAL.halfWidth-KICK_GOAL.ballRadius?(offset<0?'WIDE LEFT':'WIDE RIGHT'):'GOOD';
  return {good:reason==='GOOD',reason,p,height,offset};
 }
 export function kickWindow(los,rating){
  let low=0,high=1;
- if(!kickOutcome(kickTrajectory(los,rating,1,0)).good)return {powerRequired:1.01,aimTolerance:KICK_GOAL.halfWidth/((117-los)*3)};
+ if(!kickOutcome(kickTrajectory(los,rating,1,0)).good)return {powerRequired:1.01,aimTolerance:(KICK_GOAL.halfWidth-KICK_GOAL.ballRadius)/((117-los)*3)};
  for(let i=0;i<20;i++){const mid=(low+high)/2;if(kickOutcome(kickTrajectory(los,rating,mid,0)).good)high=mid;else low=mid;}
- return {powerRequired:high,aimTolerance:clamp(KICK_GOAL.halfWidth/((117-los)*3),0,1)};
+ return {powerRequired:high,aimTolerance:clamp((KICK_GOAL.halfWidth-KICK_GOAL.ballRadius)/((117-los)*3),0,1)};
+}
+
+// The goal camera holds the exact scoring-plane sample, not the later landing.
+export function kickGoalSample(ball,now){
+ const outcome=kickOutcome(ball),position=flightPosition(ball,now);
+ const crossed=outcome.p<1&&position.p>=outcome.p;
+ return {crossed,finished:position.p>=1,reason:outcome.reason,
+  offset:crossed?outcome.offset:position.x-KICK_GOAL.center,
+  height:crossed?outcome.height:position.height};
 }

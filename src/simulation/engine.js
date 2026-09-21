@@ -688,7 +688,7 @@ function updateSimulation(dt,now){
     if(game.phase==='kicking'){
       const k=game.kick;
       if(k.stage==='approach'&&now-k.start>=550){
-        k.stage='flight';k.start=now;entities.ball=kickTrajectory(game.los,k.rating,k.power,k.aim,now);Object.assign(k,kickOutcome(entities.ball));
+        k.stage='flight';k.start=now;entities.ball=kickTrajectory(game.los,k.rating,k.power,k.aim,now);k.flight={...entities.ball};Object.assign(k,kickOutcome(entities.ball));
       }else if(k.stage==='flight'){
         const pos=flightPosition(entities.ball,now);
         game.cameraYard+=(pos.yfield/XPX-game.cameraYard)*Math.min(1,dt*3);

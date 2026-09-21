@@ -1,4 +1,4 @@
-import {kickTrajectory,kickOutcome,kickWindow,kickMeter} from '../src/simulation/kicking.js';
+import {kickTrajectory,kickOutcome,kickWindow,kickMeter,kickGoalSample,KICK_GOAL} from '../src/simulation/kicking.js';
 import assert from 'node:assert/strict';
 import {slingshotTarget,maxThrowYards} from '../src/input/aim.js';
 import {looseBall,advanceLooseBall,fumbleChance} from '../src/simulation/ballMotion.js';
@@ -201,4 +201,20 @@ await test('deep lob flight gives routes time while short throws and bullets sta
  assert.ok(profile(25,'bullet').duration<850);assert.ok(profile(35,'lob').duration>profile(25,'lob').duration);
 });
 
+
+
+await test('goal camera holds the scoring crossing, including kicks landing outside the posts',()=>{
+ for(const distance of [20,35,50,60]){
+  const aim=(KICK_GOAL.halfWidth-KICK_GOAL.ballRadius-1)/(distance*3),ball=kickTrajectory(117-distance,99,1,aim,1000),out=kickOutcome(ball);
+  assert.equal(out.good,true);
+  const at=1000+ball.duration*out.p;
+  const before=kickGoalSample(ball,at-1),crossed=kickGoalSample(ball,at+1),landed=kickGoalSample(ball,1000+ball.duration+900);
+  assert.equal(before.crossed,false);assert.equal(crossed.crossed,true);
+  assert.equal(crossed.offset,out.offset);assert.equal(landed.offset,out.offset);assert.equal(landed.height,out.height);
+  assert.ok(Math.abs(crossed.offset)+KICK_GOAL.ballRadius<KICK_GOAL.halfWidth);
+  assert.ok(crossed.height-KICK_GOAL.ballRadius>=KICK_GOAL.barHeight);
+  if(distance===20)assert.ok(Math.abs(ball.toX-190)>KICK_GOAL.halfWidth,'landing can be outside despite a legal crossing');
+ }
+ const boundary=kickTrajectory(82,99,1,44/(35*3));assert.equal(kickOutcome(boundary).good,false,'ball must fully clear the post');
+});
 console.log(`${checks} overhaul checks passed.`);
