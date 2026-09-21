@@ -24,7 +24,7 @@ export function drawKick(ctx,width,game,entities,now){
  const origin=toCanvas({x:190,yfield:(game.los-7)*XPX}),originX=origin.cx,originY=origin.cy;
  const art=teamSheet(k.skin||0);
  ctx.save();ctx.imageSmoothingEnabled=false;ctx.textAlign='center';
- const title=`${game.practice?'PRACTICE · ':''}${k.distance} YARD FIELD GOAL`;
+ const title=`${game.practice?'PRACTICE · ':''}${k.distance} YARD ${k.kind==='extraPoint'?'EXTRA POINT':'FIELD GOAL'}`;
  ctx.font=`bold ${Math.max(16,12*pixelScale)}px monospace`;
  const titleWidth=ctx.measureText(title).width+24;
  ctx.fillStyle='#102b43';ctx.fillRect((width-titleWidth)/2,10,titleWidth,32);

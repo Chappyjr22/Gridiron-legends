@@ -50,7 +50,8 @@ export function restoreCheckpoint(saved){
  const r=saved.resume;
  if(r.type==='offense'){game.phase='callsheet';updateHUD();return;}
  let action;
- if(r.type==='afterPlay')action=afterPlayerPlay;
+ if(r.type==='extraPoint')action=attemptExtraPoint;
+ else if(r.type==='afterPlay')action=afterPlayerPlay;
  else if(r.type==='turnover')action=()=>advanceExpiredPeriod(()=>startOpponentPossession(r.cpuStart,r.reason));
  else if(r.type==='cpuResult')action=()=>finishOpponentPossession(r.playerStart);
  else if(r.type==='kickoff')action=r.receiver==='player'?()=>startPlayerDrive(r.spot):()=>startOpponentPossession(r.spot,'Opening kickoff');
@@ -314,9 +315,10 @@ function simulateExtraPoint(team){
 function handlePlayerTouchdown(){
   feedback('score');
   game.playerScore+=6;
-  const patGood=simulateExtraPoint('player');
   adjustMomentum(0.35);
-  completePlayerPossession('TOUCHDOWN!\n'+(entities.ballCarrier?.slot||'Player')+' · '+Math.round(entities.ballCarrier.yfield/XPX-game.los)+' yards\nExtra point '+(patGood?'is good.':'missed.')+'\n'+scoreLine(),kickoffSpot(),'Kickoff');
+  const message='TOUCHDOWN!\n'+(entities.ballCarrier?.slot||'Player')+' · '+Math.round(entities.ballCarrier.yfield/XPX-game.los)+' yards\n'+scoreLine();
+  showResult(message,attemptExtraPoint,'Kick extra point');
+  checkpoint({type:'extraPoint',message,buttonLabel:'Kick extra point'});
 }
 export function endPlay(yardGained,label,outOfBounds=false,exactSpot=game.los+yardGained){
   if(game.playResolved)return;
@@ -392,10 +394,21 @@ export function practiceFieldGoal(distance=35){
 }
 export function attemptFieldGoal(){
  if(game.phase!=='decision'||117-game.los>=65)return;
+ beginKick('fieldGoal');
+}
+function attemptExtraPoint(){
+ // Keep the six-point touchdown saved until the kick has resolved.
+ game.los=84;game.cameraYard=game.los;
+ resetHighlight();
+ beginKick('extraPoint');
+ checkpoint({type:'extraPoint',message:'Extra point pending.\n'+scoreLine(),buttonLabel:'Kick extra point'});
+}
+function beginKick(kind){
  hideAllOverlays();game.phase='kicking';
  interaction.aiming=false;interaction.steering=false;entities.ball={};
  const distance=Math.round(117-game.los),rating=positionRating(teamState.userTeam,'K','offense');
- game.kick={stage:'power',start:simulationNow(),distance,rating,skin:rosterPlayer(teamState.userTeam,'K')?.skin??0,power:0,aim:0,...kickWindow(game.los,rating)};
+ game.kick={kind,stage:'power',start:simulationNow(),distance,rating,skin:rosterPlayer(teamState.userTeam,'K')?.skin??0,power:0,aim:0,...kickWindow(game.los,rating)};
+ updateHUD();
 }
 export function kickInput(){
  const k=game.kick;if(game.paused||game.phase!=='kicking'||!k)return;
@@ -405,7 +418,13 @@ export function kickInput(){
  k.aim=kickMeter('aim',elapsed,game.difficulty);k.stage='approach';k.start=now;
 }
 function finishKick(){
- const k=game.kick;consumeClock(5);
+ const k=game.kick;
+ if(k.kind==='extraPoint'){
+  if(k.good){game.playerScore+=1;adjustMomentum(.05);}
+  completePlayerPossession('Extra point '+(k.good?'is GOOD!':'is no good: '+k.reason+'.')+'\n'+scoreLine(),kickoffSpot(),'Kickoff');
+  return;
+ }
+ consumeClock(5);
  if(game.practice){showResult(k.distance+'-yard field goal '+(k.good?'is GOOD!':'is no good: '+k.reason+'.'),()=>practiceFieldGoal(k.distance),'Kick again');return;}
  if(k.good){game.playerScore+=3;adjustMomentum(.12);completePlayerPossession(k.distance+'-yard field goal is GOOD!\n'+scoreLine(),kickoffSpot(),'Kickoff');}
  else{adjustMomentum(-.1);completePlayerPossession(k.distance+'-yard field goal is no good: '+k.reason+'.',clamp(100-game.los,1,99),'Missed field goal');}

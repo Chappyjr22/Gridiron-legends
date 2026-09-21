@@ -30,6 +30,7 @@ export function validCheckpoint(saved,career){
  }
  if(r.type==='offense')return true;
  if(!text(r.message))return false;
+ if(r.type==='extraPoint')return g.possession==='player'&&g.playerScore>=6&&r.buttonLabel==='Kick extra point';
  if(r.type==='afterPlay')return true;
  if(r.type==='turnover')return number(r.cpuStart,0,100)&&text(r.reason);
  if(r.type==='cpuResult')return number(r.playerStart,0,100);

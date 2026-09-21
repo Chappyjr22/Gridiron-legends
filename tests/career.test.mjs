@@ -123,3 +123,14 @@ await import('./college.test.mjs');
 }
 
 await import("./career-depth.test.mjs");
+
+// Pending extra points are accepted by the persisted career schema.
+{
+ const c=C.createCareer({name:'PAT Reload'}),match=C.nextMatch(c),h=await harness();
+ c.activeMatch=match.id;h.game.userTeamId=c.teamId;h.game.cpuTeamId=match.homeTeamId===c.teamId?match.awayTeamId:match.homeTeamId;
+ h.engine.startNewGame({career:true});h.engine.startPlayerDrive(95);h.engine.uiHooks.checkpoint=s=>c.checkpoint=JSON.parse(JSON.stringify(s));
+ h.engine.endPlay(5,'Run',false,100);
+ assert.equal(c.checkpoint.resume.type,'extraPoint');assert.ok(C.parseCareer(JSON.stringify(c)));
+ h.hud.resultFlow.continueAction();assert.ok(C.parseCareer(JSON.stringify(c)));
+ const invalid=structuredClone(c);invalid.checkpoint.game.playerScore=0;assert.equal(C.parseCareer(JSON.stringify(invalid)),null);
+}
