@@ -1,5 +1,5 @@
-const CACHE='gridiron-legends-v1';
-const CORE=['/','/manifest.webmanifest','/assets/brand/shield-v1.webp'];
+const CACHE='gridiron-legends-v3';
+const CORE=['/','/app-mobile.css','/manifest.webmanifest','/assets/brand/shield-v1.webp'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting()));
@@ -18,9 +18,17 @@ self.addEventListener('fetch',event=>{
   if(request.mode==='navigate'){
     event.respondWith(fetch(request).then(response=>{
       const copy=response.clone();
-      caches.open(CACHE).then(cache=>cache.put('/',copy));
+      caches.open(CACHE).then(cache=>cache.put(request,copy));
       return response;
-    }).catch(()=>caches.match('/')));
+    }).catch(()=>caches.match(request)));
+    return;
+  }
+
+  if(url.pathname==='/app-mobile.css'||url.pathname.startsWith('/assets/masks/')){
+    event.respondWith(fetch(request).then(response=>{
+      if(response.ok)event.waitUntil(caches.open(CACHE).then(cache=>cache.put(request,response.clone())));
+      return response;
+    }).catch(()=>caches.match(request)));
     return;
   }
 

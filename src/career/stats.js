@@ -1,4 +1,4 @@
-export function emptyStats(){return {games:0,attempts:0,completions:0,passingYards:0,passingTD:0,interceptions:0,sacks:0,sackYards:0,carries:0,rushingYards:0,rushingTD:0,targets:0,receptions:0,receivingYards:0,receivingTD:0};}
+export function emptyStats(){return {games:0,fumbles:0,fumblesLost:0,attempts:0,completions:0,passingYards:0,passingTD:0,interceptions:0,sacks:0,sackYards:0,carries:0,rushingYards:0,rushingTD:0,targets:0,receptions:0,receivingYards:0,receivingTD:0};}
 export function emptyMatch(){return {plays:[],players:{},opponentDrives:[]};}
 export function addStats(total,delta){for(const key of Object.keys(emptyStats()))total[key]=(total[key]||0)+(delta[key]||0);return total;}
 export function recordPlay(match,play){
@@ -6,6 +6,7 @@ export function recordPlay(match,play){
  match.plays.push({...play});
  const player=id=>match.players[id]??=emptyStats();
  const qb=player(play.qbId);
+ if(play.fumbled&&play.carrierId){const carrier=player(play.carrierId);carrier.fumbles=(carrier.fumbles||0)+1;carrier.fumblesLost=(carrier.fumblesLost||0)+Number(!!play.fumbleLost);}
  if(play.threw){
   qb.attempts++;
   if(play.targetId)player(play.targetId).targets++;

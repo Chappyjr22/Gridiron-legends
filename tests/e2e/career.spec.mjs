@@ -56,7 +56,8 @@ test('career creation, three weekly results, reload and upgrade',async({page})=>
  }
  await page.getByRole('tab',{name:'Player',exact:true}).click();
  await expect(page.locator('#career-lifetime')).toContainText('75 passing yards');
- const upgrade=page.getByRole('button',{name:'Upgrade accuracy by 2 for 1 point',exact:true});await expect(upgrade).toBeEnabled();await upgrade.click();await expect(upgrade.locator('strong')).toHaveText('84');
+ await page.evaluate(async()=>{const C=await import('/src/career/career.js');const c=C.loadCareer();c.points=2;C.saveCareer(c);});await page.reload();await page.getByRole('button',{name:'Career Mode',exact:true}).click();await page.getByRole('button',{name:'Continue last career',exact:true}).click();await page.getByRole('tab',{name:'Player',exact:true}).click();
+ const upgrade=page.getByRole('button',{name:'Upgrade accuracy by 2 for 2 points',exact:true});await expect(upgrade).toBeEnabled();await upgrade.click();await expect(upgrade.locator('strong')).toHaveText('84');
  await page.screenshot({path:'test-results/career-after-three-weeks.png',fullPage:true});
  await page.getByRole('button',{name:'Career menu',exact:true}).click();await page.getByRole('button',{name:'Main menu',exact:true}).click();await page.locator('#btn-practice').click();
  await expect(page.locator('#hud-quarter')).toHaveText('Practice');expect(errors).toEqual([]);

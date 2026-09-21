@@ -1,6 +1,6 @@
 import {onFeedback} from '../state/feedback.js';
 import {game} from '../state/gameState.js';
-import {choosePlay} from '../simulation/engine.js';
+import {choosePlay,practiceFieldGoal} from '../simulation/engine.js';
 import {enterGame} from './menus.js';
 import {requestJuke} from '../input/runnerControls.js';
 const el=id=>document.getElementById(id);
@@ -10,8 +10,9 @@ export function initPracticeGuide(){
  const end=()=>{lesson=null;coach.hidden=true;};
  const set=(title,text)=>{el('practice-coach-title').textContent=title;el('practice-coach-text').textContent=text;};
  for(const button of document.querySelectorAll('[data-open-guide]'))button.onclick=()=>{
-  el('practice-guide-start').disabled=!!game.career;el('practice-guide-note').textContent=game.career?'Finish or leave your career game before starting a practice session.':'Guided practice starts a fresh practice rep.';guide.showModal();el('practice-guide-heading').focus({preventScroll:true});guide.scrollTop=0;
+  el('practice-guide-start').disabled=!!game.career;el('practice-kicking').disabled=!!game.career;el('practice-guide-note').textContent=game.career?'Finish or leave your career game before starting a practice session.':'Guided practice starts a fresh practice rep.';guide.showModal();el('practice-guide-heading').focus({preventScroll:true});guide.scrollTop=0;
  };
+ el('practice-kicking').onclick=()=>{if(game.career)return;guide.close();end();enterGame(true);practiceFieldGoal(el('practice-kick-distance').value);};
  el('practice-guide-close').onclick=()=>guide.close();
  el('practice-guide-start').onclick=()=>{
   if(game.career)return;

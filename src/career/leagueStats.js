@@ -15,7 +15,8 @@ export function simulatedBoxScore(team,drives,seed){
   const intercepted=Number(points===0&&random()<.15);
   players[qb.id].attempts+=Math.max(attempts,completions+intercepted);players[qb.id].interceptions+=intercepted;
   for(let i=0;i<Math.max(attempts,completions+intercepted);i++){
-   const receiver=receivers[Math.floor(random()*receivers.length)],r=players[receiver.id];r.targets++;
+   let pick=random()*receivers.reduce((n,p)=>n+Math.max(1,(p.rating-40)**2),0);
+   const receiver=receivers.find(p=>(pick-=Math.max(1,(p.rating-40)**2))<=0)||receivers.at(-1),r=players[receiver.id];r.targets++;
    if(i<completions){const yards=3+Math.floor(random()*16),td=Number(passTD&&i===0);r.receptions++;r.receivingYards+=yards;r.receivingTD+=td;players[qb.id].completions++;players[qb.id].passingYards+=yards;players[qb.id].passingTD+=td;}
   }
   const carries=1+Math.floor(random()*4);players[rb.id].carries+=carries;players[rb.id].rushingYards+=Math.floor(carries*(2+random()*4));players[rb.id].rushingTD+=Number(touchdown&&!passTD);
@@ -23,9 +24,9 @@ export function simulatedBoxScore(team,drives,seed){
  }
  return players;
 }
-export function seasonPlayerRows(c){
+export function seasonPlayerRows(c,scope='regular'){
  const totals={};let games=0,covered=0;
- for(const g of [...c.league.schedule,...(c.postseason?.games||[])]){
+ for(const g of (scope==='playoffs'?(c.postseason?.games||[]):scope==='all'?[...c.league.schedule,...(c.postseason?.games||[])]:c.league.schedule)){
   if(g.status!=='completed')continue;games++;if(!g.boxScore)continue;covered++;
   for(const [id,stats] of Object.entries(g.boxScore.players))addStats(totals[id]??=emptyStats(),stats);
  }

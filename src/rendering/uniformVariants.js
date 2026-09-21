@@ -5,15 +5,22 @@ export function defaultUniforms(team){
  const secondary=team?.colors?.secondary||'#eef1f4';
  const accent=team?.colors?.accent||'#f4c542';
  return {
-  home:{jersey:primary,helmet:secondary,stripe:accent},
-  away:{jersey:secondary,helmet:primary,stripe:accent},
-  alternate:{jersey:accent,helmet:primary,stripe:secondary}
+  home:{jersey:primary,helmet:primary,stripe:accent,pants:'#ffffff'},
+  away:{jersey:secondary,helmet:primary,stripe:accent,pants:'#ffffff'},
+  alternate:{jersey:accent,helmet:primary,stripe:secondary,pants:'#ffffff'}
  };
 }
 
 export function ensureUniformVariants(team){
  const defaults=defaultUniforms(team);
  const legacy=team?.uniform||{};
+ // Earlier defaults were invisible to the old jersey-only renderer. Repair only
+ // complete, untouched auto sets; any custom material or explicit set is preserved.
+ if(!team.uniformSchemaVersion&&!team.uniformsCustomized&&!team.uniform&&(!team.uniformPreference||team.uniformPreference==='auto')&&team.uniforms){
+  const previous={...defaults,home:{...defaults.home,helmet:team.colors?.secondary||'#eef1f4'}};
+  if(UNIFORM_VARIANTS.every(v=>Object.keys(defaults[v]).every(k=>team.uniforms[v]?.[k]===previous[v][k])))team.uniforms.home.helmet=defaults.home.helmet;
+ }
+ team.uniformSchemaVersion=2;
  if(!team.uniforms||typeof team.uniforms!=='object')team.uniforms={};
  for(const key of UNIFORM_VARIANTS){
   const base=key==='home'?{...defaults[key],...legacy}:defaults[key];
