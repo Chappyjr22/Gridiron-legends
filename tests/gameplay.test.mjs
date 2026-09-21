@@ -90,6 +90,26 @@ await test('dives move physically, miss a cut, and detect swept contact',async h
  const other={x:0,yfield:0};c.startDive(other,{x:0,yfield:40},1000);assert.equal(c.advanceDive(other,{x:0,yfield:40},0.18,1180),true);
  assert.equal(c.touching(other,{x:0,yfield:40}),true);
 });
+for(const difficulty of ['medium','hard','gridiron'])await test(`faster trailing defender catches the runner on ${difficulty}`,async h=>{
+ h.engine.startPractice();h.game.difficulty=difficulty;h.engine.choosePlay('trips_slants');h.engine.onSnap();h.game.carrierSince=h.now-2000;
+ const runner=h.entities.players.wr1,def=h.entities.players.cb1;
+ h.entities.ballCarrier=runner;
+ for(const p of [...Object.values(h.entities.players),...h.entities.decor])Object.assign(p,{x:300,yfield:-10000,state:'released'});
+ Object.assign(runner,{x:150,yfield:30*28,attributes:{speed:50,strength:50}});
+ Object.assign(def,{x:150,yfield:runner.yfield-25,attributes:{speed:100,tackling:100}});
+ h.setRandom(0.99);
+ for(let i=0;i<400&&h.game.phase==='live';i++){
+  h.step(16);assert.ok(!def.dive,'rear pursuit must not stop to wind up');
+ }
+ assert.equal(h.game.phase,'tackle');assert.ok(runner.yfield<40*28,'faster defender closes within ten yards');
+});
+await test('trailing dives are rejected but side and head-on lunges remain available',async h=>{
+ const c=await h.load('src/simulation/contact.js');
+ const runner={x:100,yfield:100,velocity:{x:0,yfield:100}};
+ for(const gap of [19,25,40])assert.equal(c.startDive({x:100,yfield:100-gap},runner,1000),false);
+ assert.equal(c.startDive({x:130,yfield:100},runner,1000),true);
+ assert.equal(c.startDive({x:100,yfield:130},runner,1000),true);
+});
 await test('catch pursuit releases linemen and activates every extra defender',async h=>{
  h.engine.startPractice();h.engine.choosePlay('trips_slants');h.engine.onSnap();h.game.carrierSince=h.now-2000;
  h.entities.ballCarrier=h.entities.players.wr1;h.entities.ballCarrier.yfield=40*28;

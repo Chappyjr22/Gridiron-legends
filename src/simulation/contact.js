@@ -2,7 +2,6 @@
 import {TACKLE_R} from '../state/constants.js';
 export const CONTACT_RADIUS=TACKLE_R;
 export const DIVE_REACH=44;
-export const TRAILING_DIVE_REACH=CONTACT_RADIUS+8;
 export const DIVE_DURATION=180;
 export const DIVE_SPEED=250;
 export function separation(a,b){return Math.hypot(a.x-b.x,a.yfield-b.yfield);}
@@ -14,15 +13,14 @@ export function pursuitTarget(def,carrier,velocity){
 // A lunge commits to a direction; it cannot home in after the runner cuts.
 export function startDive(def,carrier,now,timing={}){
  const distance=separation(def,carrier);
- // Offense advances toward increasing yfield. Apply the shorter trailing range
- // only to a runner who is actually moving upfield; static contact fixtures and
- // side/front approaches keep the normal dive geometry.
+ // Keep chasing from behind: stopping for the windup gives a moving runner
+ // enough separation to escape even a faster defender. Normal contact still
+ // tackles, while side/front approaches retain their committed lunges.
  const longitudinalGap=carrier.yfield-def.yfield;
  const lateralGap=Math.abs(carrier.x-def.x);
  const movingUpfield=(carrier.velocity?.yfield||0)>1;
  const trailing=movingUpfield&&longitudinalGap>CONTACT_RADIUS*0.45&&longitudinalGap>lateralGap*0.7;
- const reach=trailing?TRAILING_DIVE_REACH:DIVE_REACH;
- if(distance<=CONTACT_RADIUS||distance>reach||now<(def.nextDiveAt||0))return false;
+ if(trailing||distance<=CONTACT_RADIUS||distance>DIVE_REACH||now<(def.nextDiveAt||0))return false;
  const duration=timing.diveDuration??DIVE_DURATION,windup=timing.diveWindup??0,speed=45/(duration/1000);
  def.dive={launchAt:now+windup,vx:(carrier.x-def.x)/distance*speed,vy:(carrier.yfield-def.yfield)/distance*speed,until:now+windup+duration};
  if(Math.abs(carrier.yfield-def.yfield)>0.5)def.facing=carrier.yfield>def.yfield?'left':'right';
