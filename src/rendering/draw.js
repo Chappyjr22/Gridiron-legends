@@ -98,6 +98,7 @@ function drawScene(){
   const camPx=game.cameraYard*XPX;
   const xAt=(yard)=>BASE_X-(yard*XPX-camPx);
   ctx.imageSmoothingEnabled=false;
+  if(game.kick&&['kicking','result'].includes(game.phase)){drawPixelStadium(xAt,w);drawKick(ctx,w,game,entities,simulationNow());return;}
   drawPixelTurf(xAt,w);
   drawPixelStadium(xAt,w);
   for(let yard=0;yard<=100;yard+=5){
@@ -149,7 +150,6 @@ function drawScene(){
     ctx.textAlign='left';
     return;
   }
-  if(game.kick&&['kicking','result'].includes(game.phase)){drawKick(ctx,w,game,entities,simulationNow());return;}
   // Show actual close contact, not the entire blocking assignment or pursuit path.
   if(game.phase==='live'){
     const offense=[...entities.decor.filter(p=>p.team===OFF),...['rb','wr1','wr2','wr3','te'].map(k=>entities.players[k])].filter(Boolean);
@@ -232,7 +232,7 @@ function drawScene(){
       const reachable=read?.target?.reachable;
       const color=reachable?'#b3f0d4':'#ffdf8a';
       ctx.save();ctx.lineCap='round';ctx.setLineDash([1,8]);
-      drawArcPath(cx,cy,tx,ty,profile.arcHeight,'rgba(255,240,192,.8)',1.7);
+      drawArcPath(cx,cy,tx,ty,profile.arcHeight,'rgba(255,240,192,.9)',2.2);
       ctx.setLineDash([]);
       // A single ground target, with a dark edge for contrast against yard lines.
       ctx.strokeStyle='#102c32';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(tx,ty,9,5,0,0,Math.PI*2);ctx.stroke();
