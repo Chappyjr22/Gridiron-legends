@@ -17,12 +17,21 @@ export function startDive(def,carrier,now,timing={}){
  // enough separation to escape even a faster defender. Normal contact still
  // tackles, while side/front approaches retain their committed lunges.
  const longitudinalGap=carrier.yfield-def.yfield;
- const lateralGap=Math.abs(carrier.x-def.x);
  const movingUpfield=(carrier.velocity?.yfield||0)>1;
- const trailing=movingUpfield&&longitudinalGap>CONTACT_RADIUS*0.45&&longitudinalGap>lateralGap*0.7;
+ const trailing=movingUpfield&&longitudinalGap>0;
  if(trailing||distance<=CONTACT_RADIUS||distance>DIVE_REACH||now<(def.nextDiveAt||0))return false;
  const duration=timing.diveDuration??DIVE_DURATION,windup=timing.diveWindup??0,speed=45/(duration/1000);
- def.dive={launchAt:now+windup,vx:(carrier.x-def.x)/distance*speed,vy:(carrier.yfield-def.yfield)/distance*speed,until:now+windup+duration};
+ const vx=(carrier.x-def.x)/distance*speed,vy=longitudinalGap/distance*speed;
+ // A nearby runner can already be out of reach by the end of the windup.
+ // Test the committed path against constant runner motion before giving up
+ // pursuit. This does not steer the dive or prevent a later cut from beating it.
+ const runnerVX=carrier.velocity?.x||0,runnerVY=carrier.velocity?.yfield||0;
+ const rx=carrier.x-def.x+runnerVX*windup/1000,ry=longitudinalGap+runnerVY*windup/1000;
+ const relativeVX=runnerVX-vx,relativeVY=runnerVY-vy;
+ const relativeSpeed2=relativeVX**2+relativeVY**2;
+ const closestTime=relativeSpeed2?Math.max(0,Math.min(duration/1000,-(rx*relativeVX+ry*relativeVY)/relativeSpeed2)):0;
+ if(Math.hypot(rx+relativeVX*closestTime,ry+relativeVY*closestTime)>CONTACT_RADIUS)return false;
+ def.dive={launchAt:now+windup,vx,vy,until:now+windup+duration};
  if(Math.abs(carrier.yfield-def.yfield)>0.5)def.facing=carrier.yfield>def.yfield?'left':'right';
  def.action=windup?'diveWindup':'dive';def.actionStart=now;def.nextDiveAt=now+1400;
  return true;
