@@ -498,6 +498,7 @@ function finishOpponentPossession(playerStart){
   advanceExpiredPeriod(()=>startPlayerDrive(playerStart));
 }
 export function startOpponentPossession(startField,reason){
+  game.kick=null;
   game.possession='cpu';
   game.phase='simulation';
   const result=simulateOpponentDrive(startField,reason);

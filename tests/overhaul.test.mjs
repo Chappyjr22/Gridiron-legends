@@ -96,7 +96,7 @@ await test('a mid-flight deflection reaches the turf before becoming incomplete'
 await test('kick has two timing stages, visible flight and a single scoring result',async()=>{
  const h=await harness();h.engine.startNewGame();h.engine.startPlayerDrive(80);h.game.down=4;h.hud.showFourthDown();h.engine.attemptFieldGoal();assert.equal(h.game.phase,'kicking');
  h.step(940);h.engine.kickInput();assert.ok(h.game.kick.power>.99);h.engine.kickInput();assert.equal(h.game.kick.stage,'aim');h.step(628);h.engine.kickInput();assert.equal(h.game.kick.stage,'approach');h.step(560);assert.equal(h.game.kick.stage,'flight');assert.ok(h.entities.ball.inFlight);
- h.step(1000);h.step(1000);h.step(1000);h.step(950);assert.equal(h.game.playerScore,3);h.engine.kickInput();assert.equal(h.game.playerScore,3);assert.ok(h.entities.ball.loose);
+ h.step(1000);h.step(1000);h.step(1000);h.step(950);assert.equal(h.game.playerScore,3);h.engine.kickInput();assert.equal(h.game.playerScore,3);assert.ok(h.entities.ball.loose);h.engine.startOpponentPossession(20,'Kickoff');assert.equal(h.game.kick,null);
 });
 await test('out-of-range kicks cannot start and weak kicks miss',async()=>{
  const h=await harness();h.engine.startNewGame();h.engine.startPlayerDrive(20);h.hud.showFourthDown();h.engine.attemptFieldGoal();assert.equal(h.game.phase,'decision');assert.ok(h.element('btn-field-goal').disabled);
