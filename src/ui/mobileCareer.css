@@ -112,9 +112,16 @@
 
 /* Weekly choices stay inside the scrolling Home cards on landscape phones. */
 #career-screen .career-preparation { margin: 12px 0; border-top: 1px solid #2878b9; padding-top: 10px; }
-#career-screen .career-preparation label { display: block; color: #d5e5ff; font-size: 13px; margin: 6px 0; }
-#career-screen .career-preparation select { width: 100%; max-width: 100%; min-height: 44px; background: #062f68; color: #fff; border: 1px solid #399fff; border-radius: 4px; padding: 8px; font-size: 14px; }
-#career-screen .career-preparation select:disabled { opacity: .7; }
+#career-screen .weekly-field-label { display: block; color: #d5e5ff; font: 18px/1.2 var(--sports-face); margin: 8px 0 6px; text-transform: uppercase; }
+#career-screen .weekly-dropdown-trigger, #career-screen .weekly-dropdown-options button { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-width: 0; min-height: 44px; padding: 9px 10px; border: 1px solid #399fff; border-radius: 0; background: #062f68; color: #fff; font: 18px/1.2 var(--sports-face); text-align: left; text-transform: uppercase; touch-action: manipulation; }
+#career-screen .weekly-dropdown-trigger span:first-child, #career-screen .weekly-dropdown-options button span:first-child { min-width: 0; overflow-wrap: anywhere; }
+#career-screen .weekly-dropdown-trigger:disabled, #career-screen .weekly-dropdown-options button:disabled { opacity: .55; }
+#career-screen .weekly-dropdown-trigger[aria-expanded="true"] { border-color: #ffe000; color: #ffe000; }
+#career-screen .weekly-dropdown-options { max-height: min(180px, 42dvh); overflow-y: auto; overscroll-behavior: contain; border: 2px solid #399fff; margin-top: 4px; background: #031735; }
+#career-screen .weekly-dropdown-options[hidden] { display: none; }
+#career-screen .weekly-dropdown-options button { border: 0; border-bottom: 1px solid #2878b9; background: #06285f; }
+#career-screen .weekly-dropdown-options button[aria-selected="true"] { background: #ffe000; color: #031735; }
+#career-screen .weekly-dropdown-trigger:focus-visible, #career-screen .weekly-dropdown-options button:focus-visible { outline: 2px solid #fff; outline-offset: -3px; }
 #career-screen .preparation-reward, #career-screen .career-stakes p { font-size: 13px; line-height: 1.45; color: #e0eeff; overflow-wrap: anywhere; }
 #career-screen .preparation-status { color: #b4cfee; font-size: 12px; line-height: 1.4; }
 #career-screen .career-stakes { border-bottom: 1px solid #2878b9; margin-bottom: 12px; padding-bottom: 8px; }
