@@ -1,5 +1,5 @@
 import {seasonReview,evolveLeague} from './offseason.js';
-import {normalizeQuarterback,upgradeOffer,QB_KEYS,levelThreshold,assessGoal} from './development.js';
+import {normalizeQuarterback,upgradeOffer,QB_KEYS,assessGoal,DEVELOPMENT,applyDevelopment,awardExperience} from './development.js';
 import {careerStorage} from '../cloud/storage.js';
 import {opponentBoxScore} from './leagueStats.js';
 import {validCheckpoint} from './checkpoints.js';
@@ -17,11 +17,12 @@ export const ARCHETYPES={
  quick:{name:'Quick release',description:'Get the ball out before pressure arrives.',attributes:{accuracy:74,arm:69,release:83,speed:76}}
 };
 export function careerPlayer(c){return League.findTeamState(c.league,c.teamId).roster.find(p=>p.id===c.playerId);}
-export function createCareer({name,number=7,teamId='bos',archetype='precision',skin=2,portrait=0,difficulty='medium',quarterMinutes=2,schoolId=null}){
+export function createCareer({name,number=7,teamId='bos',archetype='precision',skin=2,portrait=0,difficulty='medium',quarterMinutes=2,schoolId=null,development='standard'}){
  const cleanName=String(name||'').trim().replace(/\s+/g,' ').slice(0,28);
  if(!cleanName)throw Error('Enter your player name.');
  if(!(schoolId?COLLEGE_TEAMS.some(t=>t.id===schoolId):League.TEAMS.some(t=>t.id===teamId))||!ARCHETYPES[archetype])throw Error('Choose a team and playing style.');
  number=Number(number);if(!Number.isInteger(number)||number<0||number>19)throw Error('Choose a QB number from 0 to 19.');
+ if(!Object.hasOwn(DEVELOPMENT,development))throw Error('Choose a development speed.');
  if(schoolId)teamId=schoolId;
  const league=schoolId?createCollegeLeague(schoolId):League.createFranchise(teamId),team=League.findTeamState(league,teamId),player=team.roster.find(p=>p.slot==='QB');
  const used=new Set(team.roster.map(p=>p.number));
@@ -31,7 +32,7 @@ export function createCareer({name,number=7,teamId='bos',archetype='precision',s
  if(schoolId)for(const key of Object.keys(player.attributes))player.attributes[key]+=SCHOOL_TIERS[team.tier].attributeBonus;
  normalizeQuarterback(player);
  League.refreshRatings(league);
- return {careerId:`career-${Date.now()}-${Math.random().toString(36).slice(2,10)}`,schemaVersion:1,stage:schoolId?'college':'pro',teamId,playerId:player.id,league,settings:{difficulty:['easy','medium','hard','gridiron'].includes(difficulty)?difficulty:'medium',quarterMinutes:[2,3,4,5].includes(Number(quarterMinutes))?Number(quarterMinutes):2},xp:0,level:1,points:0,totals:emptyStats(),seasonStats:emptyStats(),history:[],awards:[],postseason:null,lastResult:null,activeMatch:null,checkpoint:null};
+ return {careerId:`career-${Date.now()}-${Math.random().toString(36).slice(2,10)}`,schemaVersion:1,progressionVersion:2,stage:schoolId?'college':'pro',teamId,playerId:player.id,league,settings:{development,difficulty:['easy','medium','hard','gridiron'].includes(difficulty)?difficulty:'medium',quarterMinutes:[2,3,4,5].includes(Number(quarterMinutes))?Number(quarterMinutes):2},xp:0,level:1,points:0,totals:emptyStats(),seasonStats:emptyStats(),history:[],awards:[],postseason:null,lastResult:null,activeMatch:null,checkpoint:null};
 }
 export function saveCareer(c){try{return writeSlot(careerStorage(),parseCareer,CAREER_KEY,c);}catch{return false;}}
 export function listCareers(){return Object.values(readSlots(careerStorage(),parseCareer,CAREER_KEY).careers);}
@@ -45,6 +46,8 @@ export function parseCareer(raw){
   if(c.stage==='pro')League.ensureLeagueState(c.league);else ensureCollegeTalent(c.league);
   const p=careerPlayer(c);if(!p||!ARCHETYPES[p.archetype]||!['accuracy','arm','release'].every(k=>Number.isFinite(p.attributes?.[k])&&p.attributes[k]>=0&&p.attributes[k]<=100))return null;
   if(!['xp','level','points'].every(k=>Number.isFinite(c[k])&&c[k]>=0)||!c.settings)return null;
+  if(c.progressionVersion!==undefined&&![1,2].includes(c.progressionVersion))return null;
+  if(c.progressionVersion===2&&!Object.hasOwn(DEVELOPMENT,c.settings.development))return null;
   if(c.activeMatch&&![...c.league.schedule,...(c.postseason?.games||[])].some(g=>g.id===c.activeMatch&&g.status==='scheduled'))return null;
   if(!['easy','medium','hard','gridiron'].includes(c.settings.difficulty)||![2,3,4,5].includes(c.settings.quarterMinutes))return null;
   if(c.checkpoint&&(!c.activeMatch||!validCheckpoint(c.checkpoint,c)))return null;
@@ -60,7 +63,7 @@ export function nextMatch(c){
 }
 export function upgrade(c,attribute){
  const p=normalizeQuarterback(careerPlayer(c));if(c.activeMatch||!QB_KEYS.includes(attribute))return false;
- const offer=upgradeOffer(p,attribute);if(!offer.gain||c.points<offer.cost)return false;
+ const offer=upgradeOffer(p,attribute,c);if(!offer.gain||c.points<offer.cost)return false;
  p.attributes[attribute]+=offer.gain;c.points-=offer.cost;normalizeQuarterback(p);
  League.refreshRatings(c.league);return true;
 }
@@ -115,12 +118,12 @@ export function completeCareerGame(c,gameId,userScore,cpuScore,matchStats){
  const assessment=c.stage==='college'?collegeGameAssessment(c,stats,userScore>cpuScore,opponent):null;
  const previousProjection=c.stage==='college'?draftProjection(c):null;
  const goal=assessGoal(c,stats,userScore>cpuScore);
- const breakdown=xpBreakdown(stats,userScore>cpuScore,c.matchContext||c.settings);
+ const breakdown=applyDevelopment(xpBreakdown(stats,userScore>cpuScore,c.matchContext||c.settings),c);
  if(assessment)assessment.goal=goal;
  breakdown.push({label:'Weekly objective',xp:goal.xp});
  const xp=breakdown.reduce((sum,item)=>sum+item.xp,0);
- c.xp+=xp;let gained=0;while(c.xp>=levelThreshold(c.level)){c.xp-=levelThreshold(c.level);c.level++;c.points++;gained++;}
- c.lastResult={gameId,season:c.league.season,week:match.week,userScore,cpuScore,xp,levels:gained,stats,opponentId:home?match.awayTeamId:match.homeTeamId};
+ const reward=awardExperience(c,xp);
+ c.lastResult={gameId,season:c.league.season,week:match.week,userScore,cpuScore,xp,levels:reward.levels,pointsEarned:reward.points,stats,opponentId:home?match.awayTeamId:match.homeTeamId};
  Object.assign(c.lastResult,{goal,previousProjection,xpBreakdown:breakdown,playerStats:structuredClone(match.boxScore.players),keyMoments:captureMoments(matchStats.plays)});
  if(assessment)c.lastResult.collegeAssessment=assessment;
  c.pendingRecapGameId=gameId;c.history.push(c.lastResult);

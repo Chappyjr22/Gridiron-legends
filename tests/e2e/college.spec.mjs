@@ -10,7 +10,7 @@ test('college school picker fits short landscape and previews tier attributes',a
   const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await enroll(page);await page.getByRole('button',{name:'Choose your school',exact:true}).tap();
   await expect(page.locator('#school-grid button')).toHaveCount(8);
-  await expect(page.locator('#school-preview')).toContainText('Accuracy 86');
+  await expect(page.locator('#school-preview')).toContainText('Accuracy 82');
   await page.evaluate(()=>document.fonts.ready);
   for(const conference of ['southern','heartland','atlantic','western']){
    await page.locator('[data-conference="'+conference+'"]').tap();
@@ -31,13 +31,13 @@ test('college school picker fits short landscape and previews tier attributes',a
   await page.locator('[data-conference="southern"]').tap();
 
   await page.locator('[data-school="college-bluegrass"]').tap();
-  await expect(page.locator('#school-preview')).toContainText('Accuracy 78');
+  await expect(page.locator('#school-preview')).toContainText('Accuracy 66');
   const confirm=page.getByRole('button',{name:'Choose this school',exact:true});
   const bounds=await confirm.boundingBox();expect(bounds.y).toBeGreaterThanOrEqual(0);expect(bounds.y+bounds.height).toBeLessThanOrEqual(height);
   await page.screenshot({path:`test-results/college-picker-${height}.png`});
   await confirm.tap();await page.getByRole('button',{name:'Begin senior season',exact:true}).tap();
   await expect(page.locator('#career-season')).toContainText('College senior');
-  await page.getByRole('tab',{name:'Player',exact:true}).tap();await expect(page.locator('[data-upgrade="accuracy"] strong')).toHaveText('78');
+  await page.getByRole('tab',{name:'Player',exact:true}).tap();await expect(page.locator('[data-upgrade="accuracy"] strong')).toHaveText('66');
   await page.getByRole('tab',{name:'League',exact:true}).tap();await expect(page.locator('#league-stat-team option')).toHaveCount(33);
   await expect(page.locator('#college-schedule .career-list-row')).toHaveCount(12);
   await page.getByRole('tab',{name:'Home',exact:true}).tap();await page.getByRole('button',{name:'Play next game',exact:true}).tap();

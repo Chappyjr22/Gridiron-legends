@@ -1,6 +1,6 @@
 import {resolvedUniform} from '../rendering/uniformVariants.js';
 import {contrastingOpponent} from '../rendering/uniforms.js';
-import {normalizeQuarterback,upgradeOffer,levelThreshold,weeklyGoal,QB_KEYS,assessGoal} from '../career/development.js';
+import {normalizeQuarterback,upgradeOffer,levelThreshold,weeklyGoal,QB_KEYS,assessGoal,developmentProfile,pointsPerLevel} from '../career/development.js';
 import {paintPlayerPortrait} from './playerPortrait.js';
 import {initPortraitPicker,openPortraitPicker} from './portraitPicker.js';
 import {initEnrollment,resetEnrollment} from './enrollment.js';
@@ -8,7 +8,7 @@ import {careerStorage} from '../cloud/storage.js';
 import {readSlots,SLOTS_KEY,importSlotArchive} from '../career/slots.js';
 import {playingRoster} from '../career/roster.js';
 import {collegeStandings} from '../career/college.js';
-import {initCollegeUI,syncCollegeEnrollment,renderCollegeCareer} from './college.js';
+import {initCollegeUI,syncCollegeEnrollment,renderCollegeCareer,enrollmentDevelopment} from './college.js';
 import {renderMyTeam,showPostgame,initCareerExperience} from './careerExperience.js';
 import {renderCareerStats} from './careerStats.js';
 import {paintMenuPlayer} from './menuArt.js';
@@ -77,7 +77,7 @@ function render(){
  el('career-create').hidden=!!career&&!creating;el('career-hub').hidden=!career||creating;
  if(!career||creating){el('career-season').textContent='New career';el('career-header-name').textContent='My Career';el('career-header-level').textContent='';return;}
  const player=normalizeQuarterback(Career.careerPlayer(career)),team=League.findTeamState(career.league,career.teamId),match=Career.nextMatch(career);
- el('career-header-name').textContent=rosterName(player);el('career-header-level').textContent=`LV ${career.level} · ${career.xp}/${levelThreshold(career.level)} XP · ${career.points} ${career.points===1?'point':'points'}`;
+ el('career-header-name').textContent=rosterName(player);el('career-header-level').textContent=`LV ${career.level} · ${career.xp}/${levelThreshold(career.level,career)} XP · ${career.points} ${career.points===1?'point':'points'}`;
  el('career-player-name').textContent=rosterName(player);el('career-player-detail').textContent=`#${player.number} QB · ${Career.ARCHETYPES[player.archetype].name} · ${team.city} ${team.name}`;
  el('career-screen').style.setProperty('--career-color',team.colors.primary);
  el('career-jersey-number').textContent=player.number;
@@ -87,16 +87,16 @@ function render(){
  el('career-user-abbr').textContent=team.abbr;el('career-user-record').textContent=recordLabel(team);
  el('career-open-player').textContent=career.points?`${career.points} upgrade ${career.points===1?'point':'points'}`:'View your player';
  el('career-season').textContent=`Season ${career.league.season} · ${career.postseason?'Playoffs':`Week ${career.league.week}`} · ${recordLabel(team)}`;
- el('career-level').textContent=`Level ${career.level} · ${career.xp}/${levelThreshold(career.level)} XP · ${career.points} upgrade ${career.points===1?'point':'points'}`;
- el('career-xp').max=levelThreshold(career.level);el('career-xp').value=career.xp;el('qb-profile-xp').max=levelThreshold(career.level);
- el('career-points').textContent=`${career.points} ${career.points===1?'point':'points'} available`;
+ el('career-level').textContent=`Level ${career.level} · ${career.xp}/${levelThreshold(career.level,career)} XP · ${career.points} upgrade ${career.points===1?'point':'points'}`;
+ el('career-xp').max=levelThreshold(career.level,career);el('career-xp').value=career.xp;el('qb-profile-xp').max=levelThreshold(career.level,career);
+ el('career-points').textContent=`${career.points} ${career.points===1?'point':'points'} · ${career.progressionVersion===2?developmentProfile(career).name+' development':'Original progression'}`;
  el('career-weekly-goal').textContent=match?'Win your matchup. Earn XP through your play and develop your quarterback.':'Season complete. Your next chapter is ready.';
  el('career-goal-reward').textContent='GAME DAY';
  const s=career.seasonStats;el('career-season-summary').innerHTML=`<span><b>${s.games}</b> games</span><span><b>${s.passingYards}</b> yards</span><span><b>${s.passingTD}</b> TD</span>`;el('career-yards').textContent=s.passingYards;el('career-td').textContent=s.passingTD;el('career-int').textContent=s.interceptions;el('career-stat-line').textContent=`${s.passingYards} YDS · ${s.passingTD} TD · ${s.interceptions} INT`;
  el('career-completions').textContent=`${s.completions}/${s.attempts} completed · ${s.sacks} sacks · ${s.games} games`;
  const t=career.totals;el('career-lifetime').textContent=`Career: ${t.passingYards} passing yards · ${t.passingTD} TD · ${t.games} games`;
- el('upgrade-status').textContent=career.activeMatch?'Upgrades after the game':career.points?`${career.points} upgrade point${career.points===1?'':'s'} available`:'0 points · Level up to earn 1';
- el('career-upgrades').innerHTML=QB_KEYS.map(key=>{const value=player.attributes[key],offer=upgradeOffer(player,key),label=key==='arm'?'Arm strength':key[0].toUpperCase()+key.slice(1);return `<button aria-label="Upgrade ${label.toLowerCase()} by ${offer.gain} for ${offer.cost} points" data-upgrade="${key}" ${career.points<offer.cost||career.activeMatch||!offer.gain?'disabled':''}><span>${label}</span><strong>${value}</strong><span class="rating-track" aria-hidden="true"><span style="width:${value/95*100}%"></span></span><span class="upgrade-cost">${!offer.gain?'MAX':`+${offer.gain}<small>${offer.cost} ${offer.cost===1?'POINT':'POINTS'}</small>`}</span></button>`;}).join('');
+ el('upgrade-status').textContent=career.activeMatch?'Upgrades after the game':career.points?`${career.points} upgrade point${career.points===1?'':'s'} available`:`0 points · Level up to earn ${pointsPerLevel(career)}`;
+ el('career-upgrades').innerHTML=QB_KEYS.map(key=>{const value=player.attributes[key],offer=upgradeOffer(player,key,career),label=key==='arm'?'Arm strength':key[0].toUpperCase()+key.slice(1);return `<button aria-label="Upgrade ${label.toLowerCase()} by ${offer.gain} for ${offer.cost} points" data-upgrade="${key}" ${career.points<offer.cost||career.activeMatch||!offer.gain?'disabled':''}><span>${label}</span><strong>${value}</strong><span class="rating-track" aria-hidden="true"><span style="width:${value/(career.progressionVersion===2?99:95)*100}%"></span></span><span class="upgrade-cost">${!offer.gain?'MAX':`+${offer.gain}<small>${offer.cost} ${offer.cost===1?'POINT':'POINTS'}</small>`}</span></button>`;}).join('');
  for(const button of el('career-upgrades').querySelectorAll('button'))button.addEventListener('click',()=>{if(Career.upgrade(career,button.dataset.upgrade)){persist();render();}});
  el('career-play').hidden=!match;el('career-next-season').hidden=!career.postseason?.champion;
  if(match){
@@ -244,7 +244,7 @@ export function initCareer(){
  el('career-create').addEventListener('submit',event=>{
   event.preventDefault();if(career&&!creating)return;
   try{
-   const candidate=Career.createCareer({name:el('career-name').value,number:el('career-number').value,teamId:el('career-team').value,archetype:el('career-archetype').value,skin:el('career-skin').value,portrait:Number(el('career-portrait').value),difficulty:el('career-difficulty').value,quarterMinutes:el('career-minutes').value,schoolId:el('career-path').value==='college'?el('career-school').value:null});
+   const candidate=Career.createCareer({development:enrollmentDevelopment(),name:el('career-name').value,number:el('career-number').value,teamId:el('career-team').value,archetype:el('career-archetype').value,skin:el('career-skin').value,portrait:Number(el('career-portrait').value),difficulty:el('career-difficulty').value,quarterMinutes:el('career-minutes').value,schoolId:el('career-path').value==='college'?el('career-school').value:null});
    if(!Career.saveCareer(candidate))throw Error('Could not save the new career. Existing careers are unchanged. Free some device storage and try again.');
    career=candidate;creating=false;persist();render();
   }catch(error){el('career-create-error').textContent=error.message;}

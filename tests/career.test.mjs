@@ -134,3 +134,5 @@ await import("./career-depth.test.mjs");
  h.hud.resultFlow.continueAction();assert.ok(C.parseCareer(JSON.stringify(c)));
  const invalid=structuredClone(c);invalid.checkpoint.game.playerScore=0;assert.equal(C.parseCareer(JSON.stringify(invalid)),null);
 }
+
+await import("./progression.test.mjs");

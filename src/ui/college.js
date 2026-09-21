@@ -1,4 +1,4 @@
-import {weeklyGoal} from '../career/development.js';
+import {weeklyGoal,DEVELOPMENT,RECOMMENDED_DEVELOPMENT,proProjection} from '../career/development.js';
 import {COLLEGE_TEAMS,COLLEGE_CONFERENCES,SCHOOL_TIERS,SCHEMES} from '../career/collegeData.js';
 import * as Career from '../career/career.js';
 import * as League from '../state/league.js';
@@ -6,9 +6,19 @@ const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;
 const el=id=>document.getElementById(id);
 const helmet=t=>`<svg class="school-helmet" style="--career-color:${t.colors.primary};--team-primary:${t.colors.primary};--helmet-stripe:${t.colors.accent}" viewBox="0 0 32 28" aria-hidden="true"><use href="#helmet-icon"/></svg>`;
 let selected=COLLEGE_TEAMS[0].id,conference=COLLEGE_TEAMS[0].conference;
+export function enrollmentDevelopment(){
+ const chosen=el('career-development').value;
+ if(chosen!=='recommended')return chosen;
+ const school=COLLEGE_TEAMS.find(t=>t.id===el('career-school').value);
+ return el('career-path').value==='college'?RECOMMENDED_DEVELOPMENT[school.tier]:'standard';
+}
+function ratingPreview(attrs){
+ const p={attributes:attrs,rating:Math.round(Object.values(attrs).reduce((n,v)=>n+v,0)/4)};
+ return `College overall ${p.rating} · Projected pro overall ${proProjection(p,{progressionVersion:2}).overall}`;
+}
 function preview(school){
  const tier=SCHOOL_TIERS[school.tier],attrs=Career.ARCHETYPES[el('career-archetype').value].attributes;
- return `${helmet(school)}<h3>${school.city} ${school.name}</h3><p>${tier.name} · ${SCHEMES[school.scheme]}</p><p><b>Your starting attributes</b><br>${Object.entries(attrs).map(([k,v])=>`${k==='arm'?'Arm':k[0].toUpperCase()+k.slice(1)} ${v+tier.attributeBonus}`).join(' · ')}</p><p>Supporting cast: ${school.tier==='powerhouse'?'Strong':school.tier==='competitive'?'Balanced':'Developing'}</p><p>Expectation: ${tier.expectation}</p><p class="experience-note">Rotating weekly objectives reward efficient passing, ball security, scoring and scrambling. +20 XP.</p>`;
+ return `${helmet(school)}<h3>${school.city} ${school.name}</h3><p>${tier.name} · ${SCHEMES[school.scheme]}</p><p><b>Your starting attributes</b><br>${Object.entries(attrs).map(([k,v])=>`${k==='arm'?'Arm':k[0].toUpperCase()+k.slice(1)} ${v+tier.attributeBonus}`).join(' · ')}</p><p>${ratingPreview(Object.fromEntries(Object.entries(attrs).map(([k,v])=>[k,v+tier.attributeBonus])))}</p><p>Recommended development: ${DEVELOPMENT[RECOMMENDED_DEVELOPMENT[school.tier]].name}. You can choose any speed.</p><p>Supporting cast: ${school.tier==='powerhouse'?'Strong':school.tier==='competitive'?'Balanced':'Developing'}</p><p>Expectation: ${tier.expectation}</p><p class="experience-note">Rotating weekly objectives reward efficient passing, ball security, scoring and scrambling. Base reward: 20 XP before development speed.</p>`;
 }
 function renderPicker(){
  el('school-conferences').innerHTML=Object.values(COLLEGE_CONFERENCES).map(c=>`<button type="button" class="sports-button ${conference===c.id?'gold':'blue'}" data-conference="${c.id}" aria-pressed="${conference===c.id}">${c.name.replace(' Conference','')}</button>`).join('');
@@ -24,7 +34,9 @@ export function syncCollegeEnrollment(){
  const school=COLLEGE_TEAMS.find(t=>t.id===el('career-school').value)||COLLEGE_TEAMS[0];
  const attrs=Career.ARCHETYPES[el('career-archetype').value].attributes,tier=SCHOOL_TIERS[school.tier];
  el('chosen-school').textContent=`${school.city} ${school.name} · ${tier.name}`;
- el('chosen-school-attributes').textContent=Object.entries(attrs).map(([k,v])=>`${k}: ${v+tier.attributeBonus}`).join(' · ');
+ el('chosen-school-attributes').textContent=ratingPreview(Object.fromEntries(Object.entries(attrs).map(([k,v])=>[k,v+tier.attributeBonus])));
+ const dev=DEVELOPMENT[enrollmentDevelopment()];
+ el('career-development-note').textContent=`${dev.name} development · ${dev.multiplier}× XP. ${dev.description} Stays with you in the pros.`+(college?' College ratings can reach 99, which converts to 85 in the pros. Three college upgrade points convert to one pro point; leftover value becomes XP.':'');
 }
 export function renderCollegeCareer(c){
  const college=c.stage==='college',ready=college&&!!c.postseason?.champion;
@@ -32,17 +44,18 @@ export function renderCollegeCareer(c){
  el('college-progress').hidden=!college&&!c.collegeArchive;
  if(college){
   const projection=Career.draftProjection(c),school=COLLEGE_TEAMS.find(t=>t.id===c.teamId),tier=SCHOOL_TIERS[school.tier];
+  const rating=proProjection(Career.careerPlayer(c),c);
   const objective=weeklyGoal(c);const target=`<p>${esc(objective.label)}</p>`;
-  el('college-progress').innerHTML=`<section class="story-card draft-projection"><span class="board-kicker">Road to the draft</span><h3>${projection.label}</h3><p>${tier.expectation}</p></section><section class="story-card"><div class="challenge-heading"><h3>Weekly objective</h3><span class="reward-chip">+${objective.xp} XP</span></div>${target}</section>`;
+  el('college-progress').innerHTML=`<section class="story-card draft-projection"><span class="board-kicker">Road to the draft</span><h3>${projection.label}</h3><p>${tier.expectation}</p><p>College overall <b>${rating.collegeOverall}</b> · Projected pro overall <b>${rating.overall}</b></p><p class="experience-note">${c.progressionVersion===2?'Ratings reflect your competition. Your abilities convert at the draft; your development speed stays with you.':'Existing career: original progression and attribute carryover preserved.'}</p></section><section class="story-card"><div class="challenge-heading"><h3>Weekly objective</h3><span class="reward-chip">+${objective.xp} XP</span></div>${target}</section>`;
   el('career-weekly-goal').innerHTML=ready?'<p>Senior season complete. Your draft awaits.</p>':target;
-  el('career-goal-reward').textContent=ready?'DRAFT READY':`+${tier.goalXP} XP`;
+  el('career-goal-reward').textContent=ready?'DRAFT READY':`+${objective.xp} XP`;
   el('career-season').textContent=`College senior · ${c.postseason?'Postseason':'Week '+c.league.week+' / 12'} · ${League.findTeamState(c.league,c.teamId).record.wins}–${League.findTeamState(c.league,c.teamId).record.losses}`;
   el('career-next-season').hidden=true;
 
   if(ready){el('career-matchup').textContent='Senior season complete. Your next chapter awaits.';el('career-draft').textContent=c.draft?'View draft selection':'Enter the draft';}
  }else if(c.collegeArchive){
   const a=c.collegeArchive,team=League.findTeam(a.draft.teamId);
-  el('college-progress').innerHTML=`<h3>Your college story</h3><p>${esc(a.school.city)} ${esc(a.school.name)}</p><p>${a.stats.passingYards} YDS · ${a.stats.passingTD} TD · ${a.stats.interceptions} INT</p><p>Drafted by ${esc(team.city)} ${esc(team.name)}: round ${a.draft.round}, pick ${a.draft.pick}.</p>`;
+  el('college-progress').innerHTML=`<h3>Your college story</h3><p>${esc(a.school.city)} ${esc(a.school.name)}</p>${a.finalOverall!=null?`<p>Final college overall <b>${a.finalOverall}</b> · Rookie overall <b>${c.proEntry.rookieOverall}</b></p>`:''}<p>${a.stats.passingYards} YDS · ${a.stats.passingTD} TD · ${a.stats.interceptions} INT</p><p>Drafted by ${esc(team.city)} ${esc(team.name)}: round ${a.draft.round}, pick ${a.draft.pick}.</p>`;
  }
  const select=el('league-stat-team'),valid=select.value;
  if(select.dataset.kind!==(college?'college':'pro')){
@@ -57,14 +70,15 @@ export function renderCollegeCareer(c){
  }).join('');
 }
 export function initCollegeUI(getCareer,persist,render){
+ el('career-development').onchange=syncCollegeEnrollment;
  el('career-path').onchange=syncCollegeEnrollment;el('career-archetype').addEventListener('change',syncCollegeEnrollment);
  el('choose-school').onclick=()=>{selected=el('career-school').value;conference=COLLEGE_TEAMS.find(t=>t.id===selected).conference;renderPicker();el('school-dialog').showModal();};
  el('school-confirm').onclick=()=>{el('career-school').value=selected;syncCollegeEnrollment();el('school-dialog').close();};
  el('school-back').onclick=()=>el('school-dialog').close();
  el('career-draft').onclick=()=>{
   const c=getCareer(),draft=Career.enterDraft(c);if(!draft)return;persist();
-  const team=League.findTeamState(draft.league,draft.teamId);
-  el('draft-selection').innerHTML=`<p class="sports-kicker">ROUND ${draft.round} · PICK ${draft.pick}</p>${helmet(team)}<h3>${esc(team.city)} ${esc(team.name)}</h3><p>You're headed to the pros as the starting quarterback. ${draft.round<=2?'Lead a winning season with a 4-year contract.':draft.round<=4?'Establish yourself with a 3-year contract.':'Prove you belong with a 2-year contract.'}</p><p>Your player, attributes and earned upgrades come with you. Your college record stays in your career story.</p>`;
+  const team=League.findTeamState(draft.league,draft.teamId),rating=proProjection(Career.careerPlayer(c),c);
+  el('draft-selection').innerHTML=`<p class="sports-kicker">ROUND ${draft.round} · PICK ${draft.pick}</p>${helmet(team)}<h3>${esc(team.city)} ${esc(team.name)}</h3><p>You're headed to the pros as the starting quarterback. ${draft.round<=2?'Lead a winning season with a 4-year contract.':draft.round<=4?'Establish yourself with a 3-year contract.':'Prove you belong with a 2-year contract.'}</p><p>College overall ${rating.collegeOverall} → Pro overall ${rating.overall}. ${c.progressionVersion===2?'Your abilities convert to the pro scale. Development speed stays with you. Unspent college points convert at 3:1; leftover value becomes XP.':'Your original attribute carryover is preserved.'} Your college rating, attributes and achievements stay in your career story.</p>`;
   el('draft-dialog').showModal();
  };
  el('draft-back').onclick=()=>el('draft-dialog').close();
