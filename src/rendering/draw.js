@@ -1,9 +1,14 @@
+import {drawFootball} from './football.js';
+import {drawKick} from './kicking.js';
+import {slingshotTarget,limitThrowTarget} from '../input/aim.js';
+import {flightPosition} from '../simulation/ballMotion.js';
+import {replayFrame,highlights} from '../simulation/highlights.js';
 import {playingRoster} from '../career/roster.js';
-import {passingRead} from '../simulation/passing.js';
+import {passingRead,throwProfile} from '../simulation/passing.js';
 import {brandArt} from './brand.js';
 import {stickVector,STICK_TRAVEL} from '../input/runnerControls.js';
 import {catchTolerance} from '../simulation/receiving.js';
-import { simulationNow } from '../state/clock.js';
+import { renderNow as simulationNow, setRenderTime } from '../state/clock.js';
 import { canvas, ctx } from './canvas.js';
 import { game, entities, teamState } from '../state/gameState.js';
 import { XPX, BASE_X, LAT_MIN, LAT_MAX, DL_KEYS, OFF, DEF,  MIN_PULL, clamp, ratingMultiplier } from '../state/constants.js';
@@ -74,6 +79,20 @@ function drawPresnapLineupTags(){
   ctx.restore();
 }
 export function draw(){
+ const frame=replayFrame();
+ document.getElementById('result-overlay')?.classList.toggle('replaying',!!frame);
+ const button=document.getElementById('btn-replay');if(button)button.textContent=frame?'Skip replay':'Replay';
+ if(!frame){drawScene();return;}
+ const savedEntities={...entities},savedGame={...game};
+ try{
+   const copy=frame; // replayFrame already returns disposable render objects.
+   copy.decor.forEach((player,index)=>{player.team=savedEntities.decor[index]?.team;});
+   entities.players=copy.players;entities.decor=copy.decor;entities.ball=copy.ball;entities.ballCarrier=copy.players[copy.carrierKey]||null;entities.runExchange=null;entities.playFake=null;
+   Object.assign(game,{cameraYard:copy.cameraYard,los:copy.los,firstDownYard:copy.firstDownYard,scrambling:copy.scrambling,phase:copy.phase,tackle:null});
+   setRenderTime(frame.time);drawScene();
+ }finally{Object.assign(entities,savedEntities);Object.assign(game,savedGame);setRenderTime(null);}
+}
+function drawScene(){
   const w=canvas.width;
   ctx.setTransform(1,0,0,1,0,SCENE_TOP);
   const camPx=game.cameraYard*XPX;
@@ -112,12 +131,24 @@ export function draw(){
   ctx.fillRect(0,LAT_MAX-1,w,3);
   drawPixelEndZone(xAt,0,-10,END_ZONE_STYLE.near,-Math.PI/2);
   drawPixelEndZone(xAt,100,110,END_ZONE_STYLE.far,Math.PI/2);
+  if(game.kick&&['kicking','result'].includes(game.phase)){drawKick(ctx,w,game,entities,simulationNow());return;}
   const losX=Math.round(xAt(game.los));
   ctx.fillStyle='#2f70df';ctx.fillRect(losX-1,LAT_MIN,3,LAT_MAX-LAT_MIN);
   const fdX=Math.round(xAt(game.firstDownYard));
   if(fdX>=0&&fdX<=w){
     ctx.fillStyle='#edca3a';
     ctx.fillRect(fdX-1,LAT_MIN,3,LAT_MAX-LAT_MIN);
+  }
+  if(game.drivePresentation&&game.possession==='cpu'){
+    const drive=game.drivePresentation,progress=Math.min(1,(simulationNow()-drive.start)/4500);
+    const left=w*.12,width=w*.76,top=(LAT_MIN+LAT_MAX)/2;
+    ctx.fillStyle='rgba(9,28,47,.94)';ctx.fillRect(left-14,top-42,width+28,94);
+    ctx.fillStyle='#486480';ctx.fillRect(left,top,width,12);
+    ctx.fillStyle='#f4c542';ctx.fillRect(left+width*drive.startField/100,top,width*drive.gain/100*progress,12);
+    ctx.fillStyle='#fff4d4';ctx.font='16px monospace';ctx.textAlign='left';ctx.fillText('OPPONENT DRIVE',left,top-15);
+    ctx.font='12px monospace';ctx.fillText('OWN GOAL',left,top+35);ctx.textAlign='right';ctx.fillText('YOUR GOAL',left+width,top+35);
+    ctx.textAlign='left';
+    return;
   }
   // Show actual close contact, not the entire blocking assignment or pursuit path.
   if(game.phase==='live'){
@@ -173,13 +204,14 @@ export function draw(){
     const {cx,cy}=toCanvas(entities.players.qb);
     let tx,ty,showArc;
     if(game.passMode==='drag'){
-      const mx=cx*2-interaction.aimTarget.x, my=cy*2-interaction.aimTarget.y;
-      ctx.strokeStyle='rgba(255,255,255,0.55)';ctx.lineWidth=2;ctx.setLineDash([4,4]);
-      ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(interaction.aimTarget.x,interaction.aimTarget.y);ctx.stroke();
+      const anchor=interaction.aimAnchor??{x:cx,y:cy};
+      const target=slingshotTarget({cx,cy},interaction.aimTarget,entities.players.qb.attributes?.arm??entities.players.qb.rating,game.throwType,anchor);const mx=target.x,my=target.y;
+      ctx.strokeStyle='rgba(255,255,255,0.25)';ctx.lineWidth=1;ctx.setLineDash([3,6]);
+      ctx.beginPath();ctx.moveTo(anchor.x,anchor.y);ctx.lineTo(interaction.aimTarget.x,interaction.aimTarget.y);ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle='rgba(255,255,255,0.7)';
-      ctx.beginPath();ctx.arc(interaction.aimTarget.x,interaction.aimTarget.y,6,0,7);ctx.fill();
-      const pullDist=Math.hypot(interaction.aimTarget.x-cx,interaction.aimTarget.y-cy);
+      ctx.fillStyle='rgba(255,255,255,0.4)';
+      ctx.beginPath();ctx.arc(interaction.aimTarget.x,interaction.aimTarget.y,4,0,7);ctx.fill();
+      const pullDist=Math.hypot(interaction.aimTarget.x-anchor.x,interaction.aimTarget.y-anchor.y);
       showArc=pullDist>=MIN_PULL;
       tx=mx;ty=my;
     } else {
@@ -190,23 +222,29 @@ export function draw(){
       ctx.save();ctx.font='bold 13px sans-serif';ctx.textAlign='center';ctx.fillStyle='#101e30';
       ctx.fillRect(cx-72,cy-49,144,24);ctx.fillStyle='#ffdc63';ctx.fillText('Release to scramble',cx,cy-32);ctx.restore();
     }else if(showArc){
-      const previewDist=Math.hypot(tx-cx,ty-cy);
-      const previewArc=Math.min(60,previewDist*0.12)*(game.throwType==='bullet'?0.3:1);
-      drawArcPath(cx,cy,tx,ty,previewArc,'rgba(255,209,102,0.9)',2.5);
-      ctx.strokeStyle='#ffd166';ctx.beginPath();ctx.arc(tx,ty,10,0,7);ctx.stroke();
-      const camPx=game.cameraYard*XPX;
-      const fLat=clamp(ty,LAT_MIN,LAT_MAX);
-      const fDown=camPx+(BASE_X-tx);
-      const playDef=PLAYS[game.playCall];
-      if(playDef){
-        const read=passingRead({players:entities.players,play:playDef,los:game.los,elapsed:simulationNow()-game.snapTime,landing:{x:fLat,yfield:fDown},kind:game.throwType,difficulty:currentDiff(),difficultyName:game.difficulty,momentum:game.momentum});
-        if(read.target){
-          const rc=toCanvas(read.target.predicted),current=toCanvas(entities.players[read.target.key]);
-          ctx.strokeStyle=read.target.error<=read.target.tolerance?'#8cf0cf':read.target.reachable?'#ffd166':'rgba(255,255,255,.45)';
-          ctx.lineWidth=1.5;ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(current.cx,current.cy);ctx.lineTo(rc.cx,rc.cy);ctx.stroke();ctx.setLineDash([]);
-          ctx.beginPath();ctx.arc(rc.cx,rc.cy,9,0,Math.PI*2);ctx.stroke();
-        }
+      const limited=limitThrowTarget({cx,cy},{x:tx,y:ty},entities.players.qb.attributes?.arm??entities.players.qb.rating,game.throwType);
+      tx=limited.x;ty=limited.y;
+      // Use the same landing and arc as release/prediction, including the sideline clamp.
+      ty=clamp(ty,LAT_MIN,LAT_MAX);
+      const landing={x:ty,yfield:game.cameraYard*XPX+(BASE_X-tx)};
+      const profile=throwProfile(entities.players.qb,landing,game.throwType);
+      const read=PLAYS[game.playCall]?passingRead({players:entities.players,play:PLAYS[game.playCall],los:game.los,elapsed:simulationNow()-game.snapTime,landing,kind:game.throwType,difficulty:currentDiff(),difficultyName:game.difficulty,momentum:game.momentum}):null;
+      const reachable=read?.target?.reachable;
+      const color=reachable?'#b3f0d4':'#ffdf8a';
+      ctx.save();ctx.lineCap='round';ctx.setLineDash([1,8]);
+      drawArcPath(cx,cy,tx,ty,profile.arcHeight,'rgba(255,240,192,.9)',2.2);
+      ctx.setLineDash([]);
+      // A single ground target, with a dark edge for contrast against yard lines.
+      ctx.strokeStyle='#102c32';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(tx,ty,9,5,0,0,Math.PI*2);ctx.stroke();
+      ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();
+      ctx.fillStyle=color;ctx.fillRect(Math.round(tx)-1,Math.round(ty)-1,2,2);
+      if(reachable){
+        const receiver=toCanvas(entities.players[read.target.key]);
+        // Small brackets identify the intended receiver without a second landing circle.
+        ctx.strokeStyle=color;ctx.lineWidth=1.5;
+        for(const side of [-1,1]){ctx.beginPath();ctx.moveTo(receiver.cx+side*10,receiver.cy-5);ctx.lineTo(receiver.cx+side*13,receiver.cy-5);ctx.lineTo(receiver.cx+side*13,receiver.cy+2);ctx.stroke();}
       }
+      ctx.restore();
     }
   }
   if(interaction.steering&&interaction.steerAnchor&&interaction.steerCurrent){
@@ -221,18 +259,13 @@ export function draw(){
     ctx.fillStyle='#fff';
     ctx.beginPath();ctx.arc(thumb.x,thumb.y,9,0,7);ctx.fill();
   }
-  if(entities.ball.inFlight&&simulationNow()>=entities.ball.startTime){
-    const p=Math.min(1,(simulationNow()-entities.ball.startTime)/entities.ball.duration);
-    const bx=entities.ball.fromX+(entities.ball.toX-entities.ball.fromX)*p;
-    const byf=entities.ball.fromY+(entities.ball.toY-entities.ball.fromY)*p;
-    const {cx,cy}=toCanvas({x:bx,yfield:byf});
-    const arc=entities.ball.arcHeight*Math.sin(Math.PI*p);
-    ctx.fillStyle='rgba(0,0,0,0.22)';
-    ctx.beginPath();ctx.ellipse(cx,cy,5+arc*0.04,3,0,0,7);ctx.fill();
-    const bcy=cy-arc;
-    ctx.fillStyle='#7a4a26';
-    ctx.beginPath();ctx.ellipse(cx,bcy,5.5,3.3,0.5,0,7);ctx.fill();
-    ctx.strokeStyle='#fff';ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(cx-2,bcy);ctx.lineTo(cx+2,bcy);ctx.stroke();
+  const ball=entities.ball;
+  if((ball.inFlight&&simulationNow()>=ball.startTime)||ball.loose){
+    const position=ball.loose?ball:flightPosition(ball,simulationNow());
+    const {cx,cy}=toCanvas(position),height=position.height||0;
+    ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(cx,cy+4,5,2.5,0,0,7);ctx.fill();
+    drawFootball(ctx,cx,cy-height,{time:simulationNow(),tumble:ball.loose||ball.kick,angle:Math.atan2(ball.toX-ball.fromX,-(ball.toY-ball.fromY))});
   }
+  if(game.fumble){ctx.fillStyle='#101e30';ctx.fillRect(canvas.width/2-90,28,180,30);ctx.fillStyle='#ffdb65';ctx.font='bold 18px monospace';ctx.textAlign='center';ctx.fillText('LOOSE BALL!',canvas.width/2,50);}
+
 }

@@ -23,6 +23,7 @@ jobs:
       - run: node tests/cloud.test.mjs
       - run: node tests/uniform-pilot.test.mjs
       - run: npm run test:gameplay
+      - run: npm run test:overhaul
       - run: npm run test:career
       - run: npm run build
       - run: npx playwright install --with-deps chromium

@@ -7,13 +7,15 @@ export const uniformMaskStatus={};
 export const spriteImage=new Image();
 export const spriteLoaded=new Promise(resolve=>{spriteImage.addEventListener('load',resolve,{once:true});spriteImage.addEventListener('error',resolve,{once:true});});
 export const spriteSheets={off:[],def:[]};
+export const runnerSpriteImage=new Image();
+export const runnerSpriteSheets={off:[],def:[]};
 export const presnapSpriteImage=new Image();
 export const presnapSpriteSheets={off:[],def:[]};
 export const PRESNAP_COLUMNS={qb:0,rb:1,wr:2,ol:3};
 export const defensePresnapSpriteImage=new Image();
 export const defensePresnapSpriteSheets=[];
 export const DEFENSE_PRESNAP_COLUMNS={dl:0,cb:1,s:2};
-export const spriteState={spritesReady:false,presnapSpritesReady:false,defensePresnapSpritesReady:false,goalPostReady:false};
+export const spriteState={spritesReady:false,runnerSpritesReady:false,presnapSpritesReady:false,defensePresnapSpritesReady:false,goalPostReady:false};
 export const goalPostImage=new Image();
 goalPostImage.onload=function(){spriteState.goalPostReady=true;};
 goalPostImage.src='assets/goal-post.png';
@@ -40,6 +42,11 @@ export function rebuildSpriteSheets(){
   spriteSheets.off=SKIN_PALETTES.map((_,i)=>makeTeamSpriteSheet(OFF,i,spriteImage,false));
   spriteSheets.def=SKIN_PALETTES.map((_,i)=>makeTeamSpriteSheet(DEF,i,spriteImage,false));
   spriteState.spritesReady=true;
+  if(runnerSpriteImage.complete&&runnerSpriteImage.naturalWidth&&uniformMasks.has(runnerSpriteImage)){
+    runnerSpriteSheets.off=SKIN_PALETTES.map((_,i)=>makeTeamSpriteSheet(OFF,i,runnerSpriteImage));
+    runnerSpriteSheets.def=SKIN_PALETTES.map((_,i)=>makeTeamSpriteSheet(DEF,i,runnerSpriteImage));
+    spriteState.runnerSpritesReady=true;
+  }
   if(presnapSpriteImage.complete&&presnapSpriteImage.naturalWidth){
     presnapSpriteSheets.off=SKIN_PALETTES.map((_,i)=>makeTeamSpriteSheet(OFF,i,presnapSpriteImage,true));
     presnapSpriteSheets.def=SKIN_PALETTES.map((_,i)=>makeTeamSpriteSheet(DEF,i,presnapSpriteImage,true));
@@ -65,12 +72,13 @@ export function makeTeamSpriteSheet(team,skinIndex,sourceImage=spriteImage,expan
   for(let i=0;i<data.length;i+=4){
     if(data[i+3]===0)continue;
     const r=data[i],g=data[i+1],b=data[i+2];
-    let skinSlot=SKIN_SOURCE.indexOf(r+','+g+','+b);
+    const explicitSkin=labels?.[i/4]===5;
+    let skinSlot=explicitSkin?(r>230?0:r>210?1:r>180?2:r>150?3:4):SKIN_SOURCE.indexOf(r+','+g+','+b);
     if(skinSlot<0&&expandedSkin&&r>95&&r>g*1.08&&g>b*1.05&&r-b>40){
       const light=r+g+b;
       skinSlot=light>560?0:light>500?1:light>440?2:light>370?3:4;
     }
-    if(skinSlot>=0 && (!labels || labels[i/4]===10)){
+    if(skinSlot>=0 && (!labels || labels[i/4]===10 || explicitSkin)){
       const color=SKIN_PALETTES[skinIndex][skinSlot];
       data[i]=color[0];data[i+1]=color[1];data[i+2]=color[2];
     } else if(!labels && b>r*1.22&&b>g*1.08){
@@ -115,3 +123,5 @@ async function loadUniformSource(image,name){
 loadUniformSource(presnapSpriteImage,'presnap-offense');
 loadUniformSource(defensePresnapSpriteImage,'presnap-defense');
 loadUniformSource(spriteImage,'sprites');
+
+loadUniformSource(runnerSpriteImage,'runner-actions');

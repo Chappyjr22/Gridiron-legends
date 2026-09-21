@@ -13,7 +13,7 @@ export function renderPlayerStats(c){
  const root=el('career-qb-stats'),category=root.dataset.category||'passing';
  const draw=()=>{
   const rushing=root.dataset.category==='rushing';
-  root.querySelector('.stat-comparison').innerHTML=[['Game',c.lastResult?.stats],['Season',c.seasonStats],['Career',c.totals]].map(([title,s])=>`<section aria-label="${title} ${rushing?'rushing':'passing'}"><h3>${title}</h3>${s?tiles(rushing?[['CAR',s.carries??0],['YDS',s.rushingYards??0],['AVG',rate(s.rushingYards??0,s.carries)],['TD',s.rushingTD??0]]:[['YDS',s.passingYards],['TD',s.passingTD],['CMP',rate(s.completions*100,s.attempts,'%')],['ATT',s.attempts],['INT',s.interceptions],['SACK',s.sacks]]):'<p>No completed game yet.</p>'}</section>`).join('');
+  root.querySelector('.stat-comparison').innerHTML=[['Game',c.lastResult?.stats],['Season',c.seasonStats],['Career',c.totals]].map(([title,s])=>`<section aria-label="${title} ${rushing?'rushing':'passing'}"><h3>${title}</h3>${s?tiles(rushing?[['CAR',s.carries??0],['YDS',s.rushingYards??0],['AVG',rate(s.rushingYards??0,s.carries)],['TD',s.rushingTD??0],['FUM',s.fumbles??0],['LOST',s.fumblesLost??0]]:[['YDS',s.passingYards],['TD',s.passingTD],['CMP',rate(s.completions*100,s.attempts,'%')],['ATT',s.attempts],['INT',s.interceptions],['SACK',s.sacks]]):'<p>No completed game yet.</p>'}</section>`).join('');
   root.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.category===root.dataset.category)));
  };
  root.dataset.category=category;

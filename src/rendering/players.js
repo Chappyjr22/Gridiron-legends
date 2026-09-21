@@ -1,9 +1,10 @@
-import { simulationNow } from '../state/clock.js';
+import {runnerActionFrame} from './runnerFrames.js';
+import { renderNow as simulationNow } from '../state/clock.js';
 import { canvas, ctx } from './canvas.js';
 import { game, entities } from '../state/gameState.js';
 import { XPX, BASE_X, MISSED_TACKLE_DIVE_MS, MISSED_TACKLE_DOWN_MS, SPRITE_CELL, SPRITE_DRAW, SPRITE_ANCHOR_X, SPRITE_ANCHOR_Y, OFF, DEF } from '../state/constants.js';
 import { interaction } from '../input/interactionState.js';
-import { spriteState, spriteSheets, presnapSpriteSheets, defensePresnapSpriteSheets, PRESNAP_COLUMNS, DEFENSE_PRESNAP_COLUMNS } from './spriteSheets.js';
+import { spriteState, spriteSheets, runnerSpriteSheets, presnapSpriteSheets, defensePresnapSpriteSheets, PRESNAP_COLUMNS, DEFENSE_PRESNAP_COLUMNS } from './spriteSheets.js';
 import { PLAYS } from '../data/plays.js';
 
 export function toCanvas(e){const camPx=game.cameraYard*XPX;return {cx:BASE_X-(e.yfield-camPx),cy:e.x};}
@@ -28,6 +29,8 @@ export function drawHelmet(cx,cy,team){
 }
 export function playerFrame(e,isDecor){
   const now=simulationNow();
+  if(e.action==='runnerDive'||e.action==='runnerSlide')return {row:2,col:0}; // Ball-carrying fallback while the new art loads.
+  if(e.action==='carry'&&game.phase==='result')return {row:2,col:0};
   if(e.action==='drop')return {row:4,col:2};
   if(e.action==='deflect')return {row:4,col:1};
   if(e.action==='diveWindup')return {row:1,col:4};
@@ -92,7 +95,7 @@ export function drawPlayer(e,team,highlight,isDecor){
     cy+=uy*reach*driveEase;
   }
   const actionElapsed=simulationNow()-(e.actionStart||0);
-  const isDiving=e.action==='dive'||(e.action==='tackle'&&actionElapsed>=65)||(e.action==='missedTackle'&&actionElapsed<MISSED_TACKLE_DOWN_MS);
+  const isDiving=e.action==='runnerDive'||e.action==='runnerSlide'||e.action==='dive'||(e.action==='tackle'&&actionElapsed>=65)||(e.action==='missedTackle'&&actionElapsed<MISSED_TACKLE_DOWN_MS);
   if(e.action==='diveWindup'){
     ctx.strokeStyle='#ffd166';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(cx,cy+12,13,5,0,0,7);ctx.stroke();
   }
@@ -116,12 +119,14 @@ export function drawPlayer(e,team,highlight,isDecor){
     const useOffensePresnap=spriteState.presnapSpritesReady&&isPresnapPhase&&team===OFF&&PRESNAP_COLUMNS[e.presnapRole]!==undefined;
     const useDefensePresnap=spriteState.defensePresnapSpritesReady&&isPresnapPhase&&team===DEF&&DEFENSE_PRESNAP_COLUMNS[e.presnapRole]!==undefined;
     const usePositionPresnap=useOffensePresnap||useDefensePresnap;
-    const frame=useOffensePresnap
+    const runnerFrame=runnerActionFrame(e.action,actionElapsed);
+    const useRunner=spriteState.runnerSpritesReady&&runnerFrame;
+    const frame=useRunner?runnerFrame:useOffensePresnap
       ?{row:0,col:PRESNAP_COLUMNS[e.presnapRole]}
       :useDefensePresnap
         ?{row:0,col:DEFENSE_PRESNAP_COLUMNS[e.presnapRole]}
         :playerFrame(e,!!isDecor);
-    const sheets=useOffensePresnap
+    const sheets=useRunner?(team===DEF?runnerSpriteSheets.def:runnerSpriteSheets.off):useOffensePresnap
       ?presnapSpriteSheets.off
       :useDefensePresnap
         ?defensePresnapSpriteSheets
@@ -129,7 +134,7 @@ export function drawPlayer(e,team,highlight,isDecor){
     const sheet=sheets[e.skin??0]||sheets[0];
     const anchorX=SPRITE_DRAW*(SPRITE_ANCHOR_X/SPRITE_CELL);
     const anchorY=SPRITE_DRAW*(SPRITE_ANCHOR_Y/SPRITE_CELL);
-    const sourceFacing=usePositionPresnap?'left':(((frame.row===0&&frame.col>=2)||frame.row===3)?'right':'left');
+    const sourceFacing=(useRunner||usePositionPresnap)?'left':(((frame.row===0&&frame.col>=2)||frame.row===3)?'right':'left');
     const desiredFacing=e.facing||(team===DEF?'right':'left');
     const mirrorFrame=sourceFacing!==desiredFacing;
     ctx.save();

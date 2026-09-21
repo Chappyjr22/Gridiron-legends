@@ -1,3 +1,5 @@
+import {simulationNow} from '../state/clock.js';
+import {highlights} from '../simulation/highlights.js';
 import { game } from '../state/gameState.js';
 import { clamp, fieldGoalChance } from '../state/constants.js';
 import { momentumLabel } from '../state/difficulty.js';
@@ -7,7 +9,9 @@ import { momentumLabel } from '../state/difficulty.js';
 // than a rebindable `let`, since main.js reads it from this module.
 export const resultFlow={continueAction:null,readyAt:0};
 export function continueResult(event={}){
-  if(event.detail>1||performance.now()<resultFlow.readyAt)return;
+  if(highlights.playing||game.paused)return;
+  if(performance.now()<resultFlow.readyAt)return;
+  game.autoContinueAt=0;
   const action=resultFlow.continueAction;
   resultFlow.continueAction=null;
   if(action)action();
@@ -69,6 +73,7 @@ function restoreResultLineBreaks(message){
   return text;
 }
 export function showResult(message,nextAction,buttonLabel='Continue'){
+  game.autoContinueAt=0;game.drivePresentation=null;highlights.playing=false;
   message=restoreResultLineBreaks(message);
   game.message=message;
   game.phase='result';
@@ -81,8 +86,9 @@ export function showResult(message,nextAction,buttonLabel='Continue'){
   const kicker=document.getElementById('result-kicker');
   const upper=message.toUpperCase();
   resultCard.classList.remove('scoring','turnover');
-  if(upper.includes('TOUCHDOWN')||upper.includes('FIELD GOAL')){kicker.textContent='Scoring Play';resultCard.classList.add('scoring');}
-  else if(upper.includes('INTERCEPT')||upper.includes('TURNOVER')||upper.includes('SAFETY')){kicker.textContent='Change of Possession';resultCard.classList.add('turnover');}
+  if(upper.includes('FIELD GOAL')&&upper.includes('NO GOOD')){kicker.textContent='Missed Field Goal';}
+  else if(upper.includes('TOUCHDOWN')||upper.includes('FIELD GOAL')){kicker.textContent='Scoring Play';resultCard.classList.add('scoring');}
+  else if(upper.includes('INTERCEPT')||upper.includes('TURNOVER')||upper.includes('SAFETY')||upper.includes('FUMBLE LOST')){kicker.textContent='Change of Possession';resultCard.classList.add('turnover');}
   else if(upper.includes('FINAL')){kicker.textContent='Final Score';}
   else if(upper.includes('HALFTIME')){kicker.textContent='Halftime';}
   else if(upper.includes('QUARTER')){kicker.textContent='Quarter Break';}
@@ -91,6 +97,8 @@ export function showResult(message,nextAction,buttonLabel='Continue'){
   else{kicker.textContent='Play Result';}
   hideAllOverlays();
   const compact=/^(Catch|Run|Pitch|Scramble|Sacked|Incomplete pass)\b/i.test(message)&&!/[\n]/.test(message)&&!upper.includes('TURNOVER');
+  const replay=document.getElementById('btn-replay');if(replay)replay.hidden=highlights.frames.length<2||(!upper.includes('TOUCHDOWN')&&!/for (?:[2-9][0-9]|[1-9][0-9]{2}) yards/.test(message));
+  if(compact&&replay?.hidden!==false)game.autoContinueAt=simulationNow()+1600;
   document.getElementById('result-overlay').classList.toggle('compact-result',compact);
   document.getElementById('result-overlay').classList.add('show');
   updateHUD();
@@ -102,7 +110,8 @@ export function showFourthDown(){
   const odds=Math.round(fieldGoalChance(fgDistance)*100);
   document.getElementById('fourth-down-detail').textContent=formatFieldPosition(game.los)+'  |  4th & '+Math.max(1,Math.round(game.distance));
   document.getElementById('go-detail').textContent='Gain '+Math.max(1,Math.round(game.distance))+' yards to keep the drive alive';
-  document.getElementById('fg-detail').textContent=fgDistance+' yards  |  '+odds+'% estimated chance';
+  document.getElementById('fg-detail').textContent=fgDistance>=65?'Out of range':fgDistance+' yards · Time power, then aim';
+  document.getElementById('btn-field-goal').disabled=fgDistance>=65;
   document.getElementById('punt-detail').textContent='Expected net: 38 to 50 yards';
   document.getElementById('btn-field-goal').classList.toggle('recommended',odds>=65);
   document.getElementById('btn-punt').classList.toggle('recommended',odds<45);

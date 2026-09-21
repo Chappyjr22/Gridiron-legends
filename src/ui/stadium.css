@@ -200,6 +200,7 @@ canvas.menu-player{width:auto;max-width:100%;height:42%;background:none;image-re
 #runner-controls button:active{background:#ffcf39;color:#091e3c}
 #runner-controls button:disabled{opacity:.45}
 @media(max-height:350px){#runner-controls{bottom:7px;gap:5px}#runner-controls button{min-width:78px;font-size:20px;padding:4px 8px}}
+@media(max-height:500px){#runner-controls{flex-direction:row;align-items:center}#runner-controls button{min-height:44px}}
 
 /* Career cards and postgame use bounded scrolling on short landscape screens. */
 .career-nav{width:min(780px,88%);}
@@ -1010,3 +1011,5 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
 }
 
 .topbar .score-helmet{color:var(--helmet-color,var(--team-primary,#326591));}
+
+.kick-practice-setup{padding-top:12px;border-top:1px solid #b9a681}.kick-practice-setup label{margin-right:8px}.kick-practice-setup select{min-height:44px;font-size:16px;margin-right:8px}.kick-practice-setup button{min-height:44px;margin-top:8px}
