@@ -880,11 +880,15 @@ function updateSimulation(dt,now){
           entities.ballCarrier.x+=clamp(lane.x-entities.ballCarrier.x,-laneAssist,laneAssist)*dt*8;
         }
         entities.ballCarrier.facing='left';
-        entities.ballCarrier.yfield += BASE_RUN_YPS*fwdMult*normalize*(entities.ballCarrier.runnerDive?1.2:1)*XPX*SPEED_SCALE*diff.offenseSpeedMult*carrierSpeedMult*breakSlowMult*dt;
+        const forwardSpeed=BASE_RUN_YPS*fwdMult*normalize*(entities.ballCarrier.runnerDive?1.2:1)*XPX*SPEED_SCALE*diff.offenseSpeedMult*carrierSpeedMult*breakSlowMult;
+        entities.ballCarrier.yfield += forwardSpeed*dt;
         const jukeDelta=jukeStep(entities.ballCarrier,now);
         const nextX=entities.ballCarrier.x+(jukeDelta??(jy*normalize*(entities.ballCarrier.runnerDive?0:1)*LATERAL_YPS*XPX*SPEED_SCALE*diff.offenseSpeedMult*carrierSpeedMult*breakSlowMult*dt));
         entities.ballCarrier.x=clamp(nextX,sidelineMin,sidelineMax);
-        entities.ballCarrier.velocity={x:(entities.ballCarrier.x-previousX)/Math.max(dt,0.001),yfield:(entities.ballCarrier.yfield-previousY)/Math.max(dt,0.001)};
+        // The clock can end a frame with a sub-millisecond remainder. Flooring
+        // dt to 1 ms understates velocity and makes rear pursuit allow a dive.
+        // Use the actual movement speed, avoiding cancellation on tiny steps.
+        entities.ballCarrier.velocity={x:dt>0?(entities.ballCarrier.x-previousX)/dt:0,yfield:forwardSpeed};
         if(nextX<=sidelineMin||nextX>=sidelineMax){
           const boundary=nextX<=sidelineMin?sidelineMin:sidelineMax;
           const fraction=clamp((boundary-previousX)/(nextX-previousX),0,1);

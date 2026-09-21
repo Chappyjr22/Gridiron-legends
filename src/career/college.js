@@ -1,3 +1,4 @@
+import {proProjection,normalizeQuarterback,awardExperience} from './development.js';
 import * as League from '../state/league.js';
 import {COLLEGE_TEAMS,SCHOOL_TIERS} from './collegeData.js';
 import {emptyStats} from './stats.js';
@@ -133,12 +134,19 @@ export function enterDraft(c){
 export function beginProCareer(c){
  if(c.stage!=='college'||!c.draft||c.activeMatch)return false;
  const oldTeam=League.findTeamState(c.league,c.teamId),player=oldTeam.roster.find(p=>p.id===c.playerId);
- c.collegeArchive={school:{id:oldTeam.id,city:oldTeam.city,name:oldTeam.name,abbr:oldTeam.abbr},stats:{...c.totals},history:c.history,awards:c.awards,champion:c.postseason.champion,draft:{pick:c.draft.pick,round:c.draft.round,teamId:c.draft.teamId}};
+ const projection=proProjection(player,c);
+ c.collegeArchive={finalOverall:player.rating,attributes:{...player.attributes},development:c.settings.development||'standard',school:{id:oldTeam.id,city:oldTeam.city,name:oldTeam.name,abbr:oldTeam.abbr},stats:{...c.totals},history:c.history,awards:c.awards,champion:c.postseason.champion,draft:{pick:c.draft.pick,round:c.draft.round,teamId:c.draft.teamId}};
  const next=c.draft.league,team=League.findTeamState(next,c.draft.teamId),index=team.roster.findIndex(p=>p.slot==='QB');
  const occupied=new Set(team.roster.filter((_,i)=>i!==index).map(p=>p.number));
  for(const teammate of team.roster)if(teammate!==team.roster[index]&&teammate.number===player.number){for(let n=0;n<100;n++)if(!occupied.has(n)&&n!==player.number){teammate.number=n;occupied.add(n);break;}}
- team.roster[index]={...player,attributes:{...player.attributes},age:22,contractYears:c.draft.round<=2?4:c.draft.round<=4?3:2};
- c.proEntry={round:c.draft.round,pick:c.draft.pick,expectation:c.draft.round<=2?'Lead a winning season':c.draft.round<=4?'Establish yourself as a starter':'Prove you belong'};c.coachConfidence=c.draft.round<=2?65:c.draft.round<=4?50:40;
+ team.roster[index]={...player,attributes:projection.attributes,age:22,contractYears:c.draft.round<=2?4:c.draft.round<=4?3:2};
+ normalizeQuarterback(team.roster[index]);
+ c.proEntry={collegeOverall:projection.collegeOverall,rookieOverall:projection.overall,levelAtEntry:c.level,round:c.draft.round,pick:c.draft.pick,expectation:c.draft.round<=2?'Lead a winning season':c.draft.round<=4?'Establish yourself as a starter':'Prove you belong'};c.coachConfidence=c.draft.round<=2?65:c.draft.round<=4?50:40;
  next.careerQuarterMinutes=c.settings.quarterMinutes;
- c.teamId=team.id;next.userTeamId=team.id;c.league=next;c.stage='pro';c.totals=emptyStats();c.seasonStats=emptyStats();c.history=[];c.awards=[];c.postseason=null;c.lastResult=null;c.pendingRecapGameId=null;c.matchContext=null;c.draft=null;League.refreshRatings(next);return true;
+ c.teamId=team.id;next.userTeamId=team.id;c.league=next;c.stage='pro';
+ if(c.progressionVersion===2){
+  // College levels award three points; carry unused value into the pro economy.
+  const remainder=c.points%3;c.points=Math.floor(c.points/3);awardExperience(c,Math.floor(remainder*100/3));
+ }
+ c.totals=emptyStats();c.seasonStats=emptyStats();c.history=[];c.awards=[];c.postseason=null;c.lastResult=null;c.pendingRecapGameId=null;c.matchContext=null;c.draft=null;League.refreshRatings(next);return true;
 }

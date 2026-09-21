@@ -78,6 +78,7 @@
 #career-screen .roster-rating i { background: var(--career-yellow); }
 #career-screen #career-league-panel .leaderboard li:nth-child(odd) { background: #07356e; }
 #career-screen .career-list-row { color: #d5e5ff; border-color: #1964aa; }
+#career-screen .recap-rewards .career-list-row { color: #182a40; border-color: #9b7b27; }
 #career-screen .career-list-row.career-selected { color: var(--career-yellow); background: #07356e; }
 .career-home-standings { display: none; }
 @media (orientation: landscape) and (min-width: 800px) {

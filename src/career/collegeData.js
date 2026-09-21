@@ -18,9 +18,9 @@ export const COLLEGE_CONFERENCES={
   }
 };
 export const SCHOOL_TIERS={
- powerhouse:{name:'Powerhouse',attributeBonus:4,rosterBonus:6,expectation:'Win the conference',goalCompletions:0.65,goalTurnovers:0,goalXP:15},
- competitive:{name:'Competitive',attributeBonus:0,rosterBonus:0,expectation:'Build a winning season',goalCompletions:0.60,goalTurnovers:1,goalXP:20},
- rebuilding:{name:'Rebuilding',attributeBonus:-4,rosterBonus:-6,expectation:'Lead the turnaround',goalCompletions:0.55,goalTurnovers:1,goalXP:25}
+ powerhouse:{name:'Powerhouse',attributeBonus:0,rosterBonus:6,expectation:'Win the conference',goalCompletions:0.65,goalTurnovers:0,goalXP:15},
+ competitive:{name:'Competitive',attributeBonus:-8,rosterBonus:0,expectation:'Build a winning season',goalCompletions:0.60,goalTurnovers:1,goalXP:20},
+ rebuilding:{name:'Cupcake',attributeBonus:-16,rosterBonus:-6,expectation:'Lead the turnaround',goalCompletions:0.55,goalTurnovers:1,goalXP:25}
 };
 export const SCHEMES={spread:'Spread passing',balanced:'Balanced offense',run:'Run-heavy offense'};
 export const COLLEGE_TEAMS=[
