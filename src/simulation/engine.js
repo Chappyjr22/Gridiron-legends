@@ -1,3 +1,4 @@
+import {canvas} from '../rendering/canvas.js';
 import {kickMeter,kickTrajectory,kickOutcome,kickWindow} from './kicking.js';
 import {limitThrowTarget} from '../input/aim.js';
 import {flightPosition,looseBall,advanceLooseBall,fumbleChance} from './ballMotion.js';
@@ -692,7 +693,8 @@ function updateSimulation(dt,now){
         k.stage='flight';k.start=now;entities.ball=kickTrajectory(game.los,k.rating,k.power,k.aim,now);k.flight={...entities.ball};Object.assign(k,kickOutcome(entities.ball));
       }else if(k.stage==='flight'){
         const pos=flightPosition(entities.ball,now);
-        game.cameraYard+=(pos.yfield/XPX-game.cameraYard)*Math.min(1,dt*3);
+        const goalCamera=110-(BASE_X-canvas.width*.5)/XPX;
+        game.cameraYard+=(Math.min(pos.yfield/XPX,goalCamera)-game.cameraYard)*Math.min(1,dt*3);
         if(pos.p>=1){entities.ball=looseBall(pos,{vy:70,vz:65,now});entities.ball.kick=true;k.stage='settle';k.start=now;}
       }else if(k.stage==='settle'&&now-k.start>=900)finishKick();
       return;
