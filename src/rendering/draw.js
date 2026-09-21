@@ -1,8 +1,10 @@
+import {drawFootball} from './football.js';
+import {drawKick} from './kicking.js';
 import {slingshotTarget,limitThrowTarget} from '../input/aim.js';
 import {flightPosition} from '../simulation/ballMotion.js';
 import {replayFrame,highlights} from '../simulation/highlights.js';
 import {playingRoster} from '../career/roster.js';
-import {passingRead} from '../simulation/passing.js';
+import {passingRead,throwProfile} from '../simulation/passing.js';
 import {brandArt} from './brand.js';
 import {stickVector,STICK_TRAVEL} from '../input/runnerControls.js';
 import {catchTolerance} from '../simulation/receiving.js';
@@ -147,6 +149,7 @@ function drawScene(){
     ctx.textAlign='left';
     return;
   }
+  if(game.kick&&['kicking','result'].includes(game.phase)){drawKick(ctx,w,game,entities,simulationNow());return;}
   // Show actual close contact, not the entire blocking assignment or pursuit path.
   if(game.phase==='live'){
     const offense=[...entities.decor.filter(p=>p.team===OFF),...['rb','wr1','wr2','wr3','te'].map(k=>entities.players[k])].filter(Boolean);
@@ -203,11 +206,11 @@ function drawScene(){
     if(game.passMode==='drag'){
       const anchor=interaction.aimAnchor??{x:cx,y:cy};
       const target=slingshotTarget({cx,cy},interaction.aimTarget,entities.players.qb.attributes?.arm??entities.players.qb.rating,game.throwType,anchor);const mx=target.x,my=target.y;
-      ctx.strokeStyle='rgba(255,255,255,0.55)';ctx.lineWidth=2;ctx.setLineDash([4,4]);
+      ctx.strokeStyle='rgba(255,255,255,0.25)';ctx.lineWidth=1;ctx.setLineDash([3,6]);
       ctx.beginPath();ctx.moveTo(anchor.x,anchor.y);ctx.lineTo(interaction.aimTarget.x,interaction.aimTarget.y);ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle='rgba(255,255,255,0.7)';
-      ctx.beginPath();ctx.arc(interaction.aimTarget.x,interaction.aimTarget.y,6,0,7);ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,0.4)';
+      ctx.beginPath();ctx.arc(interaction.aimTarget.x,interaction.aimTarget.y,4,0,7);ctx.fill();
       const pullDist=Math.hypot(interaction.aimTarget.x-anchor.x,interaction.aimTarget.y-anchor.y);
       showArc=pullDist>=MIN_PULL;
       tx=mx;ty=my;
@@ -221,23 +224,27 @@ function drawScene(){
     }else if(showArc){
       const limited=limitThrowTarget({cx,cy},{x:tx,y:ty},entities.players.qb.attributes?.arm??entities.players.qb.rating,game.throwType);
       tx=limited.x;ty=limited.y;
-      const previewDist=Math.hypot(tx-cx,ty-cy);
-      const previewArc=Math.min(60,previewDist*0.12)*(game.throwType==='bullet'?0.3:1);
-      drawArcPath(cx,cy,tx,ty,previewArc,'rgba(255,209,102,0.9)',2.5);
-      ctx.strokeStyle='#ffd166';ctx.beginPath();ctx.arc(tx,ty,10,0,7);ctx.stroke();
-      const camPx=game.cameraYard*XPX;
-      const fLat=clamp(ty,LAT_MIN,LAT_MAX);
-      const fDown=camPx+(BASE_X-tx);
-      const playDef=PLAYS[game.playCall];
-      if(playDef){
-        const read=passingRead({players:entities.players,play:playDef,los:game.los,elapsed:simulationNow()-game.snapTime,landing:{x:fLat,yfield:fDown},kind:game.throwType,difficulty:currentDiff(),difficultyName:game.difficulty,momentum:game.momentum});
-        if(read.target){
-          const rc=toCanvas(read.target.predicted),current=toCanvas(entities.players[read.target.key]);
-          ctx.strokeStyle=read.target.error<=read.target.tolerance?'#8cf0cf':read.target.reachable?'#ffd166':'rgba(255,255,255,.45)';
-          ctx.lineWidth=1.5;ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(current.cx,current.cy);ctx.lineTo(rc.cx,rc.cy);ctx.stroke();ctx.setLineDash([]);
-          ctx.beginPath();ctx.arc(rc.cx,rc.cy,9,0,Math.PI*2);ctx.stroke();
-        }
+      // Use the same landing and arc as release/prediction, including the sideline clamp.
+      ty=clamp(ty,LAT_MIN,LAT_MAX);
+      const landing={x:ty,yfield:game.cameraYard*XPX+(BASE_X-tx)};
+      const profile=throwProfile(entities.players.qb,landing,game.throwType);
+      const read=PLAYS[game.playCall]?passingRead({players:entities.players,play:PLAYS[game.playCall],los:game.los,elapsed:simulationNow()-game.snapTime,landing,kind:game.throwType,difficulty:currentDiff(),difficultyName:game.difficulty,momentum:game.momentum}):null;
+      const reachable=read?.target?.reachable;
+      const color=reachable?'#b3f0d4':'#ffdf8a';
+      ctx.save();ctx.lineCap='round';ctx.setLineDash([1,8]);
+      drawArcPath(cx,cy,tx,ty,profile.arcHeight,'rgba(255,240,192,.8)',1.7);
+      ctx.setLineDash([]);
+      // A single ground target, with a dark edge for contrast against yard lines.
+      ctx.strokeStyle='#102c32';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(tx,ty,9,5,0,0,Math.PI*2);ctx.stroke();
+      ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();
+      ctx.fillStyle=color;ctx.fillRect(Math.round(tx)-1,Math.round(ty)-1,2,2);
+      if(reachable){
+        const receiver=toCanvas(entities.players[read.target.key]);
+        // Small brackets identify the intended receiver without a second landing circle.
+        ctx.strokeStyle=color;ctx.lineWidth=1.5;
+        for(const side of [-1,1]){ctx.beginPath();ctx.moveTo(receiver.cx+side*10,receiver.cy-5);ctx.lineTo(receiver.cx+side*13,receiver.cy-5);ctx.lineTo(receiver.cx+side*13,receiver.cy+2);ctx.stroke();}
       }
+      ctx.restore();
     }
   }
   if(interaction.steering&&interaction.steerAnchor&&interaction.steerCurrent){
@@ -257,14 +264,8 @@ function drawScene(){
     const position=ball.loose?ball:flightPosition(ball,simulationNow());
     const {cx,cy}=toCanvas(position),height=position.height||0;
     ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(cx,cy+4,5,2.5,0,0,7);ctx.fill();
-    ctx.save();ctx.translate(Math.round(cx),Math.round(cy-height));ctx.rotate(ball.loose?ball.spin:simulationNow()/110);
-    ctx.fillStyle='#341d12';ctx.fillRect(-6,-3,12,6);ctx.fillStyle='#ad6735';ctx.fillRect(-5,-2,10,4);ctx.fillStyle='#fff3d6';ctx.fillRect(-2,-1,4,2);ctx.restore();
+    drawFootball(ctx,cx,cy-height,{time:simulationNow(),tumble:ball.loose||ball.kick,angle:Math.atan2(ball.toX-ball.fromX,-(ball.toY-ball.fromY))});
   }
   if(game.fumble){ctx.fillStyle='#101e30';ctx.fillRect(canvas.width/2-90,28,180,30);ctx.fillStyle='#ffdb65';ctx.font='bold 18px monospace';ctx.textAlign='center';ctx.fillText('LOOSE BALL!',canvas.width/2,50);}
-  if(game.phase==='kicking'&&game.kick.stage!=='flight'){
-    const k=game.kick,now=simulationNow(),width=Math.min(300,canvas.width*.6),left=(canvas.width-width)/2;
-    const value=k.stage==='power'?(Math.sin((now-k.start)/300-Math.PI/2)+1)/2:(Math.sin((now-k.start)/400)+1)/2;
-    ctx.fillStyle='#081b2c';ctx.fillRect(left-12,30,width+24,80);ctx.fillStyle='#f5ead1';ctx.font='bold 16px monospace';ctx.textAlign='center';ctx.fillText(k.stage==='power'?'TAP: POWER':'TAP: AIM AT CENTER',canvas.width/2,53);
-    ctx.fillStyle='#bb5839';ctx.fillRect(left,67,width,22);ctx.fillStyle='#58b46b';ctx.fillRect(left+width*(k.stage==='power'?k.powerRequired:(1-k.aimTolerance)/2),67,width*(k.stage==='power'?1-k.powerRequired:k.aimTolerance),22);ctx.fillStyle='#fff';ctx.fillRect(left+width*value-2,63,4,30);
-  }
+
 }

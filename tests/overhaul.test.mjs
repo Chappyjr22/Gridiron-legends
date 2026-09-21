@@ -1,3 +1,4 @@
+import {kickTrajectory,kickOutcome,kickWindow,kickMeter} from '../src/simulation/kicking.js';
 import assert from 'node:assert/strict';
 import {slingshotTarget,maxThrowYards} from '../src/input/aim.js';
 import {looseBall,advanceLooseBall,fumbleChance} from '../src/simulation/ballMotion.js';
@@ -94,12 +95,12 @@ await test('a mid-flight deflection reaches the turf before becoming incomplete'
 });
 await test('kick has two timing stages, visible flight and a single scoring result',async()=>{
  const h=await harness();h.engine.startNewGame();h.engine.startPlayerDrive(80);h.game.down=4;h.hud.showFourthDown();h.engine.attemptFieldGoal();assert.equal(h.game.phase,'kicking');
- h.step(940);h.engine.kickInput();assert.ok(h.game.kick.power>.99);h.engine.kickInput();assert.equal(h.game.kick.stage,'flight');assert.ok(h.entities.ball.inFlight);
- h.step(1000);h.step(500);assert.equal(h.game.playerScore,3);h.engine.kickInput();assert.equal(h.game.playerScore,3);assert.ok(h.entities.ball.loose);
+ h.step(940);h.engine.kickInput();assert.ok(h.game.kick.power>.99);h.engine.kickInput();assert.equal(h.game.kick.stage,'aim');h.step(628);h.engine.kickInput();assert.equal(h.game.kick.stage,'approach');h.step(560);assert.equal(h.game.kick.stage,'flight');assert.ok(h.entities.ball.inFlight);
+ h.step(1000);h.step(1000);h.step(1000);h.step(950);assert.equal(h.game.playerScore,3);h.engine.kickInput();assert.equal(h.game.playerScore,3);assert.ok(h.entities.ball.loose);
 });
 await test('out-of-range kicks cannot start and weak kicks miss',async()=>{
  const h=await harness();h.engine.startNewGame();h.engine.startPlayerDrive(20);h.hud.showFourthDown();h.engine.attemptFieldGoal();assert.equal(h.game.phase,'decision');assert.ok(h.element('btn-field-goal').disabled);
- h.engine.startPlayerDrive(75);h.hud.showFourthDown();h.engine.attemptFieldGoal();h.engine.kickInput();h.engine.kickInput();h.step(1000);h.step(500);assert.equal(h.game.playerScore,0);assert.match(h.game.message,/no good/);
+ h.engine.startPlayerDrive(75);h.hud.showFourthDown();h.engine.attemptFieldGoal();h.engine.kickInput();h.step(628);h.engine.kickInput();h.step(560);h.step(1000);h.step(1000);h.step(950);assert.equal(h.game.playerScore,0);assert.match(h.game.message,/no good/);
 });
 await test('runner dive ends the rep and cannot be extended by repeated taps',async()=>{
  const h=await harness();h.engine.startPractice();h.engine.choosePlay('trips_inside');h.engine.startRunOption();h.step(200);
@@ -171,4 +172,33 @@ await test('fumble recovery credits turnover once and legacy stats accept new fi
  for(const p of Object.values(h.entities.players))p.x=320;h.entities.decor.forEach(p=>p.x=320);Object.assign(h.entities.players.cb1,{x:100,yfield:25*28});h.step();
  assert.match(h.game.message,/FUMBLE LOST/);assert.equal(h.engine.matchState.stats.players[carrier.playerId].fumbles,1);assert.equal(h.engine.matchState.stats.players[carrier.playerId].fumblesLost,1);assert.equal(h.engine.matchState.stats.plays.length,1);
 });
+
+
+await test('kick scoring agrees with plane crossing, height and lateral position',()=>{
+ for(const distance of [20,35,50,60])for(const rating of [40,70,99]){
+  const los=117-distance,window=kickWindow(los,rating);
+  const weak=kickTrajectory(los,rating,Math.max(0,window.powerRequired-.02),0);
+  assert.equal(kickOutcome(weak).good,false);assert.equal(kickOutcome(weak).reason,'SHORT');
+  if(window.powerRequired<=1){
+   const power=(window.powerRequired+1)/2,good=kickTrajectory(los,rating,power,0),outcome=kickOutcome(good);
+   assert.equal(outcome.good,true);assert.ok(outcome.p<1&&outcome.height>=32);assert.ok(good.toY>110*28);
+   assert.equal(kickOutcome(kickTrajectory(los,rating,power,-1)).reason,'WIDE LEFT');
+   assert.equal(kickOutcome(kickTrajectory(los,rating,power,1)).reason,'WIDE RIGHT');
+  }
+ }
+ assert.equal(kickMeter('aim',0),-1);assert.ok(Math.abs(kickMeter('aim',Math.PI*200))<.00001);
+});
+await test('practice kicks repeat without awarding points or advancing the opponent',async()=>{
+ const h=await harness();h.engine.startPractice();h.engine.practiceFieldGoal(50);assert.equal(h.game.kick.distance,50);
+ h.step(940);h.engine.kickInput();h.step(628);h.engine.kickInput();h.step(560);h.step(1000);h.step(1000);h.step(1000);h.step(950);
+ assert.equal(h.game.phase,'result');assert.equal(h.game.playerScore,0);assert.match(h.game.message,/field goal/);
+});
+await test('deep lob flight gives routes time while short throws and bullets stay quick',async()=>{
+ const h=await harness(),{throwProfile}=await h.load('src/simulation/passing.js');
+ const qb={x:190,yfield:0,rating:75,attributes:{arm:75,release:75}};
+ const profile=(yards,kind)=>throwProfile(qb,{x:190,yfield:yards*28},kind);
+ assert.ok(profile(6,'lob').duration<400);assert.ok(profile(25,'lob').duration>2200);
+ assert.ok(profile(25,'bullet').duration<850);assert.ok(profile(35,'lob').duration>profile(25,'lob').duration);
+});
+
 console.log(`${checks} overhaul checks passed.`);

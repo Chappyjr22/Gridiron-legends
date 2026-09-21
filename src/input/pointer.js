@@ -33,8 +33,8 @@ function beginTapPass(point){
 }
 let activePointer=null,pendingRunTap=null,gestureStart=null;
 canvas.addEventListener('pointerdown',ev=>{
-  if(game.phase==='kicking'){kickInput();return;}
   if(activePointer!==null)return;
+  if(game.phase==='kicking'){activePointer=ev.pointerId;canvas.setPointerCapture(ev.pointerId);kickInput();return;}
   if(editState.editMode){
     activePointer=ev.pointerId;
     canvas.setPointerCapture(ev.pointerId);

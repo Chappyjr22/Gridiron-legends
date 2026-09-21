@@ -49,9 +49,9 @@ test('mobile field goal takes power and aim taps then follows the ball to the re
  await field.tap();
  await expect.poll(()=>page.evaluate(async()=>{const {game}=await import('/src/state/gameState.js');return game.kick.stage;})).toBe('aim');
  await page.screenshot({path:'test-results/overhaul-kick-aim-mobile.png'});
- await page.evaluate(async()=>{const {game}=await import('/src/state/gameState.js'),{simulationNow}=await import('/src/state/clock.js');game.kick.start=simulationNow();});
+ await page.evaluate(async()=>{const {game}=await import('/src/state/gameState.js'),{simulationNow}=await import('/src/state/clock.js');game.kick.start=simulationNow()-600;});
  await field.tap();
- await expect(page.locator('#result-overlay')).toBeVisible();
+ await expect(page.locator('#result-overlay')).toBeVisible({timeout:10000});
  const result=await page.evaluate(async()=>{const {game,entities}=await import('/src/state/gameState.js');return {score:game.playerScore,camera:game.cameraYard,loose:entities.ball.loose};});
  expect(result.score).toBe(3);expect(result.camera).toBeGreaterThan(90);expect(result.loose).toBe(true);
  await page.screenshot({path:'test-results/overhaul-kick-result-mobile.png'});
@@ -137,4 +137,11 @@ for(const viewport of [{width:844,height:304},{width:932,height:430}])test(`drag
  await page.mouse.up();
  expect(await page.evaluate(async()=>{const {game}=await import('/src/state/gameState.js');return game.playFacts.threw;})).toBe(true);
  expect(errors).toEqual([]);await context.close();
+});
+
+test('kicking practice is reachable through controls and preserves its chosen distance',async({page})=>{
+ await page.goto('/');await page.locator('[data-open-guide]').filter({visible:true}).first().click();
+ await page.locator('#practice-kick-distance').selectOption('50');await page.locator('#practice-kicking').click();
+ await expect.poll(()=>page.evaluate(async()=>{const {game}=await import('/src/state/gameState.js');return [game.practice,game.kick?.distance,game.kick?.stage];})).toEqual([true,50,'power']);
+ await page.screenshot({path:'test-results/kick-practice-50.png'});
 });

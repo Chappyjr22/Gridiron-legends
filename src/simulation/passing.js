@@ -37,7 +37,9 @@ function continueRoute(player,distance){
 export function throwProfile(qb,landing,kind){
  const distance=Math.hypot(landing.x-qb.x,landing.yfield-qb.yfield);
  const speed=(kind==='bullet'?BALL_SPEED_BULLET:BALL_SPEED_LOB)*ratingMultiplier(qb.attributes?.arm??qb.rating,.16);
- return {duration:Math.max(180,distance/speed*1000),releaseDelay:clamp(125-((qb.attributes?.release??qb.rating)-60)*2,55,125),arcHeight:Math.min(60,distance*.12)*(kind==='bullet'?.3:1)};
+ // Extra loft grows only beyond short range; bullets retain their quick release.
+ const loft=kind==='bullet'?1:1+clamp((distance/XPX-8)/24,0,1)*1.8;
+ return {duration:Math.max(180,distance/speed*1000*loft),releaseDelay:clamp(125-((qb.attributes?.release??qb.rating)-60)*2,55,125),arcHeight:Math.min(kind==='bullet'?60:100,distance*.12)*(kind==='bullet'?.3:1)};
 }
 // Predict from route data without modifying the receiver or moving the landing point.
 export function passingRead({players,play,los,elapsed,landing,kind,difficulty,difficultyName='medium',momentum=0}){

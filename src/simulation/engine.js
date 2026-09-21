@@ -1,3 +1,4 @@
+import {kickMeter,kickTrajectory,kickOutcome,kickWindow} from './kicking.js';
 import {limitThrowTarget} from '../input/aim.js';
 import {flightPosition,looseBall,advanceLooseBall,fumbleChance} from './ballMotion.js';
 import {captureHighlight,resetHighlight,highlights} from './highlights.js';
@@ -384,26 +385,29 @@ export function endPlay(yardGained,label,outOfBounds=false,exactSpot=game.los+ya
   checkpoint({type:'afterPlay',message:game.message});
 }
 
+export function practiceFieldGoal(distance=35){
+ if(!game.practice)return;
+ startPlayerDrive(117-clamp(Number(distance)||35,20,60));game.phase='decision';attemptFieldGoal();
+}
 export function attemptFieldGoal(){
  if(game.phase!=='decision'||117-game.los>=65)return;
  hideAllOverlays();game.phase='kicking';
+ interaction.aiming=false;interaction.steering=false;entities.ball={};
  const distance=Math.round(117-game.los),rating=positionRating(teamState.userTeam,'K','offense');
- game.kick={stage:'power',start:simulationNow(),distance,power:0,aim:0,powerRequired:clamp((distance-15)/65,.18,.72),aimTolerance:clamp(.72-(distance-20)*.009+(rating-75)*.004,.2,.85)};
+ game.kick={stage:'power',start:simulationNow(),distance,rating,skin:rosterPlayer(teamState.userTeam,'K')?.skin??0,power:0,aim:0,...kickWindow(game.los,rating)};
 }
 export function kickInput(){
  const k=game.kick;if(game.paused||game.phase!=='kicking'||!k)return;
- const now=simulationNow();
- if(k.stage==='power'){k.power=(Math.sin((now-k.start)/300-Math.PI/2)+1)/2;k.stage='aim';k.start=now;return;}
- if(k.stage!=='aim')return;
- k.aim=Math.sin((now-k.start)/400);k.stage='flight';k.start=now;
- k.good=k.power>k.powerRequired&&Math.abs(k.aim)<k.aimTolerance;
- entities.ball={inFlight:true,fromX:190,fromY:(game.los-7)*XPX,toX:190+k.aim*170,toY:Math.min(110,game.los-7+20+k.power*80)*XPX,startTime:now,duration:1400,arcHeight:45+k.power*40};
+ const now=simulationNow(),elapsed=now-k.start;
+ if(k.stage==='power'){k.power=kickMeter('power',elapsed,game.difficulty);k.stage='aim';k.start=now;return;}
+ if(k.stage!=='aim'||elapsed<180)return;
+ k.aim=kickMeter('aim',elapsed,game.difficulty);k.stage='approach';k.start=now;
 }
 function finishKick(){
  const k=game.kick;consumeClock(5);
- const pos=flightPosition(entities.ball,simulationNow());entities.ball=looseBall(pos,{vy:70,vz:80,now:simulationNow()});
+ if(game.practice){showResult(k.distance+'-yard field goal: '+k.reason+'.',()=>practiceFieldGoal(k.distance),'Kick again');return;}
  if(k.good){game.playerScore+=3;adjustMomentum(.12);completePlayerPossession(k.distance+'-yard field goal is GOOD!\n'+scoreLine(),kickoffSpot(),'Kickoff');}
- else{adjustMomentum(-.1);completePlayerPossession(k.distance+'-yard field goal is no good.',clamp(100-game.los,1,99),'Missed field goal');}
+ else{adjustMomentum(-.1);completePlayerPossession(k.distance+'-yard field goal is no good: '+k.reason+'.',clamp(100-game.los,1,99),'Missed field goal');}
 }
 export function simulatePunt(){
   if(game.phase!=='decision')return;
@@ -682,10 +686,14 @@ function updateSimulation(dt,now){
       return;
     }
     if(game.phase==='kicking'){
-      if(game.kick.stage==='flight'){
-        game.cameraYard+=(flightPosition(entities.ball,now).yfield/XPX-game.cameraYard)*Math.min(1,dt*3);
-        if(now-game.kick.start>=1400)finishKick();
-      }
+      const k=game.kick;
+      if(k.stage==='approach'&&now-k.start>=550){
+        k.stage='flight';k.start=now;entities.ball=kickTrajectory(game.los,k.rating,k.power,k.aim,now);Object.assign(k,kickOutcome(entities.ball));
+      }else if(k.stage==='flight'){
+        const pos=flightPosition(entities.ball,now);
+        game.cameraYard+=(pos.yfield/XPX-game.cameraYard)*Math.min(1,dt*3);
+        if(pos.p>=1){entities.ball=looseBall(pos,{vy:70,vz:65,now});entities.ball.kick=true;k.stage='settle';k.start=now;}
+      }else if(k.stage==='settle'&&now-k.start>=900)finishKick();
       return;
     }
     if(game.phase==='result'&&!highlights.playing&&game.autoContinueAt&&now>=game.autoContinueAt){game.autoContinueAt=0;continueResult({automatic:true});}
