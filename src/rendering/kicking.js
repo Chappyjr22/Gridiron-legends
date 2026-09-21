@@ -57,8 +57,8 @@ function drawGoalCamera(ctx,ball,now,pixelScale){
  ctx.fillStyle='rgba(7,25,39,.96)';ctx.fillRect(left,top,w,h);
  ctx.strokeStyle='#a4b4ba';ctx.lineWidth=2;ctx.strokeRect(left,top,w,h);
  ctx.fillStyle='#e8ecdc';ctx.font=`bold ${Math.max(14,11*pixelScale)}px monospace`;
- ctx.fillText(held?'AT THE UPRIGHTS':'UPRIGHTS VIEW',center,top+22*scale);
- ctx.save();ctx.beginPath();ctx.rect(left+3,top+30*scale,w-6,h-58*scale);ctx.clip();
+ ctx.fillText(held?(sample.crossed?'AT THE UPRIGHTS':'SHORT OF UPRIGHTS'):'UPRIGHTS VIEW',center,top+22*scale);
+ ctx.save();ctx.beginPath();ctx.rect(left+3,top+30*scale,w-6,h-42*scale);ctx.clip();
  ctx.strokeStyle='#ffdf50';ctx.lineWidth=4;
  ctx.beginPath();ctx.moveTo(center-46*scale,top+38*scale);ctx.lineTo(center-46*scale,bar);ctx.lineTo(center+46*scale,bar);ctx.lineTo(center+46*scale,top+38*scale);ctx.stroke();
  ctx.beginPath();ctx.moveTo(center,bar);ctx.lineTo(center,base);ctx.stroke();
