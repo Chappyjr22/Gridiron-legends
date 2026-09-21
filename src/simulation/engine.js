@@ -21,7 +21,7 @@ import {
   BALL_SPEED_LOB, BALL_SPEED_BULLET,
   RUSH_SPEED, RUSH_SPEED_BLITZ, BASE_RUN_YPS, LATERAL_YPS, PURSUE_YPS_BASE, ROUTE_YPS, COVER_YPS,
   TACKLE_RESULT_DELAY, BREAK_SLOW_MS, BREAK_SPEED_MULT, MISSED_TACKLE_RECOVERY_MS,
-  SPRITE_GROUND_Y_OFFSET, SIDELINE_STEP_DEPTH, BETWEEN_PLAY_RUNOFF, PAT_CHANCE, SKIN_PALETTES,
+  SPRITE_GROUND_Y_OFFSET, BETWEEN_PLAY_RUNOFF, PAT_CHANCE, SKIN_PALETTES,
   clamp, fieldGoalChance
 } from '../state/constants.js';
 import { currentDiff, adjustMomentum } from '../state/difficulty.js';
@@ -627,7 +627,7 @@ function resolveCatchAtTarget(){
   routeKeys.forEach(k=>{
     const r=entities.players[k];
     const feet=r.x+SPRITE_GROUND_Y_OFFSET;
-    if(feet<=LAT_MIN-SIDELINE_STEP_DEPTH||feet>=LAT_MAX+SIDELINE_STEP_DEPTH||r.yfield/XPX<=-10||r.yfield/XPX>=110)return;
+    if(feet<=LAT_MIN||feet>=LAT_MAX||r.yfield/XPX<=-10||r.yfield/XPX>=110)return;
     const d=Math.hypot(r.x-entities.ball.toX,r.yfield-entities.ball.toY);
     const tolerance=catchTolerance(r,diff);
     const score=d/tolerance;
@@ -867,6 +867,11 @@ function updateSimulation(dt,now){
         const normalize=1/Math.max(1,Math.hypot(fwdMult,jy*LATERAL_YPS/BASE_RUN_YPS));
         const breakSlowMult=now<(entities.ballCarrier.breakSlowUntil||0)?BREAK_SPEED_MULT:1;
         const carrierSpeedMult=speedMultiplier(entities.ballCarrier,game.difficulty,game.momentum);
+        // Feet touching the sideline end the play, including runners already outside.
+        const sidelineMin=LAT_MIN-SPRITE_GROUND_Y_OFFSET;
+        const sidelineMax=LAT_MAX-SPRITE_GROUND_Y_OFFSET;
+        const previousX=entities.ballCarrier.x,previousY=entities.ballCarrier.yfield;
+        if(previousX<=sidelineMin||previousX>=sidelineMax){resolveOutOfBounds();return;}
         if(game.runActive&&entities.ballCarrier===entities.players.rb&&game.activeRunPath?.length){
           const runPath=game.activeRunPath;
           while(game.runPathIndex<runPath.length-1&&entities.ballCarrier.yfield/XPX-game.los>=runPath[game.runPathIndex].y)game.runPathIndex++;
@@ -874,19 +879,23 @@ function updateSimulation(dt,now){
           const laneAssist=interaction.steering&&Math.abs(jy)>.1?0:2.2;
           entities.ballCarrier.x+=clamp(lane.x-entities.ballCarrier.x,-laneAssist,laneAssist)*dt*8;
         }
-        const previousX=entities.ballCarrier.x,previousY=entities.ballCarrier.yfield;
         entities.ballCarrier.facing='left';
         entities.ballCarrier.yfield += BASE_RUN_YPS*fwdMult*normalize*(entities.ballCarrier.runnerDive?1.2:1)*XPX*SPEED_SCALE*diff.offenseSpeedMult*carrierSpeedMult*breakSlowMult*dt;
         const jukeDelta=jukeStep(entities.ballCarrier,now);
-        const nextX=previousX+(jukeDelta??(jy*normalize*(entities.ballCarrier.runnerDive?0:1)*LATERAL_YPS*XPX*SPEED_SCALE*diff.offenseSpeedMult*carrierSpeedMult*breakSlowMult*dt));
-        const sidelineMin=LAT_MIN-SPRITE_GROUND_Y_OFFSET-SIDELINE_STEP_DEPTH;
-        const sidelineMax=LAT_MAX-SPRITE_GROUND_Y_OFFSET+SIDELINE_STEP_DEPTH;
+        const nextX=entities.ballCarrier.x+(jukeDelta??(jy*normalize*(entities.ballCarrier.runnerDive?0:1)*LATERAL_YPS*XPX*SPEED_SCALE*diff.offenseSpeedMult*carrierSpeedMult*breakSlowMult*dt));
         entities.ballCarrier.x=clamp(nextX,sidelineMin,sidelineMax);
         entities.ballCarrier.velocity={x:(entities.ballCarrier.x-previousX)/Math.max(dt,0.001),yfield:(entities.ballCarrier.yfield-previousY)/Math.max(dt,0.001)};
-        if(entities.ballCarrier.runnerDive&&now-entities.ballCarrier.runnerDive.start>=300&&entities.ballCarrier.yfield/XPX<100)resolveTackle();
         if(nextX<=sidelineMin||nextX>=sidelineMax){
-          if(entities.ballCarrier.yfield/XPX<100)resolveOutOfBounds();
+          const boundary=nextX<=sidelineMin?sidelineMin:sidelineMax;
+          const fraction=clamp((boundary-previousX)/(nextX-previousX),0,1);
+          const crossingY=previousY+(entities.ballCarrier.yfield-previousY)*fraction;
+          // Spot the ball where it leaves the field, before awarding a corner TD.
+          if(crossingY<100*XPX){
+            entities.ballCarrier.x=boundary;entities.ballCarrier.yfield=crossingY;
+            resolveOutOfBounds();return;
+          }
         }
+        if(entities.ballCarrier.runnerDive&&now-entities.ballCarrier.runnerDive.start>=300&&entities.ballCarrier.yfield/XPX<100){resolveTackle();return;}
       }
 
       pursuers=pursuers.filter(def=>{

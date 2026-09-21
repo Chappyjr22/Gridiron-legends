@@ -17,11 +17,41 @@ await test('tackle short of goal line cannot round into touchdown',async h=>{
  h.step();assert.equal(h.game.phase,'tackle');h.step(801);assert.equal(h.game.playerScore,0);assert.ok(h.game.los<100&&h.game.los>99);
  h.engine.initPlay();h.engine.endPlay(1,'Run',false,100);assert.equal(h.game.playerScore,6);
 });
-for(const [name,x,y] of [['back end line',39,111],['sideline',354,25]])await test('receiver beyond '+name+' cannot complete a pass',async h=>{
+for(const [name,x,y] of [['back end line',39,111],['sideline',354,25],['upper sideline strip',12,25],['lower sideline strip',344,25]])await test('receiver beyond '+name+' cannot complete a pass',async h=>{
  h.engine.startNewGame();h.engine.startPlayerDrive(20);h.engine.choosePlay('trips_verticals');h.engine.onSnap();
  Object.assign(h.entities.players.wr1,{x,yfield:y*28});
  h.entities.ball={inFlight:true,toX:x,toY:y*28,startTime:h.now-1000,duration:100};h.game.thrown=true;h.step();
  assert.equal(h.game.playerScore,0);assert.match(h.game.message,/Incomplete/);assert.equal(h.game.los,20);
+});
+for(const side of [25,355])await test(`runner just inside sideline ${side} stays live`,async h=>{
+ h.engine.startNewGame();h.engine.startPlayerDrive(30);h.engine.choosePlay('trips_verticals');h.engine.onSnap();
+ const runner=h.entities.players.wr1;h.entities.ballCarrier=runner;runner.x=side-12+(side===25?1:-1);runner.yfield=45*28;
+ for(const p of [...Object.values(h.entities.players),...h.entities.decor])if(p!==runner)p.yfield=-10000;
+ h.step(100);assert.equal(h.game.phase,'live');assert.ok(runner.yfield>45*28);
+});
+for(const side of [25,355])for(const outside of [0,2])await test(`runner feet at sideline ${side}, offset ${outside}, stop immediately`,async h=>{
+ h.engine.startNewGame();h.engine.startPlayerDrive(30);h.engine.choosePlay('trips_verticals');h.engine.onSnap();
+ const runner=h.entities.players.wr1;h.entities.ballCarrier=runner;runner.x=side-12+(side===25?-outside:outside);runner.yfield=45*28;
+ h.game.clock=90;h.step();assert.equal(h.game.phase,'result');assert.match(h.game.message,/out of bounds/);
+ assert.equal(h.game.los,45);assert.equal(h.game.playerScore,0);assert.ok(h.game.clock>89);
+ const spot=runner.yfield,clock=h.game.clock;h.step(100);assert.equal(runner.yfield,spot);assert.equal(h.game.clock,clock);
+ assert.equal(h.engine.matchState.stats.plays.length,1);
+});
+for(const side of [25,355])for(const goalFirst of [false,true])await test(`corner crossing at ${side} respects ${goalFirst?'goal line':'sideline'} first`,async h=>{
+ h.engine.startNewGame();h.engine.startPlayerDrive(95);h.engine.choosePlay('trips_verticals');h.engine.onSnap();
+ const runner=h.entities.players.wr1;h.entities.ballCarrier=runner;
+ for(const p of [...Object.values(h.entities.players),...h.entities.decor])if(p!==runner)p.yfield=-10000;
+ runner.x=side-12+(side===25?1:-1);runner.yfield=100*28-(goalFirst?.05:1.8);
+ h.interaction.steering=true;h.interaction.steerAnchor={x:0,y:0};h.interaction.steerCurrent={x:0,y:side===25?-70:70};
+ h.step();assert.equal(h.game.phase,'result');assert.equal(h.game.playerScore,goalFirst?6:0);
+ if(!goalFirst){assert.match(h.game.message,/out of bounds/);assert.ok(h.game.los<100);}
+});
+for(const side of [25,355])await test(`juke across sideline ${side} ends the run`,async h=>{
+ h.engine.startNewGame();h.engine.startPlayerDrive(30);h.engine.choosePlay('trips_verticals');h.engine.onSnap();
+ const runner=h.entities.players.wr1;h.entities.ballCarrier=runner;runner.x=side-12+(side===25?5:-5);runner.yfield=45*28;
+ for(const p of [...Object.values(h.entities.players),...h.entities.decor])if(p!==runner)p.yfield=-10000;
+ const controls=await h.load('src/input/runnerControls.js');assert.ok(controls.requestJuke(side===25?-1:1));h.step(180);
+ assert.equal(h.game.phase,'result');assert.match(h.game.message,/out of bounds/);assert.equal(h.game.playerScore,0);
 });
 await test('cancellation releases Formation Lab selection',async h=>{
  await h.load('src/input/pointer.js');h.engine.startPractice();h.editState.editMode=true;h.event('pointerdown');assert.ok(h.editState.dragEntity);
