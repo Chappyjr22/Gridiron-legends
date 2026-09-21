@@ -312,7 +312,8 @@ export function simulateScore(franchise,game){
   const away=findTeamState(franchise,game.awayTeamId);
   if(!home||!away)return {homeScore:0,awayScore:0};
   const random=rng(hashString(game.id+':result'));
-  const possessions=8+Math.floor(random()*4);
+  const minutes=[2,3,4,5].includes(franchise.careerQuarterMinutes)?franchise.careerQuarterMinutes:3;
+  const possessions=Math.max(4,Math.round((8+Math.floor(random()*4))*minutes/3));
   let homeScore=0,awayScore=0;const homeDrives=[],awayDrives=[];
   for(let possession=0;possession<possessions;possession++){
     const hp=scoringDrive(home,away,random,1.5);homeScore+=hp;homeDrives.push(hp);

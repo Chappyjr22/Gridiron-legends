@@ -10,7 +10,7 @@ export function stickVector(anchor,current){
  return {x:dx*scale,y:dy*scale};
 }
 export function canJuke(){
- return game.phase==='live'&&!game.paused&&!entities.ball.inFlight&&entities.ballCarrier&&entities.ballCarrier!==entities.players.qb;
+ return game.phase==='live'&&!game.paused&&!entities.ball.inFlight&&entities.ballCarrier&&(entities.ballCarrier!==entities.players.qb||game.scrambling);
 }
 export function requestJuke(direction){
  if(!canJuke()||![-1,1].includes(direction))return false;

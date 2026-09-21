@@ -1,14 +1,15 @@
-import {spriteImage,makeTeamSpriteSheet} from '../rendering/spriteSheets.js';
+import {spriteImage,spriteLoaded,makeTeamSpriteSheet} from '../rendering/spriteSheets.js';
+import {resolvedUniform} from '../rendering/uniformVariants.js';
 import {SPRITE_CELL} from '../state/constants.js';
 import {loadBrand} from '../rendering/brand.js';
 const requests=new WeakMap();
 // Reuse the game's exact sprite and recoloring code, without changing OFF/DEF.
-export async function paintMenuPlayer(canvas,team,skin=2){
+export async function paintMenuPlayer(canvas,team,skin=2,isHome=true){
  if(!canvas||!team)return;
  const request={};requests.set(canvas,request);
- if(!spriteImage.complete)await new Promise(resolve=>{spriteImage.addEventListener('load',resolve,{once:true});spriteImage.addEventListener('error',resolve,{once:true});});
+ if(!spriteImage.naturalWidth)await spriteLoaded;
  if(!spriteImage.naturalWidth||requests.get(canvas)!==request)return;
- const sheet=makeTeamSpriteSheet({jersey:team.colors.primary},Math.max(0,Math.min(3,Number(skin)||0)),spriteImage);
+ const sheet=makeTeamSpriteSheet(resolvedUniform(team,isHome),Math.max(0,Math.min(3,Number(skin)||0)),spriteImage);
  const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,64,64);
  ctx.drawImage(sheet,3*SPRITE_CELL,0,SPRITE_CELL,SPRITE_CELL,0,0,64,64);
 }

@@ -105,7 +105,8 @@ export function collegeGameAssessment(c,stats,won,opponent){
  const goalMet=stats.attempts>=6&&completion>=tier.goalCompletions&&stats.interceptions<=tier.goalTurnovers;
  const difficulty={easy:0,medium:3,hard:6,gridiron:9}[settings.difficulty]||0;
  // Efficiency avoids rewarding longer quarters simply for generating more snaps.
- const score=stats.attempts<6?20:clamp(completion*30+clamp(stats.passingYards/attempts,0,10)*3+clamp(stats.passingTD/attempts,0,.12)/.12*20-stats.interceptions/attempts*120+(won?8:0)+clamp((opponent.ratings.defense-65)/3,-5,8)+difficulty,0,100);
+ const performance=clamp(completion*30+clamp(stats.passingYards/attempts,0,10)*3+clamp(stats.passingTD/attempts,0,.12)/.12*20-stats.interceptions/attempts*120+(won?8:0)+clamp((opponent.ratings.defense-65)/3,-5,8)+difficulty,0,100);
+ const weight=Math.min(1,stats.attempts/6);const score=20*(1-weight)+performance*weight;
  return {score:Math.round(score),difficulty:settings.difficulty,quarterMinutes:settings.quarterMinutes,opponentDefense:opponent.ratings.defense,goal:{label:`Complete ${Math.round(tier.goalCompletions*100)}% of passes, at most ${tier.goalTurnovers} INT (6+ attempts)`,met:goalMet,xp:goalMet?tier.goalXP:0}};
 }
 export function draftProjection(c){
@@ -136,6 +137,8 @@ export function beginProCareer(c){
  const next=c.draft.league,team=League.findTeamState(next,c.draft.teamId),index=team.roster.findIndex(p=>p.slot==='QB');
  const occupied=new Set(team.roster.filter((_,i)=>i!==index).map(p=>p.number));
  for(const teammate of team.roster)if(teammate!==team.roster[index]&&teammate.number===player.number){for(let n=0;n<100;n++)if(!occupied.has(n)&&n!==player.number){teammate.number=n;occupied.add(n);break;}}
- team.roster[index]={...player,attributes:{...player.attributes},age:22,contractYears:4};
+ team.roster[index]={...player,attributes:{...player.attributes},age:22,contractYears:c.draft.round<=2?4:c.draft.round<=4?3:2};
+ c.proEntry={round:c.draft.round,pick:c.draft.pick,expectation:c.draft.round<=2?'Lead a winning season':c.draft.round<=4?'Establish yourself as a starter':'Prove you belong'};c.coachConfidence=c.draft.round<=2?65:c.draft.round<=4?50:40;
+ next.careerQuarterMinutes=c.settings.quarterMinutes;
  c.teamId=team.id;next.userTeamId=team.id;c.league=next;c.stage='pro';c.totals=emptyStats();c.seasonStats=emptyStats();c.history=[];c.awards=[];c.postseason=null;c.lastResult=null;c.pendingRecapGameId=null;c.matchContext=null;c.draft=null;League.refreshRatings(next);return true;
 }

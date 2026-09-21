@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {harness} from './helpers/engine.mjs';
 import {createFranchise,standings} from '../src/state/league.js';
 import {contrastingOpponent} from '../src/rendering/uniforms.js';
+import {resolvedUniform} from '../src/rendering/uniformVariants.js';
 let checks=0;
 async function test(name,fn){await fn(await harness());console.log('ok - '+name);checks++;}
 await test('paused flight, route delays, and animations retain simulation time',async h=>{
@@ -134,7 +135,10 @@ await test('easy tackles telegraph longer without gaining extra lunge distance',
 });
 const f=createFranchise();const [a,b]=f.teams;a.record.wins=10;a.record.losses=1;b.record.wins=1;b.record.losses=10;b.record.pointsFor=200;
 assert.ok(standings(f).indexOf(a)<standings(f).indexOf(b));
-const bos=f.teams.find(t=>t.id==='bos'),dal=f.teams.find(t=>t.id==='dal');assert.notEqual(contrastingOpponent(bos,dal).colors.primary,dal.colors.primary);assert.equal(dal.colors.primary,'#234a72');
+const bos=f.teams.find(t=>t.id==='bos'),dal=f.teams.find(t=>t.id==='dal');assert.equal(contrastingOpponent(bos,dal),dal,'Contrasting away jersey needs no override');
+const identical={...dal,uniformPreference:'alternate',uniforms:{alternate:{jersey:bos.colors.primary,helmet:'#ffffff',stripe:'#ff0000'}}};
+const original=JSON.stringify(identical),readable=contrastingOpponent(bos,identical);
+assert.notEqual(resolvedUniform(readable,false).jersey,bos.colors.primary);assert.equal(JSON.stringify(identical),original);
 
 await test('all 18 plays still resolve on all four difficulties',async h=>{
  const {PLAYS}=await h.load('src/data/plays.js');
@@ -182,6 +186,22 @@ await test('route turns spend distance without overshoot and prediction leaves p
  const before=JSON.stringify(h.entities.players),r=h.entities.players.wr1;
  const read=passingRead({players:h.entities.players,play:PLAYS.trips_verticals,los:h.game.los,elapsed:0,landing:{x:r.x,yfield:r.yfield+160},kind:'lob',difficulty:currentDiff()});
  assert.equal(JSON.stringify(h.entities.players),before);assert.ok(read.target.predicted.yfield>r.yfield);assert.ok(read.duration>0);
+});
+await test('passing guide follows speed attributes rather than overall rating',async h=>{
+ const {passingRead}=await h.load('src/simulation/passing.js');
+ const {currentDiff}=await h.load('src/state/difficulty.js');
+ h.engine.startPractice();h.engine.choosePlay('trips_verticals');
+ const receiver=h.entities.players.wr1,qb=h.entities.players.qb;
+ const play={routes:{wr1:[{x:receiver.x,y:100}]}};
+ const read=()=>passingRead({players:h.entities.players,play,los:h.game.los,elapsed:0,landing:{x:receiver.x,yfield:receiver.yfield+160},kind:'lob',difficulty:currentDiff(),difficultyName:h.game.difficulty,momentum:h.game.momentum});
+ for(const difficulty of ['easy','medium','hard','gridiron']){
+  h.game.difficulty=difficulty;receiver.attributes={...receiver.attributes,speed:45};const slow=read().target.predicted.yfield;
+  receiver.attributes.speed=97;const fast=read().target.predicted.yfield;assert.ok(fast>slow+10,difficulty);
+  const prior=receiver.rating;receiver.rating=50;assert.equal(read().target.predicted.yfield,fast);receiver.rating=prior;
+ }
+});
+await test('kickoff and drive summaries preserve readable line breaks',async h=>{
+ h.engine.startNewGame();assert.match(h.game.message,/OPENING KICKOFF\nThe /);assert.ok(h.game.message.split('\n').length>=3);
 });
 await test('routine results keep the field clear while scoring remains a full result',async h=>{
  h.hud.showResult('Catch for 7 yards.',()=>{});assert.ok(h.element('result-overlay').classList.contains('compact-result'));
