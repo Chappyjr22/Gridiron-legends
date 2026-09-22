@@ -21,7 +21,7 @@ export function initPracticeGuide(){
   set('1 · Lead your receiver',text);
  };
  el('practice-coach-next').onclick=()=>{
-  enterGame(true);choosePlay('trips_inside');lesson='juke';el('practice-coach-next').hidden=true;set('2 · Make a defender miss','Tap the field to hand off. Use Juke up or Juke down when a defender crouches.');
+  enterGame(true);choosePlay('trips_inside');lesson='juke';el('practice-coach-next').hidden=true;set('2 · Make a defender miss','Tap the field to hand off. Quickly swipe up or down when a defender crouches.');
  };
  el('practice-coach-close').onclick=end;
  el('btn-main-menu').addEventListener('click',end);

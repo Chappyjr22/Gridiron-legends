@@ -9,7 +9,7 @@ import {playingRoster,uniqueLineupNumbers} from '../career/roster.js';
 import {speedMultiplier,strengthEdge,attributeRating} from '../career/playerAttributes.js';
 import {controlPreferences} from '../state/preferences.js';
 import {advanceRoute,passingRead,throwProfile} from './passing.js';
-import {stickVector,jukeStep,syncRunnerControls} from '../input/runnerControls.js';
+import {stickVector,jukeStep} from '../input/runnerControls.js';
 import {catchTolerance,catchOutcome} from './receiving.js';
 import {separation, touching, pursuitTarget, startDive, advanceDive} from './contact.js';
 import { emptyMatch, recordPlay } from '../career/stats.js';
@@ -1000,7 +1000,6 @@ function updateSimulation(dt,now){
 }
 function tick(){
   advanceSimulation(updateSimulation);
-  syncRunnerControls();
   draw();
   requestAnimationFrame(tick);
 }

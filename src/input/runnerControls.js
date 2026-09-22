@@ -30,20 +30,10 @@ export function jukeStep(runner,now){
  j.progress=p;if(p>=1)runner.juke=null;
  return eased===old?0:j.direction*JUKE_DISTANCE*(eased-old);
 }
-export function syncRunnerControls(){
- const panel=document.getElementById('runner-controls');if(!panel)return;
- panel.hidden=!canJuke();
- const ready=!entities.ballCarrier?.runnerDive&&simulationNow()>=(entities.ballCarrier?.jukeReadyAt||0);
- const dive=document.getElementById('btn-dive');if(dive){dive.textContent=entities.ballCarrier===entities.players.qb?'SLIDE':'DIVE';dive.disabled=!!entities.ballCarrier?.runnerDive;}
- for(const id of ['btn-juke-up','btn-juke-down'])document.getElementById(id).disabled=!ready;
-}
-export function initRunnerControls(){
- const dive=document.getElementById('btn-dive');
- dive?.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();requestDive();syncRunnerControls();});
- dive?.addEventListener('click',e=>{if(e.detail===0){requestDive();syncRunnerControls();}});
- for(const [id,direction] of [['btn-juke-up',-1],['btn-juke-down',1]]){
-  const button=document.getElementById(id);
-  button.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();requestJuke(direction);syncRunnerControls();});
-  button.addEventListener('click',e=>{if(e.detail===0){requestJuke(direction);syncRunnerControls();}});
- }
+// Distances are CSS pixels so a phone and a scaled canvas use the same gesture.
+export function runnerGesture(dx,dy,elapsed){
+ if(elapsed<0||elapsed>=280)return null;
+ if(dx<-45&&Math.abs(dx)>Math.abs(dy)*1.4)return 'dive';
+ if(Math.abs(dy)>40&&Math.abs(dy)>Math.abs(dx)*1.4)return dy<0?'up':'down';
+ return null;
 }

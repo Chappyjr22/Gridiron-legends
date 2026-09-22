@@ -4,7 +4,6 @@ import {initAudio} from './audio/gameAudio.js';
 import {initPracticeGuide} from './ui/practiceGuide.js';
 import {initOverlayFocus} from './ui/focus.js';
 import {initFieldViewport} from './rendering/viewport.js';
-import {initRunnerControls} from './input/runnerControls.js';
 import {initMenuArt} from './ui/menuArt.js';
 import { game, teamState } from './state/gameState.js';
 import { initCareer } from './ui/career.js';
@@ -46,7 +45,6 @@ populateOpponentSelect();
 syncMatchupUI();
 updateHUD();
 
-initRunnerControls();
 initMenuArt();
 initCareer();
 initMainTeamEditor(
@@ -56,8 +54,8 @@ initMainTeamEditor(
   team=>{
     if(team.id===game.userTeamId)teamState.userTeam=team;
     if(teamState.cpuTeam?.id===team.id)teamState.cpuTeam=team;
-    updateTeamPreview(game.userTeamId);
-    updateOpponentPreview();
+    populateTeamSelect();
+    populateOpponentSelect();
     syncMatchupUI();
   }
 );

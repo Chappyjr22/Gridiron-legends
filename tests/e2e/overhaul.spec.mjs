@@ -1,12 +1,10 @@
 import {test,expect} from '@playwright/test';
 
-test('three runner actions stay in one thumb-sized row on short landscape',async({browser})=>{
+test('runner buttons do not cover the field on short landscape',async({browser})=>{
  const context=await browser.newContext({viewport:{width:844,height:304},hasTouch:true}),page=await context.newPage();
  await page.goto('/');await page.locator('#btn-practice').tap();await page.locator('.play-btn').first().tap();
  await page.evaluate(async()=>{const {game,entities}=await import('/src/state/gameState.js');game.phase='live';entities.ballCarrier=entities.players.wr1;entities.ball.inFlight=false;for(const p of Object.values(entities.players))if(p!==entities.ballCarrier)p.yfield=-10000;entities.decor.forEach(p=>p.yfield=-10000);});
- const controls=page.locator('#runner-controls');await expect(controls).toBeVisible();
- for(const button of await controls.getByRole('button').all())await expect(button).toBeInViewport({ratio:1});
- expect((await controls.boundingBox()).height).toBeLessThan(60);
+ await expect(page.locator('#runner-controls, #btn-dive, #btn-juke-up, #btn-juke-down')).toHaveCount(0);
  await page.screenshot({path:'test-results/overhaul-runner-controls-mobile.png'});await context.close();
 });
 

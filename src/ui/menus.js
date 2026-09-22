@@ -57,7 +57,7 @@ export function populateTeamSelect(){
     ['east','north','south','west'].forEach(division=>{
       const group=document.createElement('optgroup');
       group.label=League.CONFERENCES[conference].name+' '+division[0].toUpperCase()+division.slice(1);
-      League.TEAMS.filter(team=>team.conference===conference&&team.division===division).forEach(team=>{
+      teamState.franchise.teams.filter(team=>team.conference===conference&&team.division===division).forEach(team=>{
         const option=document.createElement('option');
         option.value=team.id;
         option.textContent=League.fullName(team);
@@ -100,7 +100,7 @@ export function populateOpponentSelect(){
   select.innerHTML='<option value="random">Random Opponent</option>';
   ['legacy','frontier'].forEach(conference=>{
     ['east','north','south','west'].forEach(division=>{
-      const teams=League.TEAMS.filter(team=>team.conference===conference&&team.division===division&&team.id!==game.userTeamId);
+      const teams=teamState.franchise.teams.filter(team=>team.conference===conference&&team.division===division&&team.id!==game.userTeamId);
       if(!teams.length)return;
       const group=document.createElement('optgroup');
       group.label=League.CONFERENCES[conference].name+' '+division[0].toUpperCase()+division.slice(1);

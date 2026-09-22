@@ -5,6 +5,12 @@ import {contrastingOpponent} from '../src/rendering/uniforms.js';
 import {resolvedUniform} from '../src/rendering/uniformVariants.js';
 let checks=0;
 async function test(name,fn){await fn(await harness());console.log('ok - '+name);checks++;}
+await test('runner gestures separate quick swipes from taps, diagonals, and held steering',async h=>{
+ const {runnerGesture}=await h.load('src/input/runnerControls.js');
+ assert.equal(runnerGesture(0,-55,180),'up');assert.equal(runnerGesture(0,55,180),'down');
+ assert.equal(runnerGesture(-60,5,180),'dive');
+ for(const [x,y,t] of [[0,10,100],[50,0,150],[-60,60,150],[0,55,280],[0,-80,600],[-80,0,-1]])assert.equal(runnerGesture(x,y,t),null);
+});
 await test('paused flight, route delays, and animations retain simulation time',async h=>{
  h.engine.startPractice();h.engine.choosePlay('trips_verticals');h.engine.onSnap();h.engine.releaseThrow({x:120,y:39});h.step();
  const {simulationNow}=await h.load('src/state/clock.js');const before=simulationNow();
