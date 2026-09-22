@@ -126,3 +126,25 @@
 #career-screen .preparation-status { color: #b4cfee; font-size: 12px; line-height: 1.4; }
 #career-screen .career-stakes { border-bottom: 1px solid #2878b9; margin-bottom: 12px; padding-bottom: 8px; }
 #career-screen .career-stakes h3 { font-size: 18px; margin: 8px 0; }
+
+/* Draft report: fixed touch navigation and actions, independently scrolling pages. */
+#career-screen #draft-dialog { background: #031735; color: #e0eeff; }
+#draft-dialog .draft-tabs { display: flex; flex: none; gap: 4px; padding: 4px max(12px,env(safe-area-inset-right)) 4px max(12px,env(safe-area-inset-left)); background: #06285f; }
+#draft-dialog .draft-tabs button { flex: 1; min-width: 0; min-height: 44px; border: 1px solid #399fff; border-radius: 0; background: #06316b; color: #fff; font: 22px/1 var(--sports-face); text-transform: uppercase; touch-action: manipulation; }
+#draft-dialog .draft-tabs button[aria-selected=true] { background: #ffe000; color: #031735; }
+#draft-dialog .draft-tabs button:focus-visible { outline: 2px solid white; outline-offset: -4px; }
+#draft-dialog #draft-selection { text-align: left; color: #e0eeff; }
+#draft-dialog .draft-columns { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 20px; }
+#draft-dialog #draft-selection h3 { color: #fff; font: 24px/1.1 var(--sports-face); margin: 8px 0; }
+#draft-dialog h4 { color: #ffe000; margin: 12px 0 4px; }
+#draft-dialog ul { padding-left: 20px; }
+#draft-dialog li { margin: 6px 0; }
+#draft-dialog .sports-kicker { color: #ffe000; }
+#draft-dialog .draft-team { text-align: center; }
+#draft-dialog .school-helmet { width: 62px; height: 54px; }
+#draft-dialog .draft-note { color: #b4cfee; font-size: 12px; line-height: 1.4; }
+#draft-dialog .draft-boost { padding: 8px; border-left: 3px solid #ffe000; background: #06285f; }
+#draft-dialog .draft-attributes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; text-transform: capitalize; }
+#draft-dialog .draft-attributes span { background: #06316b; padding: 8px; }
+#career-screen #draft-dialog footer { background: #06285f; border-color: #399fff; }
+@media (max-width: 540px) { #draft-dialog .draft-columns { grid-template-columns: 1fr; } }

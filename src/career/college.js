@@ -1,3 +1,5 @@
+import {finalizeCollegeHonors,awardDraftBoosts} from './collegeHonors.js';
+import {buildDraftReport} from './draftReport.js';
 import {proProjection,normalizeQuarterback,awardExperience} from './development.js';
 import * as League from '../state/league.js';
 import {COLLEGE_TEAMS,SCHOOL_TIERS} from './collegeData.js';
@@ -92,6 +94,7 @@ export function createCollegeLeague(schoolId){
 }
 export function collegeStandings(c,conf){return c.league.teams.filter(t=>t.conference===conf).sort((a,b)=>b.record.conferenceWins-a.record.conferenceWins||b.record.wins-a.record.wins||(b.record.pointsFor-b.record.pointsAgainst)-(a.record.pointsFor-a.record.pointsAgainst)||a.id.localeCompare(b.id));}
 export function seedCollegePostseason(c){
+ finalizeCollegeHonors(c);
  const conferenceIds=[...new Set(c.league.teams.map(t=>t.conference))];
  c.postseason={round:1,seeds:[],games:[],champion:null};
  for(const conf of conferenceIds){
@@ -112,14 +115,16 @@ export function collegeGameAssessment(c,stats,won,opponent){
 }
 export function draftProjection(c){
  const games=c.history.filter(r=>r.collegeAssessment);
- if(!games.length)return {score:50,pick:112,round:4,label:'Unscouted · prove yourself this season'};
+ if(!games.length&&!c.awards.some(a=>a.title==='College MVP')&&c.postseason?.champion!==c.teamId)return {score:50,basePick:112,pick:112,boosts:[],round:4,label:'Unscouted · prove yourself this season'};
  const score=(games.reduce((s,r)=>s+r.collegeAssessment.score,0)+50*2)/(games.length+2);
- const adjusted=clamp((score-20)/70,0,1),pick=clamp(Math.round(224-adjusted*223),1,224);
- return {score:Math.round(score),pick,round:Math.ceil(pick/32),label:`Projected round ${Math.ceil(pick/32)} · around pick ${pick}`};
+ const adjusted=clamp((score-20)/70,0,1),basePick=games.length?clamp(Math.round(224-adjusted*223),1,224):112;
+ const {pick,boosts}=awardDraftBoosts(c,basePick);
+ return {score:Math.round(score),basePick,boosts,pick,round:Math.ceil(pick/32),label:`Projected round ${Math.ceil(pick/32)} · around pick ${pick}`};
 }
 export function enterDraft(c){
  if(c.stage!=='college'||!c.postseason?.champion||c.activeMatch)return false;
- if(c.draft)return c.draft;
+ if(c.draft){c.draft.report??=buildDraftReport(c,c.draft);return c.draft;}
+ finalizeCollegeHonors(c);
  const projection=draftProjection(c),league=League.createFranchise('bos');
  // A fresh pro league's strength supplies draft order; QB need breaks nearby choices.
  const order=[...league.teams].sort((a,b)=>a.ratings.overall-b.ratings.overall||a.id.localeCompare(b.id));
@@ -129,19 +134,19 @@ export function enterDraft(c){
   candidates.push({pick,team,need:100-qb.rating-Math.abs(pick-projection.pick)});
  }
  candidates.sort((a,b)=>b.need-a.need||a.pick-b.pick);
- const choice=candidates[0];c.draft={pick:choice.pick,round:Math.ceil(choice.pick/32),teamId:choice.team.id,projection,league};return c.draft;
+ const choice=candidates[0];c.draft={pick:choice.pick,round:Math.ceil(choice.pick/32),teamId:choice.team.id,projection,league};c.draft.report=buildDraftReport(c,c.draft);return c.draft;
 }
 export function beginProCareer(c){
  if(c.stage!=='college'||!c.draft||c.activeMatch)return false;
  const oldTeam=League.findTeamState(c.league,c.teamId),player=oldTeam.roster.find(p=>p.id===c.playerId);
  const projection=proProjection(player,c);
- c.collegeArchive={finalOverall:player.rating,attributes:{...player.attributes},development:c.settings.development||'standard',school:{id:oldTeam.id,city:oldTeam.city,name:oldTeam.name,abbr:oldTeam.abbr},stats:{...c.totals},history:c.history,awards:c.awards,champion:c.postseason.champion,draft:{pick:c.draft.pick,round:c.draft.round,teamId:c.draft.teamId}};
+ c.collegeArchive={honors:c.collegeHonors||null,draftReport:c.draft.report||buildDraftReport(c,c.draft),finalOverall:player.rating,attributes:{...player.attributes},development:c.settings.development||'standard',school:{id:oldTeam.id,city:oldTeam.city,name:oldTeam.name,abbr:oldTeam.abbr},stats:{...c.totals},history:c.history,awards:c.awards,champion:c.postseason.champion,draft:{pick:c.draft.pick,round:c.draft.round,teamId:c.draft.teamId}};
  const next=c.draft.league,team=League.findTeamState(next,c.draft.teamId),index=team.roster.findIndex(p=>p.slot==='QB');
  const occupied=new Set(team.roster.filter((_,i)=>i!==index).map(p=>p.number));
  for(const teammate of team.roster)if(teammate!==team.roster[index]&&teammate.number===player.number){for(let n=0;n<100;n++)if(!occupied.has(n)&&n!==player.number){teammate.number=n;occupied.add(n);break;}}
  team.roster[index]={...player,attributes:projection.attributes,age:22,contractYears:c.draft.round<=2?4:c.draft.round<=4?3:2};
  normalizeQuarterback(team.roster[index]);
- c.proEntry={collegeOverall:projection.collegeOverall,rookieOverall:projection.overall,levelAtEntry:c.level,round:c.draft.round,pick:c.draft.pick,expectation:c.draft.round<=2?'Lead a winning season':c.draft.round<=4?'Establish yourself as a starter':'Prove you belong'};c.coachConfidence=c.draft.round<=2?65:c.draft.round<=4?50:40;
+ c.proEntry={expectations:c.collegeArchive.draftReport.expectations,collegeOverall:projection.collegeOverall,rookieOverall:projection.overall,levelAtEntry:c.level,round:c.draft.round,pick:c.draft.pick,expectation:c.draft.round<=2?'Lead a winning season':c.draft.round<=4?'Establish yourself as a starter':'Prove you belong'};c.coachConfidence=c.draft.round<=2?65:c.draft.round<=4?50:40;
  next.careerQuarterMinutes=c.settings.quarterMinutes;
  c.teamId=team.id;next.userTeamId=team.id;c.league=next;c.stage='pro';
  if(c.progressionVersion===2){

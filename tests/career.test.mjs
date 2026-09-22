@@ -176,3 +176,44 @@ await import("./progression.test.mjs");
  legacy.postseason.champion=legacy.teamId;assert.equal(seasonStakes(legacy).title,'Champions');assert.equal(choosePreparation(legacy,'personal'),false);
 }
 console.log('Weekly preparation: college/pro rewards, locks, reloads, misses, caps, legacy defaults, postseason stakes and duplicate prevention passed.');
+
+// League-wide regular-season MVP and persistent, diminishing draft award boosts.
+{
+ const {collegeMvpCandidates,finalizeCollegeHonors,awardDraftBoosts}=await import('../src/career/collegeHonors.js');
+ const {COLLEGE_TEAMS}=await import('../src/career/collegeData.js');
+ function fixture(cpuWinner=false){
+  const c=C.createCareer({name:'Award Winner',schoolId:COLLEGE_TEAMS[0].id});
+  const winner=cpuWinner?c.league.teams[1].roster.find(p=>p.slot==='QB').id:c.playerId;
+  for(const team of c.league.teams)team.record.wins=8;
+  for(const g of c.league.schedule){g.status='completed';g.homeScore=21;g.awayScore=14;g.boxScore={players:{}};
+   for(const team of c.league.teams.filter(t=>[g.homeTeamId,g.awayTeamId].includes(t.id)))for(const p of team.roster.filter(p=>['QB','RB','WR','TE'].includes(p.position))){
+    const s={...emptyStats(),games:1};
+    if(p.position==='QB')Object.assign(s,{attempts:12,completions:p.id===winner?11:6,passingYards:p.id===winner?180:60,passingTD:p.id===winner?3:1,interceptions:p.id===winner?0:1});
+    else if(p.position==='RB')Object.assign(s,{carries:5,rushingYards:20});else Object.assign(s,{targets:4,receptions:2,receivingYards:20});
+    g.boxScore.players[p.id]=s;
+   }
+  }
+  c.history=Array.from({length:12},()=>({collegeAssessment:{score:65}}));c.postseason={champion:c.teamId,round:3,games:[]};
+  return c;
+ }
+ let c=fixture();const before=C.draftProjection({...c,postseason:null});
+ assert.equal(collegeMvpCandidates(c)[0].playerId,c.playerId);
+ const honors=finalizeCollegeHonors(c);assert.equal(honors.mvp.playerId,c.playerId);assert.ok(honors.eligiblePlayers>32);
+ assert.equal(c.awards.filter(a=>a.title==='College MVP').length,1);assert.strictEqual(finalizeCollegeHonors(c),honors);
+ const projected=C.draftProjection(c);assert.equal(projected.boosts.length,2);assert.ok(projected.pick<before.pick);
+ assert.ok(projected.boosts[0].places>projected.boosts[1].places);
+ const near=awardDraftBoosts(c,3),far=awardDraftBoosts(c,150);assert.ok(3-near.pick<150-far.pick);assert.equal(awardDraftBoosts(c,1).pick,1);assert.ok(awardDraftBoosts(c,200).pick>32);
+ c.awards.push({...c.awards[0]});assert.deepEqual(C.draftProjection(c),projected);c.awards.pop();
+ c.postseason.games.push({status:'completed',boxScore:{players:{[c.playerId]:{...emptyStats(),games:1,passingYards:10000}}}});
+ assert.equal(collegeMvpCandidates(c)[0].score,honors.mvp.score);
+ const cpu=fixture(true);finalizeCollegeHonors(cpu);assert.notEqual(cpu.collegeHonors.mvp.playerId,cpu.playerId);assert.equal(cpu.awards.some(a=>a.title==='College MVP'),false);
+ assert.equal(C.draftProjection(cpu).boosts.length,1);
+ const incomplete=fixture();incomplete.league.schedule[0].status='scheduled';assert.equal(finalizeCollegeHonors(incomplete),null);
+ const empty=fixture();for(const g of empty.league.schedule)delete g.boxScore;assert.equal(finalizeCollegeHonors(empty).mvp,null);
+ const draft=C.enterDraft(c),pick=draft.pick,report=structuredClone(draft.report);
+ assert.equal(draft.projection.pick,projected.pick);assert.equal(report.expectations.length,3);assert.ok(report.selectionReason.includes('current QB'));
+ c=C.parseCareer(JSON.stringify(c));assert.ok(c);assert.equal(C.enterDraft(c).pick,pick);assert.deepEqual(c.draft.report,report);
+ assert.ok(C.beginProCareer(c));assert.deepEqual(c.collegeArchive.draftReport,report);assert.deepEqual(c.proEntry.expectations,report.expectations);assert.equal(C.beginProCareer(c),false);
+ const old=fixture();const oldDraft=C.enterDraft(old);delete oldDraft.report;delete oldDraft.projection.boosts;const oldPick=oldDraft.pick;assert.equal(C.enterDraft(old).pick,oldPick);assert.ok(oldDraft.report);
+}
+console.log('Draft payoff checks passed: league MVP, CPU winner, eligibility, postseason exclusion, stacked bonuses, caps, locked selections, reload and pro archive.');
