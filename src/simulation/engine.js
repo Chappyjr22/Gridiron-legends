@@ -392,8 +392,11 @@ export function practiceFieldGoal(distance=35){
  if(!game.practice)return;
  startPlayerDrive(117-clamp(Number(distance)||35,20,60));game.phase='decision';attemptFieldGoal();
 }
+export function canAttemptFieldGoal(){
+ return !game.paused&&game.possession==='player'&&['decision','callsheet','presnap'].includes(game.phase)&&(game.practice||game.overtime||game.clock>0)&&117-game.los<65;
+}
 export function attemptFieldGoal(){
- if(game.phase!=='decision'||117-game.los>=65)return;
+ if(!canAttemptFieldGoal())return;
  beginKick('fieldGoal');
 }
 function attemptExtraPoint(){
@@ -405,6 +408,7 @@ function attemptExtraPoint(){
 }
 function beginKick(kind){
  hideAllOverlays();game.phase='kicking';
+ document.getElementById('presnap-hint').style.display='none';
  interaction.aiming=false;interaction.steering=false;entities.ball={};
  const distance=Math.round(117-game.los),rating=positionRating(teamState.userTeam,'K','offense');
  game.kick={kind,stage:'power',start:simulationNow(),distance,rating,skin:rosterPlayer(teamState.userTeam,'K')?.skin??0,power:0,aim:0,...kickWindow(game.los,rating)};

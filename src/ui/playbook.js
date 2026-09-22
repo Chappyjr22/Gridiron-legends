@@ -2,7 +2,7 @@ import {game} from '../state/gameState.js';
 import {FORMATION_ORDER,FORMATIONS} from '../data/formations.js';
 import {PLAYS,PLAYS_BY_FORMATION} from '../data/plays.js';
 import {drawPlayDiagram} from '../rendering/playDiagram.js';
-import {applyFormation,choosePlay} from '../simulation/engine.js';
+import {applyFormation,choosePlay,attemptFieldGoal,canAttemptFieldGoal} from '../simulation/engine.js';
 const grid=document.getElementById('callsheet-grid'),tabs=document.getElementById('formation-tabs');
 let selected=FORMATION_ORDER[0],page=0;
 const compact=matchMedia('(orientation: landscape) and (max-height: 550px)');
@@ -13,6 +13,11 @@ export function renderPlayMenu(id){
  tabs.replaceChildren();
  for(const formation of FORMATION_ORDER){const b=document.createElement('button');b.className='formation-tab';b.dataset.formation=formation;b.textContent=formation==='trips'?'Trips':formation==='ace'?'Ace':'Pistol';b.setAttribute('aria-pressed',String(formation===id));b.addEventListener('click',()=>renderPlayMenu(formation));tabs.appendChild(b);}
  document.getElementById('playbook-formation').textContent=FORMATIONS[id].name;
+ const kick=document.getElementById('playbook-field-goal'),distance=Math.round(117-game.los);
+ kick.hidden=game.practice;kick.disabled=!canAttemptFieldGoal();
+ kick.textContent=`Field goal · ${distance} yd`;
+ kick.setAttribute('aria-label',`Attempt ${distance}-yard field goal${kick.disabled?' (unavailable)':''}`);
+ kick.title=distance>=65?'Out of field-goal range':'Attempt a field goal on this down';
  const keys=PLAYS_BY_FORMATION[id],size=compact.matches?3:6,pages=Math.ceil(keys.length/size);page=Math.min(page,pages-1);grid.replaceChildren();
  document.getElementById('play-page-label').textContent=pages>1?`${page+1} / ${pages}`:'6 plays';
  document.getElementById('play-page-prev').disabled=page===0;document.getElementById('play-page-next').disabled=page===pages-1;
@@ -27,3 +32,5 @@ grid.addEventListener('click',event=>{const b=event.target.closest('[data-play]'
 document.getElementById('play-page-prev').addEventListener('click',()=>{page=Math.max(0,page-1);renderPlayMenu(selected);});
 document.getElementById('play-page-next').addEventListener('click',()=>{page++;renderPlayMenu(selected);});
 compact.addEventListener('change',()=>{if(game.phase==='callsheet'){page=0;renderPlayMenu(selected);}});
+
+document.getElementById('playbook-field-goal').addEventListener('click',attemptFieldGoal);
