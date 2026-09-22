@@ -16,7 +16,8 @@ test('second-finger juke works while steering stays captured',async({browser})=>
  const second={x:box.x+box.width*.7,y:box.y+box.height*.6,id:2};
  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[first,second]});
  await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[first,{...second,y:second.y-55}]});
- await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[first]});
+ // CDP's WebTouchEvent path ends the listed touch, leaving the other finger held.
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[{...second,y:second.y-55}]});
  await expect.poll(()=>page.evaluate(async()=>(await import('/src/state/gameState.js')).entities.ballCarrier.x)).toBeLessThan(175);
  expect(await page.evaluate(async()=>(await import('/src/input/interactionState.js')).interaction.steering)).toBe(true);
  await page.screenshot({path:'test-results/juke-landscape.png'});
@@ -54,7 +55,8 @@ test('cancelled second finger leaves steering active and does not juke',async({b
  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[first,second]});
  await page.evaluate(()=>document.getElementById('field').dispatchEvent(new PointerEvent('pointercancel',{pointerId:window.secondaryPointer})));
  await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[first,{...second,y:second.y-55}]});
- await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[first]});
+ // CDP's WebTouchEvent path ends the listed touch, leaving the other finger held.
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[{...second,y:second.y-55}]});
  expect(await page.evaluate(async()=>{const {interaction}=await import('/src/input/interactionState.js'),{entities}=await import('/src/state/gameState.js');return {steering:interaction.steering,juked:!!entities.ballCarrier.jukeReadyAt};})).toEqual({steering:true,juked:false});
  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await context.close();
 });
