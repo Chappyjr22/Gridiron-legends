@@ -139,6 +139,7 @@ export function completeCareerGame(c,gameId,userScore,cpuScore,matchStats){
  c.activeMatch=null;c.checkpoint=null;c.matchContext=null;
  if(!match.round){League.simulateWeek(c.league,c.league.week,c.teamId);if(c.league.week<(c.stage==='college'?12:17))League.advanceWeek(c.league);else if(c.stage==='college')seedCollegePostseason(c);else seedPlayoffs(c);}
  progressPostseason(c);
+ if(c.stage==='college')c.lastResult.draftProjection=draftProjection(c);
  c.lastResult.stakes={before:stakesBefore,after:seasonStakes(c)};
  c.lastResult.stakes.summary=stakesResult(stakesBefore,c.lastResult.stakes.after);
  return c.lastResult;

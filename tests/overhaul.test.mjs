@@ -261,4 +261,23 @@ await test('career reload preserves a pending PAT and never re-awards a complete
  h.engine.restoreCheckpoint(saved);assert.equal(h.game.playerScore,7);h.step(450);h.hud.continueResult();
  assert.equal(h.game.possession,'cpu');assert.equal(h.game.playerScore,7);assert.equal(h.engine.matchState.stats.plays.length,1);
 });
+
+
+for(const down of [1,2,3,4])await test(`field goal available on down ${down} with three seconds remaining`,async()=>{
+ const h=await harness();h.engine.startNewGame();h.engine.startPlayerDrive(75);
+ Object.assign(h.game,{down,quarter:4,clock:3,playerScore:14,cpuScore:16});
+ assert.ok(h.engine.canAttemptFieldGoal());h.engine.attemptFieldGoal();assert.equal(h.game.phase,'kicking');assert.equal(h.game.kick.distance,42);
+ h.step(940);h.engine.kickInput();h.step(628);h.engine.kickInput();h.step(560);
+ for(let i=0;i<6;i++)h.step(1000);
+ assert.equal(h.game.playerScore,17);assert.equal(h.game.clock,0);h.hud.continueResult();assert.equal(h.game.phase,'gameover');
+ h.engine.attemptFieldGoal();assert.equal(h.game.playerScore,17);assert.equal(h.game.phase,'gameover');
+});
+await test('any-down kicking respects range, possession, pause and live-play guards',async()=>{
+ const h=await harness();h.engine.startNewGame();h.engine.startPlayerDrive(52);assert.equal(h.engine.canAttemptFieldGoal(),false);
+ h.engine.startPlayerDrive(75);h.game.paused=true;assert.equal(h.engine.canAttemptFieldGoal(),false);h.game.paused=false;
+ h.game.possession='cpu';assert.equal(h.engine.canAttemptFieldGoal(),false);h.game.possession='player';
+ h.engine.choosePlay('trips_slants');assert.ok(h.engine.canAttemptFieldGoal());h.engine.onSnap();assert.equal(h.engine.canAttemptFieldGoal(),false);
+ h.game.phase='callsheet';h.game.clock=0;assert.equal(h.engine.canAttemptFieldGoal(),false);h.game.overtime=true;assert.ok(h.engine.canAttemptFieldGoal());
+});
+
 console.log(`${checks} overhaul checks passed.`);

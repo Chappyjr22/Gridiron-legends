@@ -1,3 +1,4 @@
+import {renderDraftNight} from './draftNight.js';
 import {weeklyGoal,DEVELOPMENT,RECOMMENDED_DEVELOPMENT,proProjection} from '../career/development.js';
 import {COLLEGE_TEAMS,COLLEGE_CONFERENCES,SCHOOL_TIERS,SCHEMES} from '../career/collegeData.js';
 import * as Career from '../career/career.js';
@@ -55,7 +56,7 @@ export function renderCollegeCareer(c){
   if(ready){el('career-matchup').textContent='Senior season complete. Your next chapter awaits.';el('career-draft').textContent=c.draft?'View draft selection':'Enter the draft';}
  }else if(c.collegeArchive){
   const a=c.collegeArchive,team=League.findTeam(a.draft.teamId);
-  el('college-progress').innerHTML=`<h3>Your college story</h3><p>${esc(a.school.city)} ${esc(a.school.name)}</p>${a.finalOverall!=null?`<p>Final college overall <b>${a.finalOverall}</b> · Rookie overall <b>${c.proEntry.rookieOverall}</b></p>`:''}<p>${a.stats.passingYards} YDS · ${a.stats.passingTD} TD · ${a.stats.interceptions} INT</p><p>Drafted by ${esc(team.city)} ${esc(team.name)}: round ${a.draft.round}, pick ${a.draft.pick}.</p>`;
+  el('college-progress').innerHTML=`<h3>Your college story</h3><p>${esc(a.school.city)} ${esc(a.school.name)}</p>${a.finalOverall!=null?`<p>Final college overall <b>${a.finalOverall}</b> · Rookie overall <b>${c.proEntry.rookieOverall}</b></p>`:''}<p>${a.stats.passingYards} YDS · ${a.stats.passingTD} TD · ${a.stats.interceptions} INT</p><p>Drafted by ${esc(team.city)} ${esc(team.name)}: round ${a.draft.round}, pick ${a.draft.pick}.</p>${a.draftReport?.projection?.boosts?.map(b=>`<p>${esc(b.title)}: projection ${b.before} → ${b.after}</p>`).join('')||''}`;
  }
  const select=el('league-stat-team'),valid=select.value;
  if(select.dataset.kind!==(college?'college':'pro')){
@@ -77,8 +78,8 @@ export function initCollegeUI(getCareer,persist,render){
  el('school-back').onclick=()=>el('school-dialog').close();
  el('career-draft').onclick=()=>{
   const c=getCareer(),draft=Career.enterDraft(c);if(!draft)return;persist();
-  const team=League.findTeamState(draft.league,draft.teamId),rating=proProjection(Career.careerPlayer(c),c);
-  el('draft-selection').innerHTML=`<p class="sports-kicker">ROUND ${draft.round} · PICK ${draft.pick}</p>${helmet(team)}<h3>${esc(team.city)} ${esc(team.name)}</h3><p>You're headed to the pros as the starting quarterback. ${draft.round<=2?'Lead a winning season with a 4-year contract.':draft.round<=4?'Establish yourself with a 3-year contract.':'Prove you belong with a 2-year contract.'}</p><p>College overall ${rating.collegeOverall} → Pro overall ${rating.overall}. ${c.progressionVersion===2?'Your abilities convert to the pro scale. Development speed stays with you. Unspent college points convert at 3:1; leftover value becomes XP.':'Your original attribute carryover is preserved.'} Your college rating, attributes and achievements stay in your career story.</p>`;
+  const team=League.findTeamState(draft.league,draft.teamId);
+  renderDraftNight(c,draft,team,helmet);
   el('draft-dialog').showModal();
  };
  el('draft-back').onclick=()=>el('draft-dialog').close();
