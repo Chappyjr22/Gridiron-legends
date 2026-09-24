@@ -19,6 +19,36 @@ assert.equal((await handle(new Request(host+'/api/cloud',{method:'PUT',body:'{}'
 assert.equal((await handle(new Request(host+'/api/cloud',{headers:{'X-Career-Owner':'bob'}}),{},backend)).status,409);
 const request=new Request(host+'/api/cloud',{method:'PUT',headers:{Origin:host,'X-Career-Owner':'alice'},body:JSON.stringify({revision:0,mutation:'save-123456',payload})});assert.equal((await handle(request,{},backend)).status,200);
 const result=await handle(new Request(host+'/api/auth/get-session'),{},backend);const json=await result.json();assert.equal(json.session.token,undefined);
-assert.equal((await handle(new Request(host+'/api/auth/sign-up/email',{method:'POST',headers:{Origin:host},body:'{}'}),{},backend)).status,404);
+assert.equal((await handle(new Request(host+'/api/auth/admin/create-user',{method:'POST',headers:{Origin:host},body:'{}'}),{},backend)).status,404);
 const unauthorized=async()=>Response.json(null);assert.equal((await handle(new Request(host+'/api/cloud'),{},unauthorized)).status,401);
 console.log('Cloud checks passed: guest preservation, account isolation, stale tabs, pending writes, conflict copies, payload validation, origin checks, session isolation and token redaction.');
+
+// Password, recovery, and Google routes expose only the intended managed APIs.
+const post=(path,body)=>new Request(host+'/api/auth'+path,{method:'POST',headers:{Origin:host},body:JSON.stringify(body)});
+for(const [path,input,expected] of [
+ ['/sign-in/email',{email:' player@example.invalid ',password:'test-password',rememberMe:false,role:'admin'},{email:'player@example.invalid',password:'test-password',rememberMe:false}],
+ ['/sign-up/email',{email:'player@example.invalid',password:'test-password',emailVerified:true},{email:'player@example.invalid',password:'test-password',name:'Player'}],
+ ['/email-otp/reset-password',{email:'player@example.invalid',otp:'123456',password:'new-password',userId:'other'},{email:'player@example.invalid',otp:'123456',password:'new-password'}],
+ ['/email-otp/request-password-reset',{email:'player@example.invalid'},{email:'player@example.invalid'}],
+ ['/email-otp/verify-email',{email:'player@example.invalid',otp:'123456'},{email:'player@example.invalid',otp:'123456'}],
+ ['/sign-in/social',{provider:'github',callbackURL:'https://evil.example'},{provider:'google',callbackURL:host+'/api/auth/callback',errorCallbackURL:host+'/?account=error',disableRedirect:true}]
+]){
+ const response=await handle(post(path,input),{},async(url,opts)=>{
+  assert.ok(url.endsWith(path));assert.deepEqual(JSON.parse(opts.body),expected);assert.equal(opts.headers.get('x-neon-auth-middleware'),'true');
+  return Response.json({token:'secret',session:{token:'secret'},user:{id:'alice'}},{headers:{'Set-Cookie':'__Secure-neon-auth.session_token=opaque; Domain=neon.tech; Path=/neondb/auth; Secure; HttpOnly; SameSite=None; Max-Age=604800'}});
+ });
+ assert.equal(response.status,200);const value=await response.json();assert.equal(value.token,undefined);assert.equal(value.session.token,undefined);
+ const cookie=response.headers.get('Set-Cookie');assert.match(cookie,/HttpOnly/);assert.match(cookie,/Secure/);assert.match(cookie,/SameSite=Lax/);assert.match(cookie,/Max-Age=604800/);assert.doesNotMatch(cookie,/Domain=/);assert.match(cookie,/Path=\/;/);
+}
+let fetched=false;
+for(const body of [{email:'wrong',password:'test-password'},{email:'a@b.test',password:'short'}])assert.equal((await handle(post('/sign-in/email',body),{},async()=>{fetched=true;})).status,400);
+assert.equal(fetched,false);
+const callback=host+'/api/auth/callback?neon_auth_session_verifier=one-use-verifier&redirect=https://evil.example';
+const rejected=await handle(new Request(callback),{},async()=>{throw Error('Must not exchange without challenge');});assert.equal(rejected.headers.get('Location'),host+'/?account=error');
+const exchanged=await handle(new Request(callback,{headers:{Cookie:'__Secure-neon-auth.session_challenge=challenge; unrelated=private'}}),{},async(url,opts)=>{
+ assert.ok(url.endsWith('/get-session?neon_auth_session_verifier=one-use-verifier'));assert.doesNotMatch(opts.headers.get('Cookie'),/unrelated/);
+ return Response.json({user:{id:'alice'},session:{token:'secret'}},{headers:{'Set-Cookie':'__Secure-neon-auth.session_token=session; Secure; HttpOnly; Path=/; SameSite=None'}});
+});
+assert.equal(exchanged.status,303);assert.equal(exchanged.headers.get('Location'),host+'/?account=signed-in');assert.equal(exchanged.headers.get('Referrer-Policy'),'no-referrer');assert.match(exchanged.headers.get('Set-Cookie'),/HttpOnly/);assert.equal(await exchanged.text(),'');
+assert.equal((await handle(new Request(host+'/api/cloud',{headers:{'X-Career-Owner':'alice'}}),{},async()=>Response.json({user:{id:'alice',emailVerified:false}}))).status,403);
+console.log('Account checks passed: password/recovery validation, fixed Google redirects, challenge-bound callback, persistent HttpOnly cookies and verified cloud ownership.');

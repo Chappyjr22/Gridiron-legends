@@ -1010,3 +1010,14 @@ button:focus-visible,input:focus-visible,select:focus-visible,#field:focus-visib
 #callsheet-overlay #playbook-field-goal{min-height:44px;flex-shrink:0;background:#ffe000;color:#102b49;border:2px solid #102b49;font:18px/1.1 var(--sports-face);padding:6px 10px;}
 #callsheet-overlay #playbook-field-goal:disabled{background:#c2cddd;color:#4d596d;opacity:.7;}
 #callsheet-overlay #playbook-field-goal[hidden]{display:none;}
+
+/* Keep account forms inside the phone viewport, with standard autofill fields. */
+#cloud-login:not([hidden]){display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.cloud-auth-options,.cloud-auth-fields{min-width:0}
+.cloud-auth-tabs{display:flex;gap:8px}.cloud-auth-tabs button{flex:1}
+.cloud-auth-tabs [aria-pressed=true]{outline:2px solid #a37000;outline-offset:2px}
+.cloud-body .cloud-google{width:100%;min-height:44px;background:#fff;color:#1f1f1f;border:1px solid #747775;border-radius:4px;font:500 16px Arial,sans-serif;box-shadow:none}
+.cloud-body .cloud-auth-link{display:block;min-height:44px;margin:0;border:0;box-shadow:none;background:transparent;color:#123e67;text-align:left;text-decoration:underline;font:16px Arial,sans-serif}
+#cloud-remember-row{display:flex;gap:8px;align-items:center;min-height:44px;margin:0}#cloud-remember{width:22px;height:22px;padding:0}
+#cloud-submit{width:100%;min-height:44px}
+@media(orientation:portrait){#cloud-login:not([hidden]){grid-template-columns:1fr;gap:8px}}

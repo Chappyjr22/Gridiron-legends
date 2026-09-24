@@ -1,3 +1,4 @@
+import {initAuthControls} from './auth.js';
 import {careerStorage,OWNER_KEY,CACHE_PREFIX,SAVE_KEYS} from './storage.js';
 import {parseCareer} from '../career/career.js';
 import {readSlots} from '../career/slots.js';
@@ -59,17 +60,11 @@ export function initCloud(){
  function schedule(){clearTimeout(timer);timer=setTimeout(()=>void sync(),3000);message(owner?'Saved on device. Waiting to sync.':'Saved on this device');}
  for(const button of document.querySelectorAll('[data-open-account]'))button.onclick=()=>{dialog.showModal();void session();};
  el('cloud-close').onclick=()=>dialog.close();
- el('cloud-send').onclick=async()=>{
-  const email=el('cloud-email').value.trim();if(!el('cloud-email').reportValidity())return;
-  el('cloud-send').disabled=true;
-  try{await api('/api/auth/email-otp/send-verification-otp',{email,type:'sign-in'});el('cloud-code-row').hidden=false;message('Check your email for the sign-in code.');el('cloud-code').focus();}
-  catch(error){message(error.message);}finally{el('cloud-send').disabled=false;}
- };
- el('cloud-login').onsubmit=async event=>{
-  event.preventDefault();el('cloud-verify').disabled=true;
-  try{await api('/api/auth/sign-in/email-otp',{email:el('cloud-email').value.trim(),otp:el('cloud-code').value.trim()});const s=await api('/api/auth/get-session');if(!s?.user?.id)throw Error('Sign-in did not finish. Please try again.');localStorage.setItem(OWNER_KEY,s.user.id);sessionStorage.setItem('gridironOpenAccount','1');location.reload();}
-  catch(error){message(error.message);}finally{el('cloud-verify').disabled=false;}
- };
+ async function finishSignIn(){
+  const s=await api('/api/auth/get-session');if(!s?.user?.id||!s.user.emailVerified)throw Error('Sign-in did not finish. Please verify your email and try again.');
+  localStorage.setItem(OWNER_KEY,s.user.id);sessionStorage.setItem('gridironOpenAccount','1');location.replace(location.pathname);
+ }
+ initAuthControls({api,message,onSignedIn:finishSignIn});
  el('cloud-switch').onclick=()=>{if(user){localStorage.setItem(OWNER_KEY,user.id);location.reload();}};
  el('cloud-signout').onclick=async()=>{
   if(busy)return;el('cloud-signout').disabled=true;
@@ -111,5 +106,10 @@ export function initCloud(){
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)void session();});
  setInterval(()=>void sync(),30000);
  if(sessionStorage.getItem('gridironOpenAccount')){sessionStorage.removeItem('gridironOpenAccount');dialog.showModal();}
- void session();
+ const accountResult=new URL(location.href).searchParams.get('account');
+ if(accountResult){
+  history.replaceState(null,'',location.pathname);dialog.showModal();
+  if(accountResult==='signed-in')void finishSignIn().catch(error=>message(error.message));
+  else void session().then(()=>message('Google sign-in was cancelled or could not finish. Please try again.'));
+ }else void session();
 }
