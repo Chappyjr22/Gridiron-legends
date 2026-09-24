@@ -73,7 +73,7 @@ export function initCareerExperience(getCareer,persist,refresh=()=>{}){
  addCareerTeamEditorButton(getCareer,persist,()=>{
   const c=getCareer();if(!c)return;
   const team=League.findTeamState(c.league,c.teamId);
-  renderMyTeam(c);
+  refresh();renderMyTeam(c);
   el('career-screen')?.style.setProperty('--career-color',team.colors.primary);
  });
  el('team-player-close').onclick=()=>el('team-player-dialog').close();

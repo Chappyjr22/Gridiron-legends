@@ -1,5 +1,5 @@
 import {slingshotTarget} from './aim.js';
-import {requestDive,requestJuke} from './runnerControls.js';
+import {requestDive,requestJuke,canJuke,runnerGesture} from './runnerControls.js';
 import { simulationNow } from '../state/clock.js';
 import { canvas } from '../rendering/canvas.js';
 import { SCENE_TOP } from '../rendering/sceneLayout.js';
@@ -31,9 +31,21 @@ function beginTapPass(point){
   });
   entities.pendingTapThrow={pointerId:activePointer,playerKey:best<=36?playerKey:null,target:{x:point.x,y:point.y},releaseAt:simulationNow()+240};
 }
-let activePointer=null,pendingRunTap=null,gestureStart=null;
+let activePointer=null,pendingRunTap=null,gestureStart=null,secondaryGesture=null;
+function startGesture(ev){return {pointerId:ev.pointerId,x:ev.clientX,y:ev.clientY,time:simulationNow(),runner:canJuke()?entities.ballCarrier:null};}
+function finishGesture(start,ev){
+ if(!start?.runner||start.runner!==entities.ballCarrier||!canJuke())return;
+ const move=runnerGesture(ev.clientX-start.x,ev.clientY-start.y,simulationNow()-start.time);
+ if(move==='dive')requestDive();
+ else if(move)requestJuke(move==='up'?-1:1);
+}
 canvas.addEventListener('pointerdown',ev=>{
-  if(activePointer!==null)return;
+  if(activePointer!==null){
+    if(!secondaryGesture&&interaction.steering&&canJuke()){
+      secondaryGesture=startGesture(ev);canvas.setPointerCapture(ev.pointerId);
+    }
+    return;
+  }
   if(game.phase==='kicking'){activePointer=ev.pointerId;canvas.setPointerCapture(ev.pointerId);kickInput();return;}
   if(editState.editMode){
     activePointer=ev.pointerId;
@@ -45,11 +57,11 @@ canvas.addEventListener('pointerdown',ev=>{
   activePointer=ev.pointerId;
   canvas.setPointerCapture(ev.pointerId);
   const p=pointerPos(ev);
-  gestureStart={...p,time:simulationNow()};
+  gestureStart=startGesture(ev);
   interaction.aimAnchor={...p};
   if(game.phase==='presnap'){
     if(PLAYS[game.playCall]?.type==='run'){
-      startRunOption();
+      startRunOption();gestureStart=startGesture(ev);
       interaction.steering=true;interaction.steerAnchor={x:p.x,y:p.y};interaction.steerCurrent={x:p.x,y:p.y};
       return;
     }
@@ -103,6 +115,7 @@ canvas.addEventListener('pointermove',ev=>{
   else if(interaction.steering){interaction.steerCurrent=p;}
 });
 canvas.addEventListener('pointerup',ev=>{
+  if(ev.pointerId===secondaryGesture?.pointerId){finishGesture(secondaryGesture,ev);secondaryGesture=null;return;}
   if(ev.pointerId!==activePointer)return;
   activePointer=null;
   if(editState.editMode){editState.dragEntity=null;return;}
@@ -123,17 +136,14 @@ canvas.addEventListener('pointerup',ev=>{
     }
     interaction.aimTarget=null;interaction.aimAnchor=null;
   }
-  if(interaction.steering&&gestureStart&&simulationNow()-gestureStart.time<280){
-    const p=pointerPos(ev),dx=p.x-gestureStart.x,dy=p.y-gestureStart.y;
-    if(dx<-45&&Math.abs(dx)>Math.abs(dy)*1.4)requestDive();
-    else if(Math.abs(dy)>40&&Math.abs(dy)>Math.abs(dx)*1.4)requestJuke(Math.sign(dy));
-  }
-  gestureStart=null;interaction.steering=false;
+  if(interaction.steering)finishGesture(gestureStart,ev);
+  gestureStart=null;secondaryGesture=null;interaction.steering=false;
 });
 function cancelPointer(ev){
-  if(ev&&activePointer!==null&&ev.pointerId!==activePointer)return;
+  if(ev?.pointerId===secondaryGesture?.pointerId){secondaryGesture=null;return;}
+  if(ev&&ev.pointerId!==activePointer)return;
   if(activePointer!==null&&entities.pendingTapThrow?.pointerId===activePointer)entities.pendingTapThrow=null;
-  activePointer=null;pendingRunTap=null;
+  activePointer=null;pendingRunTap=null;gestureStart=null;secondaryGesture=null;
   editState.dragEntity=null;
   interaction.aiming=false;interaction.steering=false;
   interaction.aimTarget=null;interaction.aimAnchor=null;interaction.steerAnchor=null;interaction.steerCurrent=null;
