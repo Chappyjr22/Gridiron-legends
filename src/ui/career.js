@@ -1,3 +1,4 @@
+import {renderWeekly} from './careerWeekly.js';
 import {resolvedUniform} from '../rendering/uniformVariants.js';
 import {contrastingOpponent} from '../rendering/uniforms.js';
 import {normalizeQuarterback,upgradeOffer,levelThreshold,weeklyGoal,QB_KEYS,assessGoal,developmentProfile,pointsPerLevel} from '../career/development.js';
@@ -132,7 +133,8 @@ function render(){
  const rank=standings.findIndex(t=>t.id===team.id),start=rank>3?rank-3:0;
  el('career-home-standings').innerHTML=standings.slice(start,start+4).map((t,i)=>`<div class="career-list-row ${t.id===team.id?'career-selected':''}"><span>${start+i+1}. ${escape(t.abbr)}</span><b>${recordLabel(t)}</b></div>`).join('');
  const objective=weeklyGoal(career);
- if(match){el('career-weekly-goal').textContent=objective.label;el('career-goal-reward').textContent=`+${objective.xp} XP`;}
+ if(match){el('career-weekly-goal').textContent=objective.label;el('career-goal-reward').textContent=objective.kind==='teammate'?'+1 CATCHING':`+${objective.xp} XP`;}
+ renderWeekly(career,match,persist,render);
  let journey=el('career-journey');if(!journey){journey=document.createElement('section');journey.id='career-journey';el('career-awards').after(journey);}
  journey.innerHTML=`<h3>Career timeline</h3><p>Next passing milestone: ${Math.max(1000,Math.ceil((career.totals.passingYards+1)/1000)*1000).toLocaleString()} yards</p>${career.proEntry?`<p>${escape(career.proEntry.expectation)} · Coach confidence ${career.coachConfidence??50}%</p>`:''}${(career.seasonArchive||[]).map(s=>`<p>Season ${s.season} · ${escape(s.team)} · ${s.record.wins}–${s.record.losses} · ${s.stats.passingYards} YDS · ${s.stats.passingTD} TD<br>${escape(s.awards.join(' · '))}</p>`).join('')}${career.collegeArchive?`<p>College: ${escape(career.collegeArchive.awards.map(a=>a.title).join(' · '))}</p>`:''}${career.offseasonNews?.length?`<details><summary>Offseason changes (${career.offseasonNews.length})</summary>${career.offseasonNews.map(n=>`<p>${escape(n)}</p>`).join('')}</details>`:''}`;
 
@@ -275,9 +277,9 @@ export function initCareer(){
  });
  uiHooks.checkpoint=saved=>{if(career?.activeMatch){career.checkpoint=saved;persist();
  const s=saved.stats.players[career.playerId]||{attempts:0,completions:0,passingYards:0,interceptions:0,rushingYards:0,passingTD:0,rushingTD:0};
- const g=assessGoal(career,s,game.playerScore>game.cpuScore);
+ const g=assessGoal(career,s,game.playerScore>game.cpuScore,saved.stats.players);
  let note=el('live-career-objective');if(!note){note=document.createElement('p');note.id='live-career-objective';note.className='experience-note';el('pause-overlay').querySelector('.pause-scroll')?.append(note);if(!note.isConnected)el('pause-overlay').append(note);}
- note.textContent=`Objective: ${g.label}. Current: ${s.completions}/${s.attempts} passing, ${s.interceptions} INT, ${s.rushingYards} rushing yards, ${s.passingTD+s.rushingTD} TD. ${g.met?'On track.':''} Evaluated at final whistle.`;
+ note.textContent=`Objective: ${g.label}. Current: ${g.kind==='teammate'?`${saved.stats.players[g.playerId]?.receptions||0}/3 catches. `:''}${s.completions}/${s.attempts} passing, ${s.interceptions} INT, ${s.rushingYards} rushing yards, ${s.passingTD+s.rushingTD} TD. ${g.met?'On track.':''} Evaluated at final whistle.`;
  }};
  uiHooks.careerSettingsChanged=()=>{
   if(!career?.activeMatch||!game.career)return;

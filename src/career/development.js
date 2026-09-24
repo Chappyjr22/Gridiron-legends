@@ -42,6 +42,7 @@ export function proProjection(player,c){
  const attributes=Object.fromEntries(Object.entries(player.attributes).map(([k,v])=>[k,c?.progressionVersion===2?proAttribute(v):v]));
  return {collegeOverall:player.rating,overall:Math.round(QB_KEYS.reduce((n,k)=>n+attributes[k],0)/4),attributes};
 }
+export function preparationKey(c){return `${c.stage||'pro'}-${c.league.season}-${c.league.week}-${c.postseason?.round||0}`;}
 export function weeklyGoal(c){
  const week=c.postseason?12+c.postseason.round:c.league.week;
  const goals=[
@@ -52,10 +53,14 @@ export function weeklyGoal(c){
   {kind:'scramble',label:'Gain 15 rushing yards with your QB',target:15},
   {kind:'win',label:'Win with no more than 1 interception',target:1}
  ];
- return {...goals[(week-1)%goals.length],xp:Math.round((c.stage==='college'?20:25)*developmentProfile(c).multiplier)};
+ const xp=Math.round((c.stage==='college'?20:25)*developmentProfile(c).multiplier);
+ const prep=c.weeklyPreparation?.key===preparationKey(c)?c.weeklyPreparation:null;
+ if(prep?.kind==='challenge')return {kind:'challenge',label:'Win with 2+ QB touchdowns, no interceptions and 6+ passes',xp:Math.round(xp*1.5)};
+ if(prep?.kind==='teammate')return {kind:'teammate',label:`Complete 3 passes to ${prep.name}`,playerId:prep.playerId,playerName:prep.name,xp:0};
+ return {...goals[(week-1)%goals.length],xp};
 }
-export function assessGoal(c,s,won){
+export function assessGoal(c,s,won,players={}){
  const g=weeklyGoal(c),a=s.attempts||0;
- const met={efficient:a>=6&&s.completions/a>=g.target,secure:a>=6&&!s.interceptions,moving:a>=6&&s.passingYards/a>=g.target,balanced:s.passingTD+s.rushingTD>=2,scramble:s.rushingYards>=15,win:won&&s.interceptions<=1}[g.kind];
+ const met={teammate:(players[g.playerId]?.receptions||0)>=3,challenge:won&&a>=6&&!s.interceptions&&(s.passingTD||0)+(s.rushingTD||0)>=2,efficient:a>=6&&s.completions/a>=g.target,secure:a>=6&&!s.interceptions,moving:a>=6&&s.passingYards/a>=g.target,balanced:s.passingTD+s.rushingTD>=2,scramble:s.rushingYards>=15,win:won&&s.interceptions<=1}[g.kind];
  return {...g,met:!!met,xp:met?g.xp:0};
 }
