@@ -548,10 +548,21 @@
  <div class="cloud-body">
  <p id="cloud-message" role="status" aria-live="polite">Guest careers are saved on this device.</p>
  <form id="cloud-login">
-  <p>Sign in with an email code to save your careers across devices. Your guest careers stay on this device until you choose to upload them.</p>
-  <label for="cloud-email">Email</label><input id="cloud-email" type="email" autocomplete="email" required maxlength="254">
-  <button id="cloud-send" type="button" class="sports-button gold">Email me a code</button>
-  <div id="cloud-code-row" hidden><label for="cloud-code">Email code</label><input id="cloud-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required><button id="cloud-verify" class="sports-button gold">Sign in</button></div>
+  <div class="cloud-auth-options">
+   <button id="cloud-google" type="button" class="cloud-google">Continue with Google</button>
+   <p id="cloud-auth-help">Sign in to save your careers across devices.</p>
+   <div class="cloud-auth-tabs"><button type="button" data-auth-mode="signin" class="sports-button blue">Sign in</button><button type="button" data-auth-mode="signup" class="sports-button blue">Create account</button></div>
+   <button type="button" data-auth-mode="forgot" class="cloud-auth-link">Forgot password?</button>
+   <button type="button" data-auth-mode="code" class="cloud-auth-link">Use an email code instead</button>
+  </div>
+  <div class="cloud-auth-fields">
+   <label for="cloud-email">Email</label><input id="cloud-email" name="username" type="email" autocomplete="username" autocapitalize="none" spellcheck="false" required maxlength="254">
+   <div id="cloud-password-row"><label id="cloud-password-label" for="cloud-password">Password</label><input id="cloud-password" name="password" type="password" autocomplete="current-password" minlength="8" maxlength="128" required></div>
+   <div id="cloud-code-row" hidden><label for="cloud-code">Email code</label><input id="cloud-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required disabled></div>
+   <label id="cloud-remember-row"><input id="cloud-remember" type="checkbox" checked> Keep me signed in</label>
+   <button id="cloud-send" type="button" class="sports-button blue" hidden>Send a new code</button>
+   <button id="cloud-submit" class="sports-button gold">Sign in</button>
+  </div>
  </form>
  <button id="cloud-switch" class="sports-button gold" hidden>Open signed-in account</button>
  <section id="cloud-signed-in" hidden><p id="cloud-email-label"></p>

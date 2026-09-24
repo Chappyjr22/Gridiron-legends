@@ -1,3 +1,4 @@
+import {authRoutes,authHeaders,copyCookies,authBody,oauthCallback} from './auth.js';
 import {parseCareer} from '../src/career/career.js';
 import {SAVE_KEYS} from '../src/cloud/storage.js';
 const production='gridiron-legends.jacobchapman3.workers.dev';
@@ -6,7 +7,7 @@ const services={
  [production]:{auth:'https://ep-misty-thunder-aybsw4h8.neonauth.c-5.us-east-2.aws.neon.tech/neondb/auth',data:'https://ep-misty-thunder-aybsw4h8.apirest.c-5.us-east-2.aws.neon.tech/neondb/rest/v1'},
  [preview]:{auth:'https://ep-solitary-wave-ay4oih88.neonauth.c-5.us-east-2.aws.neon.tech/neondb/auth',data:'https://ep-solitary-wave-ay4oih88.apirest.c-5.us-east-2.aws.neon.tech/neondb/rest/v1'}
 };
-const authRoutes=new Map([['/get-session','GET'],['/email-otp/send-verification-otp','POST'],['/sign-in/email-otp','POST'],['/sign-out','POST']]);
+services['feature-account-sign-in-gridiron-legends.jacobchapman3.workers.dev']=services[preview];
 const json=(body,status=200)=>Response.json(body,{status,headers:{'Cache-Control':'no-store'}});
 export function validatePayload(values){
  if(!values||typeof values!=='object'||Array.isArray(values))throw Error('Invalid save');
@@ -18,15 +19,6 @@ export function validatePayload(values){
  for(const value of Object.values(values))if(typeof value!=='string')throw Error('Invalid save data');
  if(values[SAVE_KEYS[1]]&&!parseCareer(values[SAVE_KEYS[1]]))throw Error('Invalid active career');
  return values;
-}
-function authHeaders(request){
- const headers=new Headers({'Content-Type':'application/json','Origin':new URL(request.url).origin});
- const cookies=(request.headers.get('Cookie')||'').split(';').filter(c=>/^(?:__Secure-|__Host-)?(?:neon-auth|better-auth)[._-]/.test(c.trim()));
- if(cookies.length)headers.set('Cookie',cookies.join(';'));
- return headers;
-}
-function copyCookies(from,to){
- for(const cookie of from.getSetCookie())to.append('Set-Cookie',cookie.replace(/;\s*Domain=[^;]*/ig,'').replace(/;\s*Path=[^;]*/ig,'; Path=/'));
 }
 async function limitedBody(request,limit){
  if(Number(request.headers.get('Content-Length'))>limit)throw Error('Request too large');
@@ -41,14 +33,13 @@ export async function handle(request,env,fetcher=fetch){
  if(request.method!=='GET'&&request.headers.get('Origin')!==url.origin)return json({message:'Invalid request origin'},403);
  const headers=authHeaders(request),opts={headers,redirect:'manual',signal:AbortSignal.timeout(15000)};
  try{
+  if(url.pathname==='/api/auth/callback'&&request.method==='GET')return await oauthCallback(request,service,fetcher);
   if(url.pathname.startsWith('/api/auth/')){
    const path=url.pathname.slice('/api/auth'.length);
    if(authRoutes.get(path)!==request.method)return json({message:'Not found'},404);
    let body;if(request.method==='POST'){
     const input=JSON.parse(await limitedBody(request,4096));
-    if(path==='/email-otp/send-verification-otp')body=JSON.stringify({email:input.email,type:'sign-in'});
-    else if(path==='/sign-in/email-otp')body=JSON.stringify({email:input.email,otp:input.otp});
-    else body='{}';
+    try{body=JSON.stringify(authBody(path,input,url.origin));}catch(error){return json({message:error.message},400);}
    }
    const upstream=await fetcher(service.auth+path,{...opts,method:request.method,body});
    const result=await upstream.json();
@@ -61,7 +52,7 @@ export async function handle(request,env,fetcher=fetch){
   const sessionResponse=await fetcher(service.auth+'/get-session',opts),session=await sessionResponse.json();
   if(!sessionResponse.ok||!session?.user?.id)return json({message:'Sign in to sync your careers.'},401);
   if(session.user.id!==request.headers.get('X-Career-Owner'))return json({message:'Account changed. Reload before syncing.'},409);
-  // Email OTP verifies ownership; reject unverified sessions created outside our UI.
+  // Cloud access always requires a verified email, regardless of sign-in method.
   if(!session.user.emailVerified)return json({message:'Verify your email before syncing.'},403);
   const jwtResponse=await fetcher(service.auth+'/token',opts),jwt=await jwtResponse.json();
   if(!jwtResponse.ok||!jwt.token)return json({message:'Sign in again to sync.'},401);
