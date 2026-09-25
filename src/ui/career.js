@@ -1,4 +1,5 @@
 import {renderWeekly} from './careerWeekly.js';
+import {renderRookie} from './careerRookie.js';
 import {resolvedUniform} from '../rendering/uniformVariants.js';
 import {contrastingOpponent} from '../rendering/uniforms.js';
 import {normalizeQuarterback,upgradeOffer,levelThreshold,weeklyGoal,QB_KEYS,assessGoal,developmentProfile,pointsPerLevel} from '../career/development.js';
@@ -135,8 +136,9 @@ function render(){
  const objective=weeklyGoal(career);
  if(match){el('career-weekly-goal').textContent=objective.label;el('career-goal-reward').textContent=objective.kind==='teammate'?'+1 CATCHING':`+${objective.xp} XP`;}
  renderWeekly(career,match,persist,render);
+ renderRookie(career);
  let journey=el('career-journey');if(!journey){journey=document.createElement('section');journey.id='career-journey';el('career-awards').after(journey);}
- journey.innerHTML=`<h3>Career timeline</h3><p>Next passing milestone: ${Math.max(1000,Math.ceil((career.totals.passingYards+1)/1000)*1000).toLocaleString()} yards</p>${career.proEntry?`<p>${escape(career.proEntry.expectation)} · Coach confidence ${career.coachConfidence??50}%</p>`:''}${career.proEntry?.expectations?.length?`<h3>Rookie season targets</h3><ul>${career.proEntry.expectations.map(e=>`<li>${escape(e.label)}</li>`).join('')}</ul>`:''}${(career.seasonArchive||[]).map(s=>`<p>Season ${s.season} · ${escape(s.team)} · ${s.record.wins}–${s.record.losses} · ${s.stats.passingYards} YDS · ${s.stats.passingTD} TD<br>${escape(s.awards.join(' · '))}</p>`).join('')}${career.collegeArchive?`<p>College: ${escape(career.collegeArchive.awards.map(a=>a.title).join(' · '))}</p>`:''}${career.offseasonNews?.length?`<details><summary>Offseason changes (${career.offseasonNews.length})</summary>${career.offseasonNews.map(n=>`<p>${escape(n)}</p>`).join('')}</details>`:''}`;
+ journey.innerHTML=`<h3>Career timeline</h3><p>Next passing milestone: ${Math.max(1000,Math.ceil((career.totals.passingYards+1)/1000)*1000).toLocaleString()} yards</p>${career.proEntry?`<p>${escape(career.proEntry.expectation)} · Coach confidence ${career.coachConfidence??50}%</p>`:''}${(career.seasonArchive||[]).map(s=>`<p>Season ${s.season} · ${escape(s.team)} · ${s.record.wins}–${s.record.losses} · ${s.stats.passingYards} YDS · ${s.stats.passingTD} TD<br>${escape(s.awards.join(' · '))}</p>`).join('')}${career.collegeArchive?`<p>College: ${escape(career.collegeArchive.awards.map(a=>a.title).join(' · '))}</p>`:''}${career.offseasonNews?.length?`<details><summary>Offseason changes (${career.offseasonNews.length})</summary>${career.offseasonNews.map(n=>`<p>${escape(n)}</p>`).join('')}</details>`:''}`;
 
  el('career-awards').textContent=career.awards.map(a=>`${career.stage==='college'?'College':'Season '+a.season}: ${a.title}`).join(' · ')||'First milestone: finish your first game.';
 }
