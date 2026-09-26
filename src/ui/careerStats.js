@@ -9,16 +9,26 @@ const metrics={
  rushing:[['rushingYards','Rushing yards'],['rushingTD','Touchdowns'],['carries','Carries']]
 };
 const score=(s,key)=>!s?null:key==='completionPct'?(s.attempts?s.completions*100/s.attempts:null):s[key];
+function accomplishments(c){
+ return [...(c.collegeArchive?.awards||[]).map(a=>({...a,era:'College'})),...c.awards.map(a=>({...a,era:c.stage==='college'?'College':`Pro season ${a.season}`}))];
+}
 export function renderPlayerStats(c){
- const root=el('career-qb-stats'),category=root.dataset.category||'passing';
+ const root=el('career-qb-stats'),category=root.dataset.category||'passing',awards=accomplishments(c);
+ const titles=awards.filter(a=>/^(League champion|National college champion)$/.test(a.title)).length;
+ const mvps=awards.filter(a=>/MVP/i.test(a.title)).length;
+ const honors=awards.length-titles-mvps;
  const draw=()=>{
   const rushing=root.dataset.category==='rushing';
-  root.querySelector('.stat-comparison').innerHTML=[['Game',c.lastResult?.stats],['Season',c.seasonStats],['Career',c.totals]].map(([title,s])=>`<section aria-label="${title} ${rushing?'rushing':'passing'}"><h3>${title}</h3>${s?tiles(rushing?[['CAR',s.carries??0],['YDS',s.rushingYards??0],['AVG',rate(s.rushingYards??0,s.carries)],['TD',s.rushingTD??0],['FUM',s.fumbles??0],['LOST',s.fumblesLost??0]]:[['YDS',s.passingYards],['TD',s.passingTD],['CMP',rate(s.completions*100,s.attempts,'%')],['ATT',s.attempts],['INT',s.interceptions],['SACK',s.sacks]]):'<p>No completed game yet.</p>'}</section>`).join('');
-  root.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.category===root.dataset.category)));
+  root.querySelector('.stat-comparison').innerHTML=[['Game',c.lastResult?.stats],['Season',c.seasonStats],['Career',c.totals]].map(([title,s])=>`<section aria-label="${title} ${rushing?'rushing':'passing'}"><h3>${title}<small>${s?`${s.games??1} GP`: 'Awaiting debut'}</small></h3>${s?tiles(rushing?[['CAR',s.carries??0],['YDS',s.rushingYards??0],['AVG',rate(s.rushingYards??0,s.carries)],['TD',s.rushingTD??0],['FUM',s.fumbles??0],['LOST',s.fumblesLost??0]]:[['CMP',`${s.completions}/${s.attempts} · ${rate(s.completions*100,s.attempts,'%')}`],['YDS',s.passingYards],['Y/A',rate(s.passingYards,s.attempts)],['TD',s.passingTD],['INT',s.interceptions],['SACK',s.sacks],['FUM',s.fumbles??0]]):'<p>No completed game yet.</p>'}</section>`).join('');
+  root.querySelectorAll('[data-category]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.category===root.dataset.category)));
  };
  root.dataset.category=category;
- root.innerHTML='<div class="player-stat-categories" role="group" aria-label="Player stat category"><button type="button" data-category="passing">Passing</button><button type="button" data-category="rushing">Rushing</button></div><div class="stat-comparison"></div>';
- root.querySelectorAll('button').forEach(b=>b.onclick=()=>{root.dataset.category=b.dataset.category;draw();});
+ root.innerHTML=`<div class="stat-comparison"></div><div class="player-stat-footer"><button type="button" class="player-awards-strip" aria-label="View accomplishments: ${titles} titles, ${mvps} MVPs, ${honors} honors"><span><i aria-hidden="true">★</i><b>${titles}</b> TITLES</span><span><i aria-hidden="true">★</i><b>${mvps}</b> MVP</span><span><i aria-hidden="true">◆</i><b>${honors}</b> HONORS</span></button><div class="player-stat-categories" role="group" aria-label="Player stat category"><button type="button" data-category="passing">Passing</button><button type="button" data-category="rushing">Rushing</button></div></div>`;
+ root.querySelectorAll('[data-category]').forEach(b=>b.onclick=()=>{root.dataset.category=b.dataset.category;draw();});
+ root.querySelector('.player-awards-strip').onclick=()=>{
+  el('player-awards-list').innerHTML=awards.length?`<ul class="player-honors-list">${awards.slice().reverse().map(a=>`<li><span aria-hidden="true">★</span><strong>${esc(a.title)}</strong><small>${esc(a.era)}</small></li>`).join('')}</ul>`:'<p>Your story starts here. Finish your first game to earn your first milestone.</p>';
+  el('player-awards-dialog').showModal();
+ };
  draw();
 }
 export function renderCareerStats(c){
