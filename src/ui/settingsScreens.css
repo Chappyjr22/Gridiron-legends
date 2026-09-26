@@ -28,7 +28,7 @@
 .compact-settings .settings-help h3{margin:0 0 6px;color:#fff;font:20px/1 var(--sports-face)}
 .compact-settings .settings-help p{margin:0;color:#bdd0ec;font:14px/1.35 Arial,sans-serif}
 .compact-settings .settings-help #checkpoint-help:empty{display:none}
-#setup-screen.compact-settings:not([data-settings-page=gameplay]) .setup-grid,#pause-overlay.compact-settings:not([data-settings-page=gameplay]) .settings-gameplay,.compact-settings:not([data-settings-page=sound]) .audio-settings,.compact-settings:not([data-settings-page=help]) .settings-help{display:none}
+#setup-screen.compact-settings:not([data-settings-page=gameplay]) .setup-grid,#pause-overlay.compact-settings:not([data-settings-page=gameplay]) .settings-gameplay,#setup-screen.compact-settings:not([data-settings-page=sound]) .audio-settings,#pause-overlay.compact-settings:not([data-settings-page=sound]) .audio-settings,.compact-settings:not([data-settings-page=help]) .settings-help{display:none}
 #setup-screen.compact-settings .setup-actions,#pause-overlay.compact-settings .pause-actions{display:flex;gap:10px;flex:none;margin:0;padding:6px 10px;border-top:2px solid #4679aa;background:#173b67}
 #setup-screen.compact-settings .setup-actions button,#pause-overlay.compact-settings .pause-actions button{width:auto;flex:1;margin:0;padding:6px;min-height:44px;font:22px/1 var(--sports-face);border:1px solid #50769e;border-radius:0;background:#1b426d;color:#eef3ff;box-shadow:none;transform:none}
 #pause-overlay.compact-settings .pause-actions #btn-resume{background:#ffe04e;color:#102643}

@@ -138,7 +138,7 @@ for(const viewport of [{width:844,height:304},{width:932,height:430}])test(`drag
 });
 
 test('kicking practice is reachable through controls and preserves its chosen distance',async({page})=>{
- await page.goto('/');await page.getByRole('button',{name:'Settings',exact:true}).click();await page.getByRole('button',{name:'Practice guide',exact:true}).click();
+ await page.goto('/');await page.getByRole('button',{name:'Settings',exact:true}).click();await page.locator('#setup-screen [data-settings-page=help]').click();await page.getByRole('button',{name:'Practice guide',exact:true}).click();
  await page.locator('#practice-kick-distance').selectOption('50');await page.locator('#practice-kicking').click();
  await expect.poll(()=>page.evaluate(async()=>{const {game}=await import('/src/state/gameState.js');return [game.practice,game.kick?.distance,game.kick?.stage];})).toEqual([true,50,'power']);
  await page.screenshot({path:'test-results/kick-practice-50.png'});
