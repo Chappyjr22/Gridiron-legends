@@ -70,9 +70,17 @@ function openPlayer(c,p){
 }
 export function renderMyTeam(c){
  const team=League.findTeamState(c.league,c.teamId);
- const roster=playingRoster(team);
+ const root=el('my-team-roster');
+ if(root.dataset.career!==c.careerId){root.dataset.career=c.careerId;root.dataset.unit='offense';}
+ const unit=root.dataset.unit||'offense';
+ const positions={offense:['QB','RB','FB','WR','TE','OL','C','G','T'],defense:['DL','DE','DT','LB','DB','CB','S'],special:['K','P','LS','KR','PR']};
+ const roster=playingRoster(team).filter(p=>positions[unit].includes(p.position));
+ for(const button of document.querySelectorAll('[data-team-unit]')){
+  button.setAttribute('aria-pressed',String(button.dataset.teamUnit===unit));
+  button.onclick=()=>{root.dataset.unit=button.dataset.teamUnit;root.scrollTop=0;renderMyTeam(c);};
+ }
  el('my-team-name').textContent=`${team.city} ${team.name}`;
- el('my-team-roster').innerHTML=roster.map(p=>`<button class="roster-card ${p.id===c.playerId?'roster-you':''}" data-player-id="${esc(p.id)}"><canvas width="64" height="64" aria-hidden="true"></canvas><span class="roster-identity"><strong>${esc(name(p))}</strong><small>#${p.number} · ${esc(p.position)}${p.id===c.playerId?' · YOU':''}</small></span><span class="roster-numbers"><span><b>${p.rating}</b><small>OVR</small></span><span><b>${p.attributes.speed}</b><small>SPD</small></span><span><b>${p.age}</b><small>AGE</small></span></span></button>`).join('');
+ el('my-team-roster').innerHTML=roster.map(p=>`<button class="roster-card ${p.id===c.playerId?'roster-you':''}" data-player-id="${esc(p.id)}"><canvas width="64" height="64" aria-hidden="true"></canvas><span class="roster-identity"><strong>${esc(name(p))}</strong><small>#${p.number} · ${esc(p.position)}${p.id===c.playerId?' · YOU':''}</small></span><span class="roster-numbers"><span><b>${p.rating}</b><small>OVR</small></span><span><b>${p.attributes.speed}</b><small>SPD</small></span><span><b>${p.age}</b><small>AGE</small></span></span></button>`).join('')||`<p class="roster-empty">${unit==='special'?'Special teams players are not tracked separately yet.':'No players in this unit.'}</p>`;
  for(const b of el('my-team-roster').querySelectorAll('button')){const p=roster.find(p=>p.id===b.dataset.playerId);paintPlayerPortrait(b.querySelector('canvas'),team,p);b.onclick=()=>openPlayer(c,p);}
 }
 export function showPostgame(c){

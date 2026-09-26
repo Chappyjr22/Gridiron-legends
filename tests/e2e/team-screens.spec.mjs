@@ -4,6 +4,12 @@ for(const [width,height] of [[844,304],[667,375],[844,390]])test(`compact team s
  page.on('pageerror',e=>errors.push(e.message));await page.goto('/');
  await page.evaluate(async()=>{const C=await import('/src/career/career.js');C.saveCareer(C.createCareer({name:'Roster QB',schoolId:'college-bluegrass'}));});
  await page.reload();await page.getByRole('button',{name:'Career Mode',exact:true}).tap();await page.getByRole('button',{name:'Continue last career',exact:true}).tap();await page.getByRole('tab',{name:'My Team',exact:true}).tap();
+ await expect(page.locator('[data-team-unit=offense]')).toHaveAttribute('aria-pressed','true');
+ await expect(page.locator('.roster-card')).toHaveCount(8);
+ await page.locator('[data-team-unit=defense]').tap();await expect(page.locator('.roster-card')).toHaveCount(5);await expect(page.locator('.roster-you')).toHaveCount(0);
+ await page.locator('.roster-card').first().tap();await page.locator('#team-player-close').tap();await expect(page.locator('[data-team-unit=defense]')).toHaveAttribute('aria-pressed','true');
+ await page.locator('[data-team-unit=special]').tap();await expect(page.locator('.roster-card')).toHaveCount(0);await expect(page.locator('.roster-empty')).toContainText('not tracked separately');
+ await page.locator('[data-team-unit=offense]').tap();
  const panel=page.locator('#career-team-panel');expect(await panel.evaluate(e=>e.scrollHeight<=e.clientHeight+1&&e.scrollWidth<=e.clientWidth+1)).toBe(true);
  for(const b of await page.locator('.team-screen-toolbar button,.career-nav button').all())await expect(b).toBeInViewport({ratio:1});
  const visible=await page.locator('.roster-card').evaluateAll(rows=>rows.filter(r=>{const b=r.getBoundingClientRect(),p=r.parentElement.getBoundingClientRect();return b.top>=p.top&&b.bottom<=p.bottom;}).length);expect(visible).toBeGreaterThanOrEqual(6);
