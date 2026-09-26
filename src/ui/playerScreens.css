@@ -10,7 +10,7 @@
 #career-screen #career-player-panel>section{min-height:0;flex:1;margin:0;padding:10px max(16px,env(safe-area-inset-right)) 10px max(16px,env(safe-area-inset-left))}
 #career-screen #player-upgrades-view{grid-template-columns:minmax(0,1fr) minmax(0,1.45fr);gap:20px;align-items:stretch}
 #career-screen .qb-passport{display:grid;grid-template-columns:90px minmax(0,1fr);grid-template-rows:auto auto auto 1fr auto auto;align-content:center;align-items:center;justify-items:start;gap:4px 12px;border:1px solid #2a6caf;border-left:3px solid #ffe000;padding:12px;background:#0a2c57}
-#career-screen .profile-face-button{grid-row:1/4;grid-column:1;width:90px;margin:0;padding:0;align-self:start;min-height:44px}
+#career-screen .profile-face-button{grid-row:1/4;grid-column:1;flex-direction:column;gap:2px;width:90px;margin:0;padding:0;align-self:start;min-height:44px}
 #career-screen #qb-profile-sprite{width:80px;height:80px}
 #career-screen #qb-profile-name{grid-column:2;text-align:left;font:25px/1 var(--sports-face)}
 #career-screen #qb-profile-detail{grid-column:2;font:19px/1 var(--sports-face);color:#bdd3ed}
@@ -32,7 +32,7 @@
 #career-screen #career-upgrades .upgrade-cost small{font:14px/1 var(--sports-face);margin:1px 0 0}
 #career-screen #player-upgrades-view .career-muted{display:none}
 #career-screen #player-stats-view{display:flex;flex-direction:column}
-#career-screen #career-qb-stats{display:flex;flex-direction:column;flex:1;gap:8px;min-height:0;overflow:visible;width:100%}
+#career-screen #career-qb-stats{display:flex;flex-direction:column;align-items:stretch;flex:1;gap:8px;min-height:0;overflow:visible;width:100%}
 #career-screen #career-qb-stats .stat-comparison{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 #career-screen #career-qb-stats .stat-comparison>section{display:flex;flex-direction:column;padding:8px 12px;min-width:0;background:#0a2c57;border:1px solid #2a6caf;border-top:3px solid #318be3}
 #career-screen #career-qb-stats .stat-comparison h3{display:flex;justify-content:space-between;align-items:center;font:26px/1 var(--sports-face);text-transform:uppercase;margin:0 0 6px;color:#fff}
@@ -63,9 +63,9 @@
  #career-screen #career-upgrades{gap:2px}
  #career-screen #career-upgrades button{grid-template-rows:20px 8px;padding-block:3px}
  #career-screen #career-qb-stats{gap:4px}
- #career-screen #career-qb-stats .stat-comparison>section{padding:4px 10px}
- #career-screen #career-qb-stats .stat-comparison h3{font-size:23px;margin-bottom:3px}
- #career-screen #career-qb-stats .stat-tiles dt,#career-screen #career-qb-stats .stat-tiles dd{font-size:20px}
+ #career-screen #career-qb-stats .stat-comparison>section{padding:2px 10px;border-top-width:2px}
+ #career-screen #career-qb-stats .stat-comparison h3{font-size:20px;margin-bottom:2px}
+ #career-screen #career-qb-stats .stat-tiles dt,#career-screen #career-qb-stats .stat-tiles dd{font-size:18px}
  #career-screen #career-qb-stats .stat-tiles>div:first-child dd{font-size:18px}
 }
 @media(max-width:700px){

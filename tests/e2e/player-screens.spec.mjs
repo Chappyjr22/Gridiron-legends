@@ -6,7 +6,7 @@ for(const [width,height] of [[844,304],[667,375],[844,390]])test(`fixed player s
   const C=await import('/src/career/career.js'),c=C.createCareer({name:'Jacob Chapman',schoolId:'college-bluegrass',development:'fast'});
   Object.assign(c.seasonStats,{games:6,attempts:120,completions:84,passingYards:1432,passingTD:12,interceptions:3,sacks:7,carries:18,rushingYards:104,rushingTD:2});
   c.totals={...c.seasonStats};c.lastResult={stats:{...c.seasonStats,games:1,attempts:20,completions:14,passingYards:212,passingTD:2,interceptions:1},opponentId:c.league.teams.find(t=>t.id!==c.teamId).id,userScore:21,cpuScore:14,xp:20,levels:0};
-  c.awards=[{season:1,title:'College MVP'},{season:1,title:'National college champion'},{season:1,title:'1,000 career passing yards'}];c.points=6;C.saveCareer(c);
+  c.awards=[{season:1,title:'College MVP'},{season:1,title:'National college champion'},{season:1,title:'1,000 career passing yards'}];c.points=6;c.pendingRecapGameId=null;C.saveCareer(c);
  });
  await page.reload();await page.getByRole('button',{name:'Career Mode',exact:true}).tap();await page.getByRole('button',{name:'Continue last career',exact:true}).tap();
  await page.getByRole('tab',{name:'Player',exact:true}).tap();
@@ -23,7 +23,9 @@ for(const [width,height] of [[844,304],[667,375],[844,390]])test(`fixed player s
  await page.getByRole('button',{name:'Stats',exact:true}).tap();await fits();
  await expect(page.locator('.stat-comparison')).toContainText('84/120 · 70.0%');
  await expect(page.getByRole('button',{name:'View accomplishments: 1 titles, 1 MVPs, 1 honors',exact:true})).toBeInViewport({ratio:1});
- for(const tile of await page.locator('#career-qb-stats .stat-tiles>div').all())await expect(tile).toBeInViewport({ratio:1});
+ const footer=await page.locator('.player-stat-footer').boundingBox();
+ for(const tile of await page.locator('#career-qb-stats .stat-tiles>div').all()){await expect(tile).toBeInViewport({ratio:1});const b=await tile.boundingBox();expect(b.y+b.height).toBeLessThanOrEqual(footer.y);}
+ const comparison=await page.locator('.stat-comparison').boundingBox();expect(comparison.width).toBeGreaterThan(width*.85);
  await page.screenshot({path:`test-results/player-passing-${width}-${height}.png`});
  await page.getByRole('button',{name:'Rushing',exact:true}).tap();await fits();await expect(page.locator('.stat-comparison')).toContainText('104');await page.screenshot({path:`test-results/player-rushing-${width}-${height}.png`});
  await page.getByRole('button',{name:/View accomplishments:/}).tap();await expect(page.locator('#player-awards-list')).toContainText('College MVP');await page.screenshot({path:`test-results/player-honors-${width}-${height}.png`});

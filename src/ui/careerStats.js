@@ -10,7 +10,7 @@ const metrics={
 };
 const score=(s,key)=>!s?null:key==='completionPct'?(s.attempts?s.completions*100/s.attempts:null):s[key];
 function accomplishments(c){
- return [...(c.collegeArchive?.awards||[]).map(a=>({...a,era:'College'})),...c.awards.map(a=>({...a,era:c.stage==='college'?'College':`Pro season ${a.season}`}))];
+ return [...(c.collegeArchive?.awards||[]).map(a=>({...a,era:'College'})),...(c.awards||[]).map(a=>({...a,era:c.stage==='college'?'College':`Pro season ${a.season}`}))];
 }
 export function renderPlayerStats(c){
  const root=el('career-qb-stats'),category=root.dataset.category||'passing',awards=accomplishments(c);
