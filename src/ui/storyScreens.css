@@ -1,0 +1,34 @@
+#career-screen #career-progress-dialog{background:#071e40;color:#fff}
+#career-screen #career-progress-dialog>header{display:flex;align-items:center;gap:12px;min-height:44px;padding-block:0;background:#08386f;border-bottom:1px solid #318be3}
+#career-screen #career-progress-heading{font:23px/1 var(--sports-face);margin-right:auto}
+#career-screen #career-progress-dialog>header button,#career-screen .story-tabs button{min-height:44px;padding:4px 12px;border:0;border-radius:0;box-shadow:none;font:18px/1 var(--sports-face);background:#103961;color:#bdd3ed}
+.story-tabs{display:flex;flex:none;gap:4px;padding:0 max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left));border-bottom:1px solid #2a6caf}
+#career-screen .story-tabs button{flex:1}
+#career-screen .story-tabs [aria-pressed=true]{color:#ffe000;background:#104981;box-shadow:inset 0 -3px #ffe000}
+#career-progress-dialog [hidden]{display:none!important}
+#career-screen #career-progress-dialog>.experience-body{padding-block:8px;font-size:13px;line-height:1.3}
+#career-progress-dialog .story-card{background:#0a2c57;color:#fff;border:1px solid #2a6caf;padding:8px 10px;margin:0}
+#career-progress-dialog .story-goal-grid,#career-progress-dialog .story-record-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#career-progress-dialog h3{font:21px/1.1 var(--sports-face);margin:4px 0 6px}
+#career-progress-dialog h4{font:19px/1 var(--sports-face);margin:8px 0 4px}
+#career-progress-dialog p{margin:5px 0}
+#career-progress-dialog .board-kicker{font:17px/1 var(--sports-face);color:#bdd3ed}
+#career-progress-dialog .experience-note{font-size:12px;color:#bdd3ed}
+#career-progress-dialog .story-reward{font:22px/1 var(--sports-face);color:#ffe000}
+#career-progress-dialog .rookie-goals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:0;margin:8px 0;list-style:none}
+#career-progress-dialog .rookie-goals>li{padding:6px;background:#071e40;border:1px solid #2a6caf}
+#career-progress-dialog .rookie-goal-heading{display:block}
+#career-progress-dialog .rookie-goal-heading strong{font:19px/1 var(--sports-face)}
+#career-progress-dialog .rookie-status{display:block;width:fit-content;font:12px/1.2 sans-serif;margin-top:5px}
+#career-progress-dialog summary{font:20px/1 var(--sports-face);min-height:44px;padding:10px 0;color:#ffe000}
+#career-progress-dialog .rookie-review{margin-top:6px;padding:0;border-top:1px solid #2a6caf}
+#career-progress-dialog .story-award-list{list-style:none;padding:0;margin:0}
+.story-award-list li{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid #2a6caf}
+.story-award-list li b{font:18px/1.1 var(--sports-face)}.story-award-list li span{font:11px/1.3 sans-serif;color:#bdd3ed;white-space:nowrap}
+#story-honors>#college-progress{margin-top:8px;padding:8px 10px;background:#0a2c57;border:1px solid #2a6caf}
+@media(orientation:portrait){
+ #career-screen #career-progress-heading{font-size:19px}
+ #career-screen #career-progress-dialog>header{gap:6px}
+ #career-screen #career-progress-dialog>header button{padding-inline:6px}
+ #career-progress-dialog .story-goal-grid,#career-progress-dialog .story-record-grid,#career-progress-dialog .rookie-goals{grid-template-columns:1fr}
+}

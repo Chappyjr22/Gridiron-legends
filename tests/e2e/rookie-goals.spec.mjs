@@ -18,10 +18,16 @@ for(const [width,height] of [[844,304],[667,375],[844,390]])test(`rookie goals a
  await expect(dialog.getByRole('button',{name:'Back to Player',exact:true})).toBeInViewport({ratio:1});
  expect(await dialog.evaluate(e=>e.scrollWidth<=e.clientWidth+1)).toBe(true);
  await page.screenshot({path:`test-results/rookie-goals-${width}-${height}.png`});
- await panel.locator('.rookie-review summary').tap();await expect(panel.getByRole('heading',{name:'Focus for the second half'})).toBeHidden();
+ await expect(panel.getByRole('heading',{name:'Focus for the second half'})).toBeHidden();
  await panel.locator('.rookie-review summary').tap();await panel.getByRole('heading',{name:'Focus for the second half'}).scrollIntoViewIfNeeded();
  await expect(dialog.getByRole('button',{name:'Back to Player',exact:true})).toBeInViewport({ratio:1});
  await page.screenshot({path:`test-results/rookie-review-${width}-${height}.png`});
+ await page.locator('[data-story-view=goals]').tap();await expect(page.locator('#story-goals')).toBeVisible();await expect(panel).not.toBeVisible();
+ await page.screenshot({path:`test-results/story-goals-${width}-${height}.png`});
+ await page.locator('[data-story-view=honors]').tap();await expect(page.locator('#story-honors')).toBeVisible();await expect(page.locator('#story-goals')).not.toBeVisible();
+ await expect(dialog.getByRole('button',{name:'Back to Player',exact:true})).toBeInViewport({ratio:1});
+ await page.screenshot({path:`test-results/story-honors-${width}-${height}.png`});
+ await page.locator('[data-story-view=progress]').tap();await expect(panel).toBeVisible();
  const review=await page.evaluate(()=>JSON.parse(localStorage.getItem('gridironLegendsCareerV1')).rookieSeason.review);
  await page.reload();await open();await expect(panel).toContainText('Protect the ball');
  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('gridironLegendsCareerV1')).rookieSeason.review)).toEqual(review);
