@@ -11,7 +11,7 @@
 #setup-screen.compact-settings .card-close,#pause-overlay.compact-settings .card-close{position:static;order:2;flex:none;width:44px;height:44px;background:transparent;color:#fff;border:0;box-shadow:none;font-size:24px}
 #setup-screen.compact-settings .setup-scroll,#pause-overlay.compact-settings .pause-scroll{flex:1;min-height:0;padding:10px;display:block;overflow:auto;overscroll-behavior:contain}
 #setup-screen.compact-settings .setup-grid,#pause-overlay.compact-settings .settings-gameplay{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-#setup-screen.compact-settings .setting-block,#pause-overlay.compact-settings .settings-row{grid-column:auto;margin:0;padding:8px;background:#132e53;border:1px solid #4679aa;min-width:0}
+#setup-screen.compact-settings .setting-block,#pause-overlay.compact-settings .settings-row{grid-column:auto;gap:0;margin:0;padding:8px;background:#132e53;border:1px solid #4679aa;min-width:0}
 #setup-screen.compact-settings .label,#pause-overlay.compact-settings .label{display:block;font:18px/1 var(--sports-face);color:#bdd0ec;margin:0 0 6px;letter-spacing:0;text-transform:none}
 .compact-settings .setting-help{display:none}
 #setup-screen.compact-settings .toggle-group,#pause-overlay.compact-settings .toggle-group{display:flex;gap:3px}
