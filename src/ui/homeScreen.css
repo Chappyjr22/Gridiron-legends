@@ -1,0 +1,55 @@
+/* Home reserves the landscape viewport for the next decision. */
+#career-screen[data-page=home] .career-header{min-height:44px;padding-block:2px;background:#08386f;gap:10px}
+#career-screen[data-page=home] #career-header-name{font:22px/1 var(--sports-face)}
+#career-screen[data-page=home] #career-header-level{font:14px/1 var(--sports-face)}
+#career-screen[data-page=home] #career-page-title{display:none}
+#career-screen[data-page=home] #career-season{font:16px/1.1 var(--sports-face)}
+#career-screen[data-page=home] #career-header-portrait{width:32px;height:32px}
+#career-screen[data-page=home] #career-hub .locker-layout{display:block;width:100%;padding:6px max(12px,env(safe-area-inset-right)) 6px max(12px,env(safe-area-inset-left));margin:0;min-height:0;overflow:hidden;box-sizing:border-box}
+#career-screen[data-page=home] #career-player-card{display:none}
+#career-screen #career-hub[data-view=home] .home-boards{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,.95fr);grid-template-rows:minmax(0,1fr);height:100%;gap:10px;padding:0;overflow:visible}
+#career-screen #career-hub[data-view=home] .paper-board{display:flex;flex-direction:column;gap:4px;padding:8px;min-height:0;overflow:hidden;background:#0a2c57;border:1px solid #2a6caf;box-shadow:none}
+#career-screen #career-hub[data-view=home] .stat-board{overflow:visible;position:relative;z-index:4}
+#career-screen #career-home-panel .board-kicker{font:20px/1 var(--sports-face)}
+.home-match-heading{display:flex;align-items:center;justify-content:space-between;position:relative;min-height:20px}
+#career-screen #career-home-panel #career-player-sprite{position:absolute;inset:auto 0 0 auto;width:30px;height:30px;margin:0;object-fit:contain;image-rendering:pixelated}
+#career-screen #career-home-panel .helmet-matchup{display:flex;flex:1;align-items:center;justify-content:space-evenly;gap:8px;margin:0;min-height:0}
+#career-screen #career-home-panel .helmet-matchup .helmet{width:54px;height:42px}
+#career-screen #career-home-panel .helmet-matchup strong{font:22px/1 var(--sports-face)}
+#career-screen #career-home-panel .helmet-matchup small{font:16px/1 var(--sports-face)}
+#career-screen #career-home-panel .helmet-matchup>b{font:20px/1 var(--sports-face)}
+#career-screen #career-next-opponent{font:18px/1 var(--sports-face);margin:0;text-align:center}
+#career-screen #career-matchup{font:11px/1.2 sans-serif;margin:0;text-align:center}
+#career-screen #career-home-panel .match-board>.sports-button{position:static;min-height:44px;padding:4px;font:23px/1 var(--sports-face);margin:0;flex:none}
+#career-screen #career-home-panel .career-preparation{margin:0;padding:0;border:0}
+#career-screen #career-home-panel .weekly-field-label{font:14px/1 var(--sports-face);margin:3px 0}
+#career-screen #career-home-panel #career-preparation-kind-label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+#career-screen #career-home-panel .weekly-dropdown{position:relative}
+#career-screen #career-home-panel .weekly-dropdown-trigger{font:17px/1 var(--sports-face);min-height:44px;padding:5px 6px}
+#career-screen #career-home-panel .weekly-dropdown-options{position:absolute;top:100%;left:0;right:0;z-index:10;max-height:132px;margin:0;box-shadow:0 4px 12px #0008}
+#career-screen #career-home-panel #career-preparation-target-options{top:auto;bottom:100%}
+#career-screen #career-home-panel .weekly-dropdown-options button{font:17px/1 var(--sports-face);padding:6px;min-height:44px}
+#career-screen #career-home-panel .preparation-reward{display:none}
+#career-screen #career-home-panel .preparation-status{font:10px/1.2 sans-serif;margin:3px 0;color:#bdd3ed}
+#career-screen #career-home-panel .challenge-heading{margin:3px 0 0;gap:4px;justify-content:space-between}
+#career-screen #career-home-panel .reward-chip{font:16px/1 var(--sports-face);padding:2px 4px}
+#career-screen #career-weekly-goal{font:16px/1.15 var(--sports-face);margin:0}#career-weekly-goal p{margin:0}
+#home-season-position strong{font:27px/1 var(--sports-face);color:#ffe000}
+#home-season-position span{font:15px/1 var(--sports-face);color:#bdd3ed}
+#career-screen #career-home-panel .career-stakes{border:0;margin:0;padding:0}
+#career-home-panel .career-stakes>.board-kicker,#career-home-panel .career-stakes p{display:none}
+#career-screen #career-home-panel .career-stakes h3{font:17px/1.1 var(--sports-face);margin:3px 0;color:#bdd3ed}
+#career-screen #career-home-panel #career-season-snapshot{margin:0;padding:0;border:0}
+#career-screen #career-home-panel #career-season-summary{display:flex;gap:8px;font:12px/1 var(--sports-face)}
+#career-screen #career-home-panel #career-season-summary b{font:19px/1 var(--sports-face)}
+#career-screen #career-home-panel #career-result-title{font:18px/1 var(--sports-face);margin:4px 0 0}
+#career-screen #career-home-panel #career-review-game{min-height:44px;font:18px/1 var(--sports-face);padding:4px 0}
+.home-links{display:flex;gap:4px;margin-top:auto}
+#career-screen #career-home-panel .home-links button{flex:1;min-width:0;min-height:44px;font:17px/1 var(--sports-face);padding:4px;border:0;box-shadow:none;margin:0;background:#103961;color:#ffe000}
+#career-screen[data-page=home] .career-nav{padding-top:0;padding-bottom:env(safe-area-inset-bottom)}
+@media(orientation:portrait){
+ #career-screen #career-hub[data-view=home] .home-boards{grid-template-columns:1fr;grid-template-rows:auto;overflow:auto;height:auto}
+ #career-screen[data-page=home] #career-hub .locker-layout{overflow:auto}
+ #career-screen #career-hub[data-view=home] .match-board{min-height:250px}
+ #career-screen #career-hub[data-view=home] .paper-board{min-height:180px}
+}

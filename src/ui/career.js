@@ -137,9 +137,10 @@ function render(){
  renderCollegeCareer(career);renderCareerStats(career);renderMyTeam(career);
  const standings=career.stage==='college'?collegeStandings(career,team.conference):League.standings(career.league,team.conference);
  const rank=standings.findIndex(t=>t.id===team.id),start=rank>3?rank-3:0;
+ el('home-season-position').innerHTML=`<strong>${recordLabel(team)}</strong><span> #${rank+1} of ${standings.length} in conference</span>`;
  el('career-home-standings').innerHTML=standings.slice(start,start+4).map((t,i)=>`<div class="career-list-row ${t.id===team.id?'career-selected':''}"><span>${start+i+1}. ${escape(t.abbr)}</span><b>${recordLabel(t)}</b></div>`).join('');
  const objective=weeklyGoal(career);
- if(match){el('career-weekly-goal').textContent=objective.label;el('career-goal-reward').textContent=objective.kind==='teammate'?'+1 CATCHING':`+${objective.xp} XP`;}
+ if(match){el('career-weekly-goal').textContent=objective.label;el('career-goal-reward').textContent=objective.kind==='teammate'?'+1 CATCHING':`+${objective.xp} XP${objective.kind==='challenge'?' · +2 CONF':''}`;}
  renderWeekly(career,match,persist,render);
  renderRookie(career);
  let journey=el('career-journey');if(!journey){journey=document.createElement('section');journey.id='career-journey';el('career-awards').after(journey);}
