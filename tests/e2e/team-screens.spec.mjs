@@ -1,0 +1,21 @@
+import {test,expect} from '@playwright/test';
+for(const [width,height] of [[844,304],[667,375],[844,390]])test(`compact team screens fit ${width}x${height}`,async({browser})=>{
+ const context=await browser.newContext({viewport:{width,height},hasTouch:true,isMobile:true}),page=await context.newPage(),errors=[];
+ page.on('pageerror',e=>errors.push(e.message));await page.goto('/');
+ await page.evaluate(async()=>{const C=await import('/src/career/career.js');C.saveCareer(C.createCareer({name:'Roster QB',schoolId:'college-bluegrass'}));});
+ await page.reload();await page.getByRole('button',{name:'Career Mode',exact:true}).tap();await page.getByRole('button',{name:'Continue last career',exact:true}).tap();await page.getByRole('tab',{name:'My Team',exact:true}).tap();
+ const panel=page.locator('#career-team-panel');expect(await panel.evaluate(e=>e.scrollHeight<=e.clientHeight+1&&e.scrollWidth<=e.clientWidth+1)).toBe(true);
+ for(const b of await page.locator('.team-screen-toolbar button,.career-nav button').all())await expect(b).toBeInViewport({ratio:1});
+ const visible=await page.locator('.roster-card').evaluateAll(rows=>rows.filter(r=>{const b=r.getBoundingClientRect(),p=r.parentElement.getBoundingClientRect();return b.top>=p.top&&b.bottom<=p.bottom;}).length);expect(visible).toBeGreaterThanOrEqual(6);
+ await expect(page.locator('.roster-you')).toContainText('Roster QB');await expect(page.locator('.roster-numbers').first()).toContainText('SPD');await page.screenshot({path:`test-results/team-roster-${width}-${height}.png`});
+ await page.locator('.roster-card').nth(1).tap();
+ await expect(page.locator('#team-player-dialog')).toBeVisible();await expect(page.locator('.team-detail-overview')).toBeVisible();
+ for(const b of await page.locator('#team-detail-tabs button,#teammate-edit-name,#teammate-edit-face,#team-player-close').all())await expect(b).toBeInViewport({ratio:1});
+ for(const row of await page.locator('.teammate-attributes>div').all())await expect(row).toBeInViewport({ratio:1});
+ expect(await page.locator('#team-player-content').evaluate(e=>e.scrollHeight<=e.clientHeight+1)).toBe(true);
+ await page.screenshot({path:`test-results/team-overview-${width}-${height}.png`});
+ await page.locator('[data-team-detail=stats]').tap();await expect(page.locator('.team-detail-stats')).toBeVisible();await expect(page.locator('.team-detail-overview')).not.toBeVisible();await page.screenshot({path:`test-results/team-stats-${width}-${height}.png`});
+ await page.locator('[data-team-detail=overview]').tap();await page.locator('#teammate-edit-name').tap();await page.getByLabel('Player name',{exact:true}).fill('Compact Teammate');await page.locator('#teammate-save-name').tap();await expect(page.locator('#team-player-heading')).toHaveText('Compact Teammate');
+ await page.locator('#team-player-close').tap();await expect(page.locator('#my-team-roster')).toContainText('Compact Teammate');await expect(page.locator('.team-screen-toolbar')).toBeInViewport({ratio:1});
+ expect(errors).toEqual([]);await context.close();
+});

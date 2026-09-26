@@ -178,6 +178,7 @@
 <link rel="stylesheet" href="./src/ui/mobileCareer.css">
 <link rel="stylesheet" href="./src/ui/playerScreens.css">
 <link rel="stylesheet" href="./src/ui/leagueScreens.css">
+<link rel="stylesheet" href="./src/ui/teamScreens.css">
 <link rel="preload" href="./assets/ui/Jersey10-Regular.ttf" as="font" type="font/ttf" crossorigin>
 <style>
 #result-overlay.replaying{backdrop-filter:none;-webkit-backdrop-filter:none;background:transparent;pointer-events:none;align-items:flex-end;}
@@ -377,7 +378,7 @@
        <div class="season-numbers"><div><strong id="career-yards">0</strong><span>YDS</span></div><div><strong id="career-td">0</strong><span>TD</span></div><div><strong id="career-int">0</strong><span>INT</span></div></div>
 </div></section>
     </section>
-    <section id="career-team-panel" class="career-page paper-board career-scroll" role="tabpanel" aria-labelledby="career-team-tab" hidden><h3 id="my-team-name">My team</h3><div id="my-team-roster"></div></section>
+    <section id="career-team-panel" class="career-page paper-board career-scroll" role="tabpanel" aria-labelledby="career-team-tab" hidden><header class="team-screen-toolbar"><h3 id="my-team-name">My team</h3></header><div class="team-roster-heading"><span>Player</span><span>Overall · Speed · Age</span></div><div id="my-team-roster"></div></section>
     <section id="career-league-panel" class="career-page paper-board career-scroll" role="tabpanel" aria-labelledby="career-league-tab" hidden>
       <header class="league-screen-toolbar"><h2>League</h2><nav aria-label="League sections"><button type="button" data-league-view="leaders" aria-pressed="true">Leaders</button><button type="button" data-league-view="standings" aria-pressed="false">Standings</button><button type="button" data-league-view="schedule" aria-pressed="false">Schedule</button></nav></header>
       <section id="league-leaders-view" class="league-view" aria-label="League leaders">

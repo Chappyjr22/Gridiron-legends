@@ -1,0 +1,57 @@
+/* Compact roster with fixed navigation and full-size touch rows. */
+#career-screen[data-page=team] .career-header{display:none}
+#career-screen[data-page=team] #career-hub .locker-layout{width:100%;padding:0;gap:0;margin:0;grid-template-rows:minmax(0,1fr)}
+#career-screen[data-page=team] .career-nav{padding-top:0;padding-bottom:env(safe-area-inset-bottom)}
+#career-screen #career-team-panel{display:flex;flex-direction:column;overflow:hidden;min-height:0;padding:0;border:0;box-shadow:none;background:#071e40}
+#career-screen .team-screen-toolbar{display:flex;align-items:center;gap:8px;flex:none;min-height:44px;padding:0 max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left));background:#08386f;border-bottom:1px solid #318be3}
+#career-screen #my-team-name{font:22px/1 var(--sports-face);margin:0 auto 0 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#career-screen #career-team-editor{min-height:44px;flex:none;margin:0!important;padding:4px 10px;font:18px/1 var(--sports-face);border:0;background:#103961;color:#bdd3ed;box-shadow:none}
+.team-roster-heading{display:flex;justify-content:space-between;flex:none;padding:5px max(16px,env(safe-area-inset-right)) 5px max(16px,env(safe-area-inset-left));font:11px/1 sans-serif;color:#bdd3ed}
+#career-screen #my-team-roster{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:4px 10px;min-height:0;overflow:auto;overscroll-behavior:contain;margin:0;padding:0 max(12px,env(safe-area-inset-right)) 8px max(12px,env(safe-area-inset-left))}
+#career-screen .roster-card{display:flex;flex-direction:row;align-items:center;gap:8px;min-height:44px;padding:4px 6px;border:1px solid #2a6caf;border-radius:0;box-shadow:none;background:#0a2c57;color:#fff}
+#career-screen .roster-card canvas{width:34px;height:34px;flex:none;border:0;margin:0;background:#103961;image-rendering:pixelated}
+#career-screen .roster-identity{flex:1;min-width:0}
+#career-screen .roster-identity strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:18px/1 var(--sports-face)}
+#career-screen .roster-identity small{display:block;font:10px/1.3 sans-serif;color:#bdd3ed;margin-top:2px}
+#career-screen .roster-numbers{display:flex;gap:10px;flex:none;text-align:center}
+#career-screen .roster-numbers b{font:19px/1 var(--sports-face)}
+#career-screen .roster-numbers small{display:block;font:9px/1.2 sans-serif;color:#bdd3ed}
+#career-screen .roster-you{box-shadow:inset 3px 0 #ffe000}
+#career-screen #team-player-dialog{background:#071e40;color:#fff}
+#career-screen #team-player-dialog header{display:flex;align-items:center;gap:12px;padding-block:0;min-height:44px;background:#08386f;border-bottom:1px solid #318be3}
+#career-screen #team-player-heading{font:23px/1 var(--sports-face);margin-right:auto}
+#team-detail-tabs{display:flex;gap:4px;flex:none}
+#career-screen #team-detail-tabs button{min-height:44px;padding:4px 12px;font:19px/1 var(--sports-face);border:0;border-radius:0;box-shadow:none;background:#103961;color:#bdd3ed}
+#career-screen #team-detail-tabs [aria-pressed=true]{color:#ffe000;box-shadow:inset 0 -3px #ffe000}
+#career-screen #team-player-content{padding-block:6px;font-size:12px}
+#team-player-content [hidden]{display:none!important}
+.team-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:center}
+#team-player-content .player-passport{gap:12px}
+#team-player-content .player-passport canvas{width:80px;height:80px;border:1px solid #2a6caf}
+#team-player-content .player-passport p{font:16px/1.1 var(--sports-face);margin:4px 0;color:#bdd3ed}
+#team-player-content .player-overall{font:30px/1 var(--sports-face);color:#ffe000}
+#team-player-content h3{font:20px/1 var(--sports-face);margin:3px 0 5px}
+#team-player-content .teammate-attributes{display:grid;grid-template-columns:1fr;gap:4px}
+#team-player-content .teammate-attributes>div{display:grid;grid-template-columns:1fr 30px;gap:2px 6px;padding:0;border:0;background:none;font:17px/1 var(--sports-face)}
+#team-player-content .teammate-meter{grid-column:1/-1;height:5px;margin:0}
+#team-player-content .teammate-customize{margin:6px 0 0;padding:0;border:0}
+#team-player-content .teammate-customize>h3{display:none}
+#team-player-content .teammate-profile-actions{display:flex;gap:6px}
+#team-player-content .teammate-profile-actions button{flex:1;min-height:44px;font:18px/1 var(--sports-face);padding:4px;border:1px solid #2a6caf;box-shadow:none;background:#103961;color:#bdd3ed}
+#team-player-content .teammate-profile-actions button:disabled{opacity:.5}
+#career-screen #team-player-dialog footer{padding-block:4px;background:#08386f;border-top:1px solid #318be3}
+#career-screen #team-player-dialog footer button{font-size:20px;background:#103961;color:#fff;box-shadow:none;border:0}
+#team-player-content .experience-note{color:#bdd3ed}
+@media(max-width:700px){
+ #career-screen .roster-numbers{gap:6px}
+ #career-screen .roster-card{gap:5px}
+ #career-screen .roster-card canvas{width:28px;height:28px}
+ #career-screen .roster-identity strong{font-size:17px}
+}
+@media(orientation:portrait){
+ #career-screen #my-team-roster{grid-template-columns:1fr}
+ .team-detail-grid{grid-template-columns:1fr}
+ #career-screen #team-player-heading{font-size:20px}
+ #team-player-content .teammate-profile-actions{flex-wrap:wrap}
+ #team-player-content .teammate-profile-actions button{flex-basis:45%}
+}

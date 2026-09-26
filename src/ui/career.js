@@ -54,7 +54,7 @@ function updateTitle(){
 }
 function setCareerTab(tab){
  el('career-hub').dataset.view=tab;el('career-screen').dataset.page=tab;
- (tab==='player'?document.querySelector('.player-toolbar'):tab==='league'?document.querySelector('.league-screen-toolbar'):document.querySelector('.career-header')).append(el('career-menu-open'));
+ (tab==='player'?document.querySelector('.player-toolbar'):tab==='league'?document.querySelector('.league-screen-toolbar'):tab==='team'?document.querySelector('.team-screen-toolbar'):document.querySelector('.career-header')).append(el('career-menu-open'));
  el('career-page-title').textContent={home:'Career',player:'Player',team:'My Team',league:'League'}[tab];
  if(tab==='player')setPlayerView('upgrades');
  for(const button of document.querySelectorAll('[data-career-tab]')){

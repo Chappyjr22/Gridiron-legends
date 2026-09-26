@@ -35,11 +35,26 @@ function openPlayer(c,p){
  const team=League.findTeamState(c.league,c.teamId),season=playerSeasonStats(c,p.id),log=playerGameLog(c,p.id);
  const editable=!p.generic&&p.id!==c.playerId;
  el('team-player-heading').textContent=name(p);
- el('team-player-content').innerHTML=`<div class="player-passport"><canvas id="team-card-sprite" width="64" height="64" aria-hidden="true"></canvas><div><p class="sports-kicker">#${p.number} · ${esc(p.position)} · AGE ${p.age}</p><strong class="player-overall">${p.rating} OVR</strong><p>${esc(team.city)} ${esc(team.name)}</p><p>${esc(p.development)} development</p></div></div>
+ el('team-player-content').innerHTML=`<section class="team-detail-overview"><div class="team-detail-grid"><div class="player-passport"><canvas id="team-card-sprite" width="64" height="64" aria-hidden="true"></canvas><div><p class="sports-kicker">#${p.number} · ${esc(p.position)} · AGE ${p.age}</p><strong class="player-overall">${p.rating} OVR</strong><p>${esc(team.city)} ${esc(team.name)}</p><p>${esc(p.development)} development</p></div></div><div class="team-detail-ratings">
  ${editable?`<p>Contract: ${p.contractYears} seasons remaining</p><button id="mentor-teammate" class="sports-button blue" ${c.activeMatch||c.points<3||p.rating>=95||c.lastMentoring===`${c.stage}-${c.league.season}-${c.league.week}-${c.postseason?.round||0}`?'disabled':''}>Mentor · +1 OVR · 3 points</button><p class="experience-note">One teammate per week. Available between games.</p>`:''}<h3>Attributes</h3><div class="teammate-attributes">${Object.entries(p.attributes||{}).map(([k,v])=>`<div><span>${esc(attributeLabel(k))}</span><b>${v}</b><span class="teammate-meter"><i style="width:${Math.min(100,v)}%"></i></span></div>`).join('')}</div>
- <h3>Season production</h3><p>${esc(line(season.tracked?season.stats:null,p.position))}</p><p class="experience-note">${season.tracked} tracked games this season</p>
+ </div></div></section><section class="team-detail-stats" hidden><h3>Season production</h3><p>${esc(line(season.tracked?season.stats:null,p.position))}</p><p class="experience-note">${season.tracked} tracked games this season</p>
  <h3>Game log</h3><div class="player-game-log">${log.map(r=>`<article><b>S${r.season} · Week ${r.week} · ${r.userScore>r.cpuScore?'WIN':'LOSS'} ${r.userScore}–${r.cpuScore}</b><p>${esc(line(r.stats,p.position))}</p></article>`).join('')||'<p>Your first game is waiting.</p>'}</div>
- ${editable?`<section class="teammate-customize"><h3>Customize teammate</h3><div class="teammate-profile-actions"><button type="button" id="teammate-edit-name" class="sports-button blue">Edit name</button><button type="button" id="teammate-edit-face" class="sports-button blue">Edit appearance</button></div><div id="teammate-customize-body"></div></section>`:''}`;
+ </section>${editable?`<section class="teammate-customize"><h3>Customize teammate</h3><div class="teammate-profile-actions"><button type="button" id="teammate-edit-name" class="sports-button blue">Edit name</button><button type="button" id="teammate-edit-face" class="sports-button blue">Edit appearance</button></div><div id="teammate-customize-body"></div></section>`:''}`;
+ const overview=el('team-player-content').querySelector('.team-detail-overview'),customize=el('team-player-content').querySelector('.teammate-customize');
+ if(customize){
+  overview.append(customize);
+  const mentor=el('mentor-teammate'),note=mentor.nextElementSibling,contract=mentor.previousElementSibling;
+  mentor.setAttribute('aria-description',note.textContent);mentor.title=note.textContent;note.remove();
+  overview.querySelector('.player-passport>div').append(contract);
+  customize.querySelector('.teammate-profile-actions').prepend(mentor);
+ }
+ let tabs=el('team-detail-tabs');
+ if(!tabs){tabs=document.createElement('nav');tabs.id='team-detail-tabs';tabs.setAttribute('aria-label','Player details');el('team-player-heading').after(tabs);}
+ tabs.innerHTML='<button type="button" data-team-detail="overview" aria-pressed="true">Overview</button><button type="button" data-team-detail="stats" aria-pressed="false">Stats</button>';
+ for(const button of tabs.querySelectorAll('button'))button.onclick=()=>{
+  const stats=button.dataset.teamDetail==='stats';overview.hidden=stats;el('team-player-content').querySelector('.team-detail-stats').hidden=!stats;
+  tabs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));el('team-player-content').scrollTop=0;
+ };
  paintPlayerPortrait(el('team-card-sprite'),team,p);
  if(editable){
   el('mentor-teammate').onclick=()=>{if(mentorTeammate(c,p.id)){saveCareer();renderMyTeam(c);openPlayer(c,p);}};
@@ -57,7 +72,7 @@ export function renderMyTeam(c){
  const team=League.findTeamState(c.league,c.teamId);
  const roster=playingRoster(team);
  el('my-team-name').textContent=`${team.city} ${team.name}`;
- el('my-team-roster').innerHTML=roster.map(p=>`<button class="roster-card" data-player-id="${esc(p.id)}"><span>#${p.number} · ${esc(p.position)}${p.id===c.playerId?' · YOU':''}</span><canvas width="64" height="64" aria-hidden="true"></canvas><strong>${esc(name(p))}</strong><span>${p.rating} OVR</span><span class="roster-rating" aria-hidden="true"><i style="width:${p.rating}%"></i></span></button>`).join('');
+ el('my-team-roster').innerHTML=roster.map(p=>`<button class="roster-card ${p.id===c.playerId?'roster-you':''}" data-player-id="${esc(p.id)}"><canvas width="64" height="64" aria-hidden="true"></canvas><span class="roster-identity"><strong>${esc(name(p))}</strong><small>#${p.number} · ${esc(p.position)}${p.id===c.playerId?' · YOU':''}</small></span><span class="roster-numbers"><span><b>${p.rating}</b><small>OVR</small></span><span><b>${p.attributes.speed}</b><small>SPD</small></span><span><b>${p.age}</b><small>AGE</small></span></span></button>`).join('');
  for(const b of el('my-team-roster').querySelectorAll('button')){const p=roster.find(p=>p.id===b.dataset.playerId);paintPlayerPortrait(b.querySelector('canvas'),team,p);b.onclick=()=>openPlayer(c,p);}
 }
 export function showPostgame(c){
