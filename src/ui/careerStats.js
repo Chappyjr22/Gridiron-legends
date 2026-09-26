@@ -43,7 +43,7 @@ export function renderCareerStats(c){
  const label=metrics[category].find(m=>m[0]===key)[1];
  el('league-player-stats').innerHTML=`<p class="leaderboard-caption">${esc(label)} · highest first${key==='completionPct'?` · minimum ${minimum} attempts`:''}</p><ol class="leaderboard">${rows.map(({team,player,stats:s})=>{
   const value=score(s,key),display=value==null?'—':key==='completionPct'?value.toFixed(1)+'%':value;
-  return `<li class="${team.id===c.teamId?'league-own-team':''}"><span class="leader-name">${esc(player.firstName+' '+player.lastName)}<small>${esc(team.abbr)} · ${esc(player.slot)} · ${s?s.games+' tracked games':'Not tracked yet'}</small></span><strong>${esc(display)}</strong></li>`;
+  return `<li class="${team.id===c.teamId?'league-own-team':''}"><span class="leader-name"><span class="leader-player">${esc(player.firstName+' '+player.lastName)}</span><small>${esc(team.abbr)} · ${esc(player.slot)} · ${s?s.games+' tracked games':'Not tracked yet'}</small></span><strong>${esc(display)}</strong></li>`;
  }).join('')||'<li>No qualified players yet.</li>'}</ol>`;
  el('league-stat-coverage').textContent=`${scope.value==='playoffs'?'Playoffs only.':'Regular season only.'} ${data.covered}/${data.games} completed games have box scores. Your team uses recorded plays. Opponents and other teams use simulated production; league possessions scale with your quarter length. Earlier untracked games show —, not zero. GP counts tracked appearances.`;
  renderLeagueScreens(c,metrics,()=>renderCareerStats(c));

@@ -52,3 +52,27 @@
  #career-screen #league-conferences{flex-wrap:wrap}#career-screen #league-conferences button{flex-basis:45%}
  .league-game{grid-template-columns:72px 1fr auto;font-size:20px;gap:6px;padding-inline:6px}.league-game .league-team-name{display:none}
 }
+
+/* Match the Player page's information density without shrinking touch targets. */
+#career-screen .league-screen-toolbar{min-height:44px}
+#career-screen .league-screen-toolbar h2{font-size:22px}
+#career-screen #career-league-panel button{font-size:18px;padding-block:4px}
+#career-screen .league-controls{padding-block:0}
+#career-screen #league-player-stats .leaderboard-caption{font-size:11px!important;padding:3px 6px;line-height:1.1}
+#career-screen #league-player-stats .leaderboard li{min-height:26px;gap:8px;padding:3px 6px;box-sizing:border-box}
+#career-screen #league-player-stats .leaderboard li:before{width:24px;font:18px/1 var(--sports-face)}
+#career-screen #league-player-stats .leader-name{display:flex;align-items:center;flex:1;gap:12px;font:18px/1 var(--sports-face);min-width:0}
+#career-screen #league-player-stats .leader-player{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#career-screen #league-player-stats .leader-name small{flex:none;margin:0;font:11px/1 sans-serif;white-space:nowrap}
+#career-screen #league-player-stats .leaderboard li>strong{min-width:52px;text-align:right;font:20px/1 var(--sports-face)}
+#career-screen .league-table{font-size:18px}
+#career-screen .league-table th,#career-screen .league-table td{padding:5px 6px}
+#career-screen #career-schedule-section h3{font-size:20px}
+#career-screen .league-game{min-height:28px;padding:4px 8px;font-size:18px;gap:8px;box-sizing:border-box}
+#career-screen #league-team-options button{min-height:44px;font-size:18px;padding-block:5px}
+#league-team-options{gap:4px}
+@media(orientation:portrait){
+ #career-screen #league-player-stats .leader-name{display:block}
+ #career-screen #league-player-stats .leader-player{display:block}
+ #career-screen #league-player-stats .leader-name small{display:block;margin-top:3px}
+}
