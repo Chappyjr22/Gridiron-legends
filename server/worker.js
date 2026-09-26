@@ -8,6 +8,7 @@ const services={
  [preview]:{auth:'https://ep-solitary-wave-ay4oih88.neonauth.c-5.us-east-2.aws.neon.tech/neondb/auth',data:'https://ep-solitary-wave-ay4oih88.apirest.c-5.us-east-2.aws.neon.tech/neondb/rest/v1'}
 };
 services['feature-account-sign-in-gridiron-legends.jacobchapman3.workers.dev']=services[preview];
+services['feature-rookie-goals-review-gridiron-legends.jacobchapman3.workers.dev']=services[preview];
 const json=(body,status=200)=>Response.json(body,{status,headers:{'Cache-Control':'no-store'}});
 export function validatePayload(values){
  if(!values||typeof values!=='object'||Array.isArray(values))throw Error('Invalid save');

@@ -24,8 +24,9 @@ export function renderPlayMenu(id){
  document.querySelector('.playbook-pages').hidden=pages===1;
  for(const key of keys.slice(page*size,(page+1)*size)){
   const play=PLAYS[key],b=document.createElement('button'),canvas=document.createElement('canvas');b.className='play-btn';b.dataset.play=key;
-  b.innerHTML=`<span class="play-type">${play.type.toUpperCase()}</span><span class="play-name">${play.name}</span>`;
-  canvas.className='play-diagram';canvas.width=270;canvas.height=112;b.insertBefore(canvas,b.children[1]);grid.appendChild(b);drawPlayDiagram(canvas,id,play);
+  b.innerHTML=`<span class="play-card-heading"><span class="play-name">${play.name}</span><span class="play-type">${play.type==='playaction'?'PA':play.type.toUpperCase()}</span></span>`;
+  b.setAttribute('aria-label',`${play.name}, ${play.type==='playaction'?'play action':play.type}`);
+  canvas.className='play-diagram';canvas.width=270;canvas.height=112;canvas.setAttribute('aria-hidden','true');b.append(canvas);grid.appendChild(b);drawPlayDiagram(canvas,id,play);
  }
 }
 grid.addEventListener('click',event=>{const b=event.target.closest('[data-play]');if(b)choosePlay(b.dataset.play);});

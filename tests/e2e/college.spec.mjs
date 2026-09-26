@@ -39,7 +39,7 @@ test('college school picker fits short landscape and previews tier attributes',a
   await expect(page.locator('#career-season')).toContainText('College senior');
   await page.getByRole('tab',{name:'Player',exact:true}).tap();await expect(page.locator('[data-upgrade="accuracy"] strong')).toHaveText('66');
   await page.getByRole('tab',{name:'League',exact:true}).tap();await expect(page.locator('#league-stat-team option')).toHaveCount(33);
-  await expect(page.locator('#college-schedule .career-list-row')).toHaveCount(12);
+  await expect(page.locator('#college-schedule .league-game')).toHaveCount(12);
   await page.getByRole('tab',{name:'Home',exact:true}).tap();await page.getByRole('button',{name:'Play next game',exact:true}).tap();
   await expect(page.locator('#hud-user-name')).toHaveText('BGS');
   await page.getByRole('button',{name:'Pause',exact:true}).tap();

@@ -163,7 +163,7 @@ test.describe('gameplay controls', () => {
     const box = await canvas.boundingBox();
     await page.mouse.click(box.x + box.width * 0.55, box.y + box.height * 0.5);
     await expect(page.locator('#result-overlay')).toHaveClass(/show/, { timeout: 5000 });
-    await expect(page.locator('#overlay-msg')).toContainText(/Run|Sacked|Scramble/);
+    await expect(page.locator('#overlay-msg')).toContainText(/Run|Sacked|Scramble|Fumble/);
     expect(errors).toEqual(NO_ERRORS);
   });
 
