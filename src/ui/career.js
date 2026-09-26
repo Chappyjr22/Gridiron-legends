@@ -1,3 +1,4 @@
+import {setLeagueView} from './leagueScreens.js';
 import {renderWeekly} from './careerWeekly.js';
 import {renderRookie} from './careerRookie.js';
 import {resolvedUniform} from '../rendering/uniformVariants.js';
@@ -53,7 +54,7 @@ function updateTitle(){
 }
 function setCareerTab(tab){
  el('career-hub').dataset.view=tab;el('career-screen').dataset.page=tab;
- (tab==='player'?document.querySelector('.player-toolbar'):document.querySelector('.career-header')).append(el('career-menu-open'));
+ (tab==='player'?document.querySelector('.player-toolbar'):tab==='league'?document.querySelector('.league-screen-toolbar'):document.querySelector('.career-header')).append(el('career-menu-open'));
  el('career-page-title').textContent={home:'Career',player:'Player',team:'My Team',league:'League'}[tab];
  if(tab==='player')setPlayerView('upgrades');
  for(const button of document.querySelectorAll('[data-career-tab]')){
@@ -160,10 +161,10 @@ function launch(){
  persist();ensureLoopStarted();
 }
 export function initCareer(){
- el('career-view-standings').onclick=()=>{setCareerTab('league');el('career-league-tab').focus();document.querySelector('[data-league-jump=standings-heading]').click();};
+ el('career-view-standings').onclick=()=>{setCareerTab('league');el('career-league-tab').focus();setLeagueView('standings');};
  initCareerExperience(()=>career,persist,render);initEnrollment();initPortraitPicker();
  el('career-edit-face').onclick=()=>{const player=normalizeQuarterback(Career.careerPlayer(career)),team=League.findTeamState(career.league,career.teamId);openPortraitPicker(player,team,choice=>{Object.assign(player,choice);persist();render();});};
- for(const [open,dialog,close] of [['career-menu-open','career-options','career-options-close'],['league-filters-open','league-filters','league-filters-close'],['scouting-info-open','scouting-info','scouting-info-close']]){
+ for(const [open,dialog,close] of [['career-menu-open','career-options','career-options-close'],['league-info-open','league-info-dialog','league-info-close'],['scouting-info-open','scouting-info','scouting-info-close']]){
   el(open).onclick=()=>el(dialog).showModal();el(close).onclick=()=>el(dialog).close();
  }
  el('career-back').addEventListener('click',()=>el('career-options').close());
@@ -195,12 +196,6 @@ export function initCareer(){
    event.preventDefault();setCareerTab(tabs[next].dataset.careerTab);tabs[next].focus();
   });
  }
- for(const button of document.querySelectorAll('[data-league-jump]'))button.onclick=()=>{
-  const panel=el('career-league-panel'),target=el(button.dataset.leagueJump);
-  if(target.tagName==='DETAILS')target.open=true;
-  const offset=target.getBoundingClientRect().top-panel.getBoundingClientRect().top+panel.scrollTop;
-  panel.scrollTop=Math.max(0,offset-panel.querySelector('.league-jumps').offsetHeight-12);
- };
  el('career-open-player').addEventListener('click',()=>{setCareerTab('player');el('career-player-tab').focus();});
  const download=(raw,filename)=>{const url=URL.createObjectURL(new Blob([raw],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
  const openBackups=()=>{

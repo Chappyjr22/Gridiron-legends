@@ -1,0 +1,54 @@
+/* Fixed phone screens: only the list scrolls, never the screen controls. */
+#career-screen[data-page=league] .career-header{display:none}
+#career-screen[data-page=league] #career-hub .locker-layout{width:100%;padding:0;gap:0;margin:0;grid-template-rows:minmax(0,1fr)}
+#career-screen[data-page=league] .career-nav{padding-top:0;padding-bottom:env(safe-area-inset-bottom)}
+#career-screen #career-league-panel{display:flex;flex-direction:column;padding:0;border:0;overflow:hidden;min-height:0;background:#071e40;box-shadow:none}
+#career-screen .league-screen-toolbar{flex:none;display:flex;align-items:center;gap:8px;min-height:48px;padding:0 max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left));background:#08386f;border-bottom:1px solid #318be3}
+#career-screen .league-screen-toolbar h2{font:26px/1 var(--sports-face);margin:0 auto 0 0;color:#fff}
+.league-screen-toolbar nav{display:flex;gap:4px}
+#career-screen #career-league-panel button,#career-screen .league-dialog button{min-height:44px;font:21px/1 var(--sports-face);border:0;border-radius:0;padding:6px 12px;box-shadow:none;background:#103961;color:#c2d7ed}
+#career-screen #career-league-panel [aria-pressed=true],#career-screen .league-dialog [aria-pressed=true]{color:#ffe000;background:#104981;box-shadow:inset 0 -3px #ffe000}
+#career-screen #career-league-panel .league-view{display:flex;flex:1;flex-direction:column;min-height:0;padding:0 max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left))}
+#career-screen #career-league-panel [hidden]{display:none!important}
+#career-screen .league-controls{display:flex;flex:none;align-items:center;gap:4px;padding:3px 0;margin:0;min-width:0}
+#league-categories{display:flex;gap:4px;margin-right:auto}
+#career-screen #league-metrics{border-block:1px solid #2a6caf;padding:0}
+#career-screen #league-metrics button{flex:1;padding:4px;min-width:44px;background:transparent}
+#career-screen #league-conferences button{flex:1}
+#career-screen .league-list{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:thin}
+#career-screen #league-player-stats .leaderboard-caption{position:sticky;top:0;z-index:1;background:#071e40;padding:5px 8px;margin:0;font:12px/1.2 sans-serif}
+#career-screen #league-player-stats .leaderboard{margin:0}
+#career-screen #league-player-stats .leaderboard li{min-height:48px;padding:4px 8px}
+#career-screen #league-player-stats .leaderboard li:before{color:#90aed0}
+#career-screen #league-player-stats .leader-name{font:23px/1 var(--sports-face)}
+#career-screen #league-player-stats .leader-name small{font:12px/1.3 sans-serif}
+#career-screen .league-own-team{box-shadow:inset 3px 0 #ffe000;background:#123e6b!important}
+#career-screen .league-table{width:100%;border-collapse:collapse;font:23px/1 var(--sports-face);color:#fff}
+.league-table th,.league-table td{padding:10px 8px;text-align:right;border-bottom:1px solid #2a6caf;white-space:nowrap}
+.league-table th:first-child{text-align:left}.league-table thead{position:sticky;top:0;background:#08386f;color:#bdd3ed}.league-table tbody th{font-weight:normal}
+.league-rank{display:inline-block;width:28px;color:#9db8d9}.league-table b{display:inline-block;min-width:50px;color:#ffe000}.league-table small{font:11px/1 sans-serif;color:#ffe000;margin-left:8px}.league-team-name{color:#bdd3ed}
+#career-screen #career-standings-note{flex:none;font:12px/1.3 sans-serif;margin:0;padding:5px 8px;color:#bdd3ed}
+#career-screen #career-schedule-section h3{font:23px/1 var(--sports-face);margin:0 auto 0 0}
+.league-game{display:grid;grid-template-columns:100px minmax(0,1fr) auto;align-items:center;gap:12px;min-height:46px;padding:6px 12px;border-bottom:1px solid #2a6caf;font:22px/1 var(--sports-face);color:#bdd3ed}.league-game strong{color:#fff}.league-next-game{background:#123e6b;box-shadow:inset 3px 0 #ffe000}.league-next-game strong{color:#ffe000}
+#career-screen .league-dialog{background:#071e40;color:#fff}
+#career-screen .league-dialog header{display:flex;align-items:center;gap:16px;background:#08386f;border-bottom:1px solid #318be3}
+.league-picker-search{display:flex;flex:none;gap:8px;padding:6px max(16px,env(safe-area-inset-right)) 6px max(16px,env(safe-area-inset-left))}
+#league-team-search{flex:1;min-width:0;min-height:44px;font:18px sans-serif;color:#fff;background:#0a2c57;border:1px solid #318be3;border-radius:0;padding:6px 12px}
+#league-team-search::placeholder{color:#bdd3ed}
+#league-team-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:6px}
+#career-screen #league-team-options button{display:flex;align-items:center;gap:10px;text-align:left;min-height:52px;border:1px solid #2a6caf}
+#league-team-options b{min-width:44px;color:#ffe000}#league-team-options small{margin-left:auto;font:11px sans-serif;color:#ffe000}
+@media(max-width:700px){
+ #career-screen #career-league-panel button{font-size:19px;padding-inline:8px}
+ #career-screen .league-screen-toolbar{gap:4px}
+ #career-screen .league-table{font-size:21px}.league-table th,.league-table td{padding:10px 5px}
+ .league-table .league-team-name{display:none}
+}
+@media(orientation:portrait){
+ #career-screen .league-screen-toolbar h2{display:none}
+ #career-screen .league-screen-toolbar nav{flex:1}#career-screen .league-screen-toolbar nav button{flex:1}
+ #career-screen #league-toolbar{flex-wrap:wrap}#league-categories{width:100%;margin:0}#league-categories button{flex:1}
+ #league-team-options{grid-template-columns:1fr}
+ #career-screen #league-conferences{flex-wrap:wrap}#career-screen #league-conferences button{flex-basis:45%}
+ .league-game{grid-template-columns:72px 1fr auto;font-size:20px;gap:6px;padding-inline:6px}.league-game .league-team-name{display:none}
+}
