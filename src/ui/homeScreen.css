@@ -53,3 +53,13 @@
  #career-screen #career-hub[data-view=home] .match-board{min-height:250px}
  #career-screen #career-hub[data-view=home] .paper-board{min-height:180px}
 }
+@media(orientation:landscape) and (max-height:350px){
+ #career-screen #career-hub[data-view=home] .paper-board{padding:6px;gap:3px}
+ #career-screen #career-home-panel .helmet-matchup .helmet{height:26px;width:38px}
+ #career-screen #career-home-panel .helmet-matchup strong{font-size:18px}
+ #career-screen #career-home-panel .helmet-matchup small{font-size:12px}
+ #career-screen #career-next-opponent{font-size:16px}
+ #career-screen #career-matchup{font-size:10px}
+ #career-screen #career-home-panel .board-kicker{font-size:18px}
+ #career-screen #career-weekly-goal{font-size:15px}
+}
