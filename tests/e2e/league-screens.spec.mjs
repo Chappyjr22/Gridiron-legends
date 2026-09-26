@@ -30,6 +30,10 @@ for(const [width,height,stage] of [[844,304,'college'],[667,375,'pro'],[844,390,
  await page.locator('#league-schedule-team').tap();await page.screenshot({path:`test-results/league-team-picker-${width}-${height}.png`});await page.locator(`#league-team-options [data-team="${fixture.other}"]`).tap();await expect(page.locator('#career-schedule-section h3')).toContainText(fixture.otherName);
  await page.locator('#league-schedule-team').tap();await page.locator('#league-team-reset').tap();await expect(page.locator('#career-schedule-section h3')).toHaveText('Your season');
  await page.locator('[data-league-view=leaders]').tap();await expect(page.locator('[data-league-metric=receptions]')).toHaveAttribute('aria-pressed','true');await fits();
- await page.getByRole('tab',{name:'Home',exact:true}).tap();await page.getByRole('button',{name:'View standings',exact:true}).tap();await expect(page.locator('#league-standings-view')).toBeVisible();await fits();
+ await page.getByRole('tab',{name:'Home',exact:true}).tap();
+ // The Home standings shortcut is intentionally shown only at 800px and wider.
+ if(width>=800)await page.getByRole('button',{name:'View standings',exact:true}).tap();
+ else{await page.getByRole('tab',{name:'League',exact:true}).tap();await page.locator('[data-league-view=standings]').tap();}
+ await expect(page.locator('#league-standings-view')).toBeVisible();await fits();
  expect(errors).toEqual([]);await context.close();
 });
