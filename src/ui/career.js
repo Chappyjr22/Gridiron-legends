@@ -92,7 +92,8 @@ function render(){
  el('qb-profile-team').textContent=`${team.city} ${team.name}`;
  el('qb-profile-career').innerHTML=`<span><b>${player.rating}</b> OVR</span><span><b>${player.age}</b> AGE</span><span><b>${career.stage==='college'?'COLLEGE':'PRO'}</b> ${career.stage==='college'?'SENIOR':`YEAR ${career.league.season}`}</span>`;
  el('career-user-abbr').textContent=team.abbr;el('career-user-record').textContent=recordLabel(team);
- el('career-open-player').textContent=career.points?`${career.points} upgrade ${career.points===1?'point':'points'}`:'View your player';
+ el('career-open-player').textContent=career.points?`${career.points} ${career.points===1?'point':'points'}`:'Your player';
+ el('career-open-player').setAttribute('aria-label',career.points?`${career.points} upgrade ${career.points===1?'point':'points'}`:'View your player');
  el('career-season').textContent=`Season ${career.league.season} · ${career.postseason?'Playoffs':`Week ${career.league.week}`} · ${recordLabel(team)}`;
  el('career-level').textContent=`Level ${career.level} · ${career.xp}/${levelThreshold(career.level,career)} XP · ${career.points} upgrade ${career.points===1?'point':'points'}`;
  el('career-xp').max=levelThreshold(career.level,career);el('career-xp').value=career.xp;el('qb-profile-xp').max=levelThreshold(career.level,career);

@@ -57,7 +57,7 @@ for(const viewport of [{width:844,height:304},{width:844,height:390},{width:932,
   await page.locator('[data-league-view=schedule]').tap();await expect(page.locator('#league-schedule-view')).toBeVisible();
   await page.locator('[data-league-view=leaders]').tap();await expect(page.locator('#league-toolbar')).toBeInViewport();
   await page.getByRole('tab',{name:'Home',exact:true}).tap();
-  await expect(page.locator('#career-player-sprite')).toBeVisible();
+  await expect(page.locator('#career-player-sprite')).not.toBeVisible();
   const helmets=await page.locator('.helmet-matchup').boundingBox(),opponent=await page.locator('#career-next-opponent').boundingBox();
   expect(helmets.y+helmets.height).toBeLessThanOrEqual(opponent.y);
   await page.screenshot({path:`test-results/mobile-home-${viewport.width}-${viewport.height}.png`});

@@ -352,14 +352,14 @@
   <div id="career-hub" hidden>
    <div class="locker-layout">
     <section class="career-player-card" id="career-player-card">
-      <h3 id="career-player-name"></h3><p id="career-player-detail"></p>
+      <canvas id="career-player-sprite" class="menu-player" width="64" height="64" aria-label="Your player in team colors"></canvas><h3 id="career-player-name"></h3><p id="career-player-detail"></p>
       <p id="career-level"></p><progress id="career-xp" max="100" value="0" aria-label="Progress to next level"></progress>
       <div class="locker-jersey" aria-hidden="true"><span id="career-jersey-number"></span></div>
 
     </section>
     <div id="career-home-panel" class="career-page home-boards" role="tabpanel" aria-labelledby="career-home-tab">
      <section class="match-board paper-board">
-       <div class="home-match-heading"><span class="board-kicker">Next game</span><canvas id="career-player-sprite" class="menu-player" width="64" height="64" aria-label="Your player in team colors"></canvas></div>
+       <div class="home-match-heading"><span class="board-kicker">Next game</span></div>
        <div class="helmet-matchup"><div><svg class="helmet" viewBox="0 0 32 28" aria-hidden="true"><use href="#helmet-icon"/></svg><strong id="career-user-abbr"></strong><small id="career-user-record"></small></div><b>VS</b><div><svg class="helmet opponent-helmet" viewBox="0 0 32 28" aria-hidden="true"><use href="#helmet-icon"/></svg><strong id="career-opponent-abbr"></strong><small id="career-opponent-record"></small></div></div>
        <h3 id="career-next-opponent"></h3><p id="career-matchup"></p>
        <button id="career-play" class="sports-button field-green">Play next game</button><button id="career-draft" class="sports-button gold" hidden>Enter the draft</button><button id="career-next-season" class="sports-button gold" hidden>Start next season</button>

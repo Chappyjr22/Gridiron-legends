@@ -63,3 +63,19 @@
  #career-screen #career-home-panel .board-kicker{font-size:18px}
  #career-screen #career-weekly-goal{font-size:15px}
 }
+/* Finish the Home controls with the same flat treatment as other career screens. */
+#career-screen #career-home-panel .home-match-heading{justify-content:center}
+#career-screen #career-home-panel .weekly-dropdown-trigger,#career-screen #career-home-panel .weekly-dropdown-options button{box-shadow:none;transform:none}
+#career-screen #career-home-panel #career-preparation-target-label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+#career-screen #career-home-panel #career-preparation-target{margin-top:4px}
+#career-screen #career-home-panel #career-last-result{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-top:6px;padding-top:6px;border-top:1px solid #2a6caf}
+#career-screen #career-home-panel #career-last-result[hidden]{display:none}
+#career-screen #career-home-panel #career-result-title{flex:1;min-width:100px;font-size:17px;margin:0}
+#career-screen #career-home-panel #career-review-game{flex:none;min-height:44px;padding:4px 10px;font:17px/1 var(--sports-face);border:1px solid #2a6caf;border-radius:0;box-shadow:none;transform:none;background:#103961;color:#ffe000}
+#career-screen #career-home-panel .home-links button{border:1px solid #2a6caf;border-radius:0;transform:none;font-size:16px}
+#career-screen #career-home-panel .home-links{gap:6px}
+#career-screen #career-home-panel .preparation-status{margin:4px 0;text-align:left}
+@media(orientation:landscape) and (max-height:350px){
+ #career-screen #career-home-panel .preparation-status{display:none}
+ #career-screen #career-home-panel .weekly-dropdown-trigger{font-size:16px}
+}
