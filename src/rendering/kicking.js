@@ -2,8 +2,9 @@ import {toCanvas} from './players.js';
 import {kickMeter,KICK_GOAL,kickGoalSample} from '../simulation/kicking.js';
 import {flightPosition} from '../simulation/ballMotion.js';
 import {drawFootball} from './football.js';
-import {OFF,XPX,SKIN_PALETTES} from '../state/constants.js';
-import {hexToRGB} from './spriteSheets.js';
+import {OFF,DEF,XPX,SKIN_PALETTES,SPRITE_CELL,SPRITE_DRAW,SPRITE_ANCHOR_X,SPRITE_ANCHOR_Y} from '../state/constants.js';
+import {hexToRGB,spriteState,spriteSheets,presnapSpriteSheets,defensePresnapSpriteSheets} from './spriteSheets.js';
+import {kickFormation,kickSnapPosition,KICK_SNAP_MS,KICK_CONTACT_MS} from './kickFormation.js';
 const sprites=new Image();sprites.src='assets/kicking.png';
 let labels=null,cacheKey='',sheet=null;
 fetch('assets/kicking-materials.json').then(r=>r.json()).then(data=>{labels=data.labels;}).catch(()=>{});
@@ -29,8 +30,11 @@ export function drawKick(ctx,width,game,entities,now){
  const titleWidth=ctx.measureText(title).width+24;
  ctx.fillStyle='#102b43';ctx.fillRect((width-titleWidth)/2,10,titleWidth,32);
  ctx.fillStyle='#fff0ce';ctx.fillText(title,width/2,33);
+ const active=k.stage==='approach'||air;
+ const formationAge=air?KICK_CONTACT_MS:elapsed;
+ for(const actor of kickFormation(game.los,formationAge,active))drawFormationPlayer(ctx,actor,active,formationAge);
  if(art){
-  const follow=air||(k.stage==='approach'&&elapsed>420),approach=k.stage==='approach'?Math.min(1,elapsed/420):air?1:0;
+  const follow=air,approach=k.stage==='approach'?Math.min(1,Math.max(0,elapsed-KICK_SNAP_MS)/(KICK_CONTACT_MS-KICK_SNAP_MS)):air?1:0;
   const player=(frame,x,y)=>ctx.drawImage(art,(frame%2)*64,Math.floor(frame/2)*64,64,64,Math.round(x-32),Math.round(y-59),64,64);
   player(follow?1:0,originX+28-approach*13,originY);player(follow?3:2,originX+8,originY);
  }
@@ -39,7 +43,11 @@ export function drawKick(ctx,width,game,entities,now){
   ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(point.cx,point.cy,5,2,0,0,7);ctx.fill();
   drawFootball(ctx,point.cx,point.cy-(pos.height||0),{time:now,tumble:true});
   if(k.flight)drawGoalCamera(ctx,k.flight,now,pixelScale);
- }else drawFootball(ctx,originX-4,originY-2,{angle:Math.PI/2,size:24});
+ }else{
+  const snapped=k.stage==='approach';
+  const pos=kickSnapPosition(game.los,snapped?elapsed:0),point=toCanvas(pos);
+  drawFootball(ctx,point.cx,point.cy-2-pos.height,{angle:snapped&&elapsed>=KICK_SNAP_MS?Math.PI/2:0,size:24,time:snapped&&elapsed<KICK_SNAP_MS?elapsed:0,tumble:snapped&&elapsed<KICK_SNAP_MS});
+ }
  if(['power','aim'].includes(k.stage)){
   const w=Math.min(Math.max(360,240*pixelScale),width*.7),left=(width-w)/2,stage=k.stage;
   const value=kickMeter(stage,elapsed,game.difficulty),start=stage==='power'?Math.min(1,k.powerRequired):(1-k.aimTolerance)/2,span=stage==='power'?Math.max(0,1-k.powerRequired):k.aimTolerance;
@@ -69,4 +77,27 @@ function drawGoalCamera(ctx,ball,now,pixelScale){
  ctx.fillStyle=held?(sample.reason==='GOOD'?'#8bf0b5':'#ffbf87'):'#d3dfec';
  ctx.font=`bold ${Math.max(14,11*pixelScale)}px monospace`;
  ctx.fillText(held?sample.reason:'BALL APPROACHING',center,top+h-10*scale);
+}
+
+function drawFormationPlayer(ctx,actor,active,elapsed){
+ const {cx,cy}=toCanvas(actor),defense=actor.side==='def',team=defense?DEF:OFF;
+ if(cx<-70||cx>ctx.canvas.width+70)return;
+ const ready=defense?spriteState.defensePresnapSpritesReady:spriteState.presnapSpritesReady;
+ const sheets=ready?(defense?defensePresnapSpriteSheets:presnapSpriteSheets.off):(defense?spriteSheets.def:spriteSheets.off);
+ const art=sheets[actor.skin]||sheets[0];
+ ctx.fillStyle='rgba(0,0,0,.27)';ctx.beginPath();ctx.ellipse(cx,cy+12,10,3,0,0,Math.PI*2);ctx.fill();
+ // Keep the protection/rush stances low, with a small contact pulse after snap.
+ const pulse=active?Math.sin(Math.min(elapsed,550)/70)*1.4:0;
+ ctx.save();ctx.translate(Math.round(cx+pulse*(defense?1:-1)),Math.round(cy+12));
+ if(defense)ctx.scale(-1,1);
+ if(art){
+  const col=ready?(defense?0:3):0;
+  ctx.drawImage(art,col*SPRITE_CELL,0,SPRITE_CELL,SPRITE_CELL,-SPRITE_DRAW*SPRITE_ANCHOR_X/SPRITE_CELL,-SPRITE_DRAW*SPRITE_ANCHOR_Y/SPRITE_CELL,SPRITE_DRAW,SPRITE_DRAW);
+ }else{
+  ctx.fillStyle=team.pants;ctx.fillRect(-8,-12,16,12);
+  ctx.fillStyle=team.jersey;ctx.fillRect(-12,-27,21,16);
+  ctx.fillStyle=team.helmet;ctx.fillRect(-15,-36,16,13);
+  ctx.fillStyle='#ccd5d9';ctx.fillRect(-18,-27,6,4);
+ }
+ ctx.restore();
 }

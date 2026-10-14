@@ -808,10 +808,6 @@ function updateSimulation(dt,now){
           moveToward(defender,tx,ty,COVER_YPS*XPX*SPEED_SCALE*sMult*(now<(defender.blockedUntil||0)?.25:1)*speedMultiplier(defender,game.difficulty,game.momentum),dt);
         }
       });
-      if(!game.scrambling&&game.blitzer&&t>0.25&&now>=(game.blitzBlockedUntil||0)){
-        const blitzer=entities.players[game.blitzer];
-        moveToward(blitzer,qb.x,qb.yfield,RUSH_SPEED_BLITZ*screenMult*(now<(blitzer.blockedUntil||0)?.25:1)*speedMultiplier(blitzer,game.difficulty,game.momentum),dt);
-      }
     }
 
     if(entities.ball.inFlight&&now>=entities.ball.startTime){
@@ -956,9 +952,15 @@ function updateSimulation(dt,now){
             if(now>=def.dive.until){def.dive=null;def.action='missedTackle';def.actionStart=now;def.missedUntil=now+MISSED_TACKLE_RECOVERY_MS;}
             continue;
           }
+          const pocketBlitzer=entities.ballCarrier===qb&&!game.scrambling&&def===entities.players[game.blitzer];
           const target=pursuitTarget(def,entities.ballCarrier,entities.ballCarrier.velocity||{x:0,yfield:0});
           const blockedMult=now<(def.blockedUntil||0)?0:1;
-          moveToward(def,clamp(target.x,LAT_MIN,LAT_MAX),target.yfield,pursueSpeed*speedMultiplier(def,game.difficulty,game.momentum)*blockedMult,dt);
+          // Blitzers use their own rush speed and delay, not an additional
+          // movement on top of normal pursuit in the same physics step.
+          const speed=pocketBlitzer
+            ?(t>0.25&&now>=(game.blitzBlockedUntil||0)?RUSH_SPEED_BLITZ*screenMult*(blockedMult?1:.25):0)
+            :pursueSpeed*blockedMult;
+          moveToward(def,clamp(target.x,LAT_MIN,LAT_MAX),target.yfield,speed*speedMultiplier(def,game.difficulty,game.momentum),dt);
           if(!entities.ball.inFlight&&(entities.ballCarrier!==qb||game.scrambling)&&blockedMult===1&&entities.breakCooldown<=0)startDive(def,entities.ballCarrier,now,diff);
         }
         if(!entities.ball.inFlight&&entities.breakCooldown<=0){

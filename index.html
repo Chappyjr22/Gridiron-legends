@@ -183,6 +183,7 @@
 <link rel="stylesheet" href="./src/ui/homeScreen.css">
 <link rel="stylesheet" href="./src/ui/settingsScreens.css">
 <link rel="stylesheet" href="./src/ui/playbookScreen.css">
+<link rel="stylesheet" href="./src/ui/gameDecisions.css">
 <link rel="preload" href="./assets/ui/Jersey10-Regular.ttf" as="font" type="font/ttf" crossorigin>
 <style>
 #result-overlay.replaying{backdrop-filter:none;-webkit-backdrop-filter:none;background:transparent;pointer-events:none;align-items:flex-end;}
@@ -483,7 +484,7 @@
         <div class="card-body">
           <div class="result-kicker" id="result-kicker">Play Result</div>
           <p class="msg" id="overlay-msg"></p>
-          <button id="btn-replay" hidden>Replay</button><button class="btn-primary" id="btn-continue">Continue</button>
+          <div class="result-actions"><button id="btn-replay" hidden>Replay</button><button class="btn-primary" id="btn-continue">Continue</button></div>
         </div>
       </div>
     </div>
@@ -491,9 +492,7 @@
     <div class="overlay" id="fourth-down-overlay">
       <div class="card wide">
         <div class="card-body">
-          <div class="result-kicker">Coach's Decision</div>
-          <p class="msg">FOURTH DOWN</p>
-          <p class="decision-detail" id="fourth-down-detail"></p>
+          <div class="decision-heading"><p class="msg">FOURTH DOWN</p><p class="decision-detail" id="fourth-down-detail"></p></div>
           <div class="decision-grid">
             <button class="decision-card" id="btn-go-for-it"><strong>Go For It</strong><span id="go-detail">Keep the offense on the field</span></button>
             <button class="decision-card" id="btn-field-goal"><strong>Field Goal</strong><span id="fg-detail">Attempt 3 points</span></button>

@@ -331,6 +331,30 @@ await test('skill blocks require contact and delayed routes release after their 
  h.engine.startPractice();h.engine.choosePlay('ace_levels');h.engine.onSnap();
  const chip=h.entities.players.wr3;h.step(100);assert.equal(chip.isBlocking,true);const start=chip.yfield;h.step(400);assert.equal(chip.isBlocking,false);assert.ok(chip.yfield>start);
 });
+for(const elapsed of [0,500])await test(`blitzer obeys delay and moves only once at ${elapsed} ms`,async h=>{
+ h.engine.startPractice();h.engine.choosePlay('trips_verticals');h.engine.onSnap();
+ const {simulationNow}=await h.load('src/state/clock.js');
+ const {RUSH_SPEED_BLITZ}=await h.load('src/state/constants.js');
+ const {speedMultiplier}=await h.load('src/career/playerAttributes.js');
+ h.game.blitzer='lb1';h.game.snapTime=simulationNow()-elapsed;
+ const qb=h.entities.players.qb,def=h.entities.players.lb1;
+ Object.assign(def,{x:qb.x,yfield:qb.yfield+200});
+ const before=def.yfield;
+ h.step(16);
+ const expected=elapsed?RUSH_SPEED_BLITZ*speedMultiplier(def,h.game.difficulty,h.game.momentum)*.016:0;
+ assert.ok(Math.abs(before-def.yfield-expected)<1e-8,`expected ${expected}, moved ${before-def.yfield}`);
+});
+await test('blitzer still sacks the QB after its delayed single rush',async h=>{
+ h.engine.startPractice();h.engine.choosePlay('trips_verticals');h.engine.onSnap();
+ const {simulationNow}=await h.load('src/state/clock.js');
+ h.game.blitzer='lb1';h.game.snapTime=simulationNow()-500;
+ const qb=h.entities.players.qb,def=h.entities.players.lb1;
+ for(const p of [...Object.values(h.entities.players),...h.entities.decor])if(p!==qb&&p!==def)Object.assign(p,{x:300,yfield:-10000});
+ Object.assign(def,{x:qb.x,yfield:qb.yfield+35});
+ h.setRandom(.99);
+ for(let i=0;i<100&&h.game.phase==='live';i++)h.step(16);
+ assert.equal(h.game.phase,'tackle');assert.equal(h.game.tackle.tackler,def);assert.equal(h.game.tackle.label,'Sacked');
+});
 await test('play-action fake keeps QB possession and cancels on an early throw',async h=>{
  h.engine.startPractice();h.engine.choosePlay('ace_pa_cross');h.engine.onSnap();assert.ok(h.entities.playFake);const y=h.entities.players.rb.yfield;h.step(180);assert.notEqual(h.entities.players.rb.yfield,y);assert.equal(h.entities.ballCarrier,h.entities.players.qb);
  h.engine.releaseThrow({x:100,y:39});assert.equal(h.entities.playFake,null);assert.equal(h.game.runActive,false);assert.ok(h.entities.ball.inFlight);

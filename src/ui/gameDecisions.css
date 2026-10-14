@@ -1,0 +1,45 @@
+/* Game decisions share the compact callsheet palette and leave the scorebug clear. */
+#fourth-down-overlay,#result-overlay:not(.replaying){align-items:flex-end;padding:8px max(10px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));background:linear-gradient(transparent 15%,#06152c55 60%);backdrop-filter:none;-webkit-backdrop-filter:none}
+#fourth-down-overlay .card,#result-overlay:not(.replaying) .result-card{width:100%;max-width:760px;max-height:calc(100% - 58px);padding:10px;background:#0c2346;color:#edf3ff;border:1px solid #4679aa;box-shadow:none;text-align:left}
+#fourth-down-overlay .card-body{min-height:0;overflow:auto}
+#fourth-down-overlay .decision-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #4679aa;padding-bottom:8px;margin-bottom:8px}
+#fourth-down-overlay .msg{color:#fff;font:22px/1 var(--sports-face);margin:0}
+#fourth-down-overlay .decision-detail{color:#bdd0ec;font:18px/1.2 var(--sports-face);margin:0;text-align:right;white-space:normal}
+#fourth-down-overlay .decision-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#fourth-down-overlay .decision-card{min-width:0;min-height:78px;padding:10px 8px;gap:7px;align-items:flex-start;background:#132e53;border:1px solid #4679aa;box-shadow:none;transform:none;text-align:left}
+#fourth-down-overlay .decision-card strong{color:#fff;font:22px/1 var(--sports-face)}
+#fourth-down-overlay .decision-card span{color:#bdd0ec;font:12px/1.3 Arial,sans-serif}
+#fourth-down-overlay .decision-card.recommended{border-color:#ffe04e;border-top-width:3px;padding-top:8px}
+#fourth-down-overlay .decision-card.recommended strong{color:#ffe04e}
+#fourth-down-overlay .decision-card:disabled{opacity:1;background:#10223b;border-color:#304d70}
+#fourth-down-overlay .decision-card:disabled strong,#fourth-down-overlay .decision-card:disabled span{color:#8da2bc}
+#fourth-down-overlay .decision-card:not(:disabled):hover,#fourth-down-overlay .decision-card:focus-visible{background:#204b7e}
+#result-overlay:not(.replaying) .card-body{display:grid;grid-template-columns:minmax(0,1fr) 148px;grid-template-rows:auto minmax(0,1fr);gap:6px 16px;min-height:0;overflow:hidden;align-items:center}
+#result-overlay:not(.replaying) .result-kicker{grid-column:1;grid-row:1;justify-self:start;margin:0;padding:0;background:transparent;color:#ffe04e;font:20px/1 var(--sports-face);letter-spacing:0}
+#result-overlay:not(.replaying) .msg{grid-column:1;grid-row:2;color:#edf3ff;font:14px/1.4 Arial,sans-serif;white-space:pre-line;text-align:left;margin:0;min-height:0;max-height:calc(100dvh - 120px);overflow:auto;overscroll-behavior:contain}
+#result-overlay:not(.replaying) .result-actions{grid-column:2;grid-row:1/3;display:flex;flex-direction:column;gap:6px;align-self:center}
+#result-overlay .result-actions button{width:100%;min-height:44px;margin:0;padding:8px;font:20px/1.1 var(--sports-face);box-shadow:none;transform:none;border:1px solid #50769e;background:#173b67;color:#edf3ff}
+#result-overlay .result-actions #btn-continue{background:#ffe04e;border-color:#fff0aa;color:#102747}
+#result-overlay .result-actions button[hidden]{display:none}
+#result-overlay:not(.replaying) .result-card.scoring{border-color:#ffe04e}
+#result-overlay:not(.replaying) .result-card.turnover{border-color:#e78080}
+#result-overlay.compact-result:not(.replaying) .card-body{grid-template-rows:1fr}
+#result-overlay.compact-result:not(.replaying) .msg{grid-row:1}
+#result-overlay.compact-result:not(.replaying) .result-actions{grid-row:1}
+#result-overlay.replaying .result-actions{display:flex;justify-content:center}
+@media(orientation:landscape) and (max-height:350px){
+ #fourth-down-overlay .card,#result-overlay:not(.replaying) .result-card{padding:8px}
+ #fourth-down-overlay .decision-heading{padding-bottom:6px;margin-bottom:6px}
+ #fourth-down-overlay .decision-card{min-height:68px;padding:8px;gap:5px}
+ #fourth-down-overlay .decision-card.recommended{padding-top:6px}
+ #fourth-down-overlay .decision-card strong{font-size:20px}
+ #result-overlay:not(.replaying) .msg{font-size:13px;line-height:1.3}
+}
+@media(orientation:portrait){
+ #fourth-down-overlay .decision-heading{align-items:flex-start;flex-direction:column;gap:6px}
+ #fourth-down-overlay .decision-grid{grid-template-columns:1fr}
+ #fourth-down-overlay .decision-card{min-height:64px}
+ #result-overlay:not(.replaying) .card-body{grid-template-columns:minmax(0,1fr)}
+ #result-overlay:not(.replaying) .result-actions,#result-overlay.compact-result:not(.replaying) .result-actions{grid-column:1;grid-row:3;flex-direction:row;margin-top:4px}
+ #result-overlay:not(.replaying) .msg{max-height:50dvh}
+}
