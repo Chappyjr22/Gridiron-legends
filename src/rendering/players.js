@@ -30,6 +30,7 @@ export function drawHelmet(cx,cy,team){
 export function playerFrame(e,isDecor){
   const now=simulationNow();
   if(e.action==='runnerDive'||e.action==='runnerSlide')return {row:2,col:0}; // Ball-carrying fallback while the new art loads.
+  if(e.touchdownRunout)return {row:2,col:Math.floor(now/90)%5};
   if(e.action==='carry'&&game.phase==='result')return {row:2,col:0};
   if(e.action==='drop')return {row:4,col:2};
   if(e.action==='deflect')return {row:4,col:1};

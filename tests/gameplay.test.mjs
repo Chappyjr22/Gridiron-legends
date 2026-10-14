@@ -5,6 +5,23 @@ import {contrastingOpponent} from '../src/rendering/uniforms.js';
 import {resolvedUniform} from '../src/rendering/uniformVariants.js';
 let checks=0;
 async function test(name,fn){await fn(await harness());console.log('ok - '+name);checks++;}
+for(const dive of [false,true])for(const practice of [false,true])await test(`touchdown ${dive?'dive':'run'} finishes moving in ${practice?'practice':'game'}`,async h=>{
+ if(practice)h.engine.startPractice();else h.engine.startNewGame();
+ h.engine.startPlayerDrive(95);h.engine.choosePlay('trips_verticals');h.engine.onSnap();
+ const runner=h.entities.players.wr1;h.entities.ballCarrier=runner;Object.assign(runner,{x:190,yfield:100*28-.1,action:'carry'});
+ for(const p of [...Object.values(h.entities.players),...h.entities.decor])if(p!==runner)p.yfield=-10000;
+ if(dive)(await h.load('src/input/runnerControls.js')).requestDive();
+ h.step(16);assert.equal(h.game.phase,'result');assert.equal(h.game.playerScore,practice?0:6);
+ const spot=runner.yfield,clock=h.game.clock,plays=h.engine.matchState.stats.plays.length;
+ h.step(100);assert.ok(runner.yfield>spot,'carrier continues across the plane');
+ if(dive)assert.equal(runner.action,'runnerDive');
+ h.game.paused=true;const frozen=runner.yfield;h.step(200);assert.equal(runner.yfield,frozen);h.game.paused=false;
+ h.step(900);const settled=runner.yfield;assert.equal(runner.touchdownRunout,false);h.step(300);assert.equal(runner.yfield,settled);
+ assert.equal(h.game.clock,clock);assert.equal(h.game.playerScore,practice?0:6);assert.equal(h.engine.matchState.stats.plays.length,plays);
+ if(!practice)assert.equal(h.engine.matchState.stats.plays[0].yards,5);
+ assert.ok((await h.load('src/simulation/highlights.js')).highlights.frames.some(f=>f.players.wr1.yfield>spot),'replay includes follow-through');
+ h.engine.startPlayerDrive(20);assert.equal(h.game.touchdownPresentation,null);
+});
 await test('runner gestures separate quick swipes from taps, diagonals, and held steering',async h=>{
  const {runnerGesture}=await h.load('src/input/runnerControls.js');
  assert.equal(runnerGesture(0,-55,180),'up');assert.equal(runnerGesture(0,55,180),'down');
