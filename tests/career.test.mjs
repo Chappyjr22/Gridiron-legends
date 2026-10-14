@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import './rookie.test.mjs';
+import './coach.test.mjs';
 import * as C from '../src/career/career.js';
 import {emptyStats,emptyMatch,recordPlay} from '../src/career/stats.js';
 import {harness} from './helpers/engine.mjs';

@@ -5,7 +5,7 @@ const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;
 export function renderStory(c){
  const dialog=el('career-progress-dialog'),goal=weeklyGoal(c),stakes=seasonStakes(c),college=c.stage==='college';
  if(dialog.dataset.career!==c.careerId){dialog.dataset.career=c.careerId;dialog.dataset.view='progress';}
- const label=college?'Draft':'Rookie';
+ const label=college?'Draft':'Pro Journey';
  const buttons=[...dialog.querySelectorAll('[data-story-view]')];
  buttons.find(b=>b.dataset.storyView==='progress').textContent=label;
  function show(view){

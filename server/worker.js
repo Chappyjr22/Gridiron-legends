@@ -9,6 +9,7 @@ const services={
 };
 services['feature-account-sign-in-gridiron-legends.jacobchapman3.workers.dev']=services[preview];
 services['feature-rookie-goals-review-gridiron-legends.jacobchapman3.workers.dev']=services[preview];
+services['feature-pro-journey-gridiron-legends.jacobchapman3.workers.dev']=services[preview];
 const json=(body,status=200)=>Response.json(body,{status,headers:{'Cache-Control':'no-store'}});
 export function validatePayload(values){
  if(!values||typeof values!=='object'||Array.isArray(values))throw Error('Invalid save');
