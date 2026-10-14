@@ -6,7 +6,7 @@ for(const width of [667,844])test(`full kicking formation at ${width}`,async({br
  for(const [stage,elapsed] of [['power',0],['approach',90],['approach',400]]){
   await page.evaluate(async({stage,elapsed})=>{
    const e=await import('/src/simulation/engine.js'),{game}=await import('/src/state/gameState.js'),clock=await import('/src/state/clock.js');
-   e.practiceFieldGoal(35);clock.pauseClock(true);game.kick.stage=stage;game.kick.start=clock.simulationNow()-elapsed;
+   if(stage==='power'){e.practiceFieldGoal(35);clock.pauseClock(true);}game.kick.stage=stage;game.kick.start=clock.simulationNow()-elapsed;
    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   },{stage,elapsed});
   await expect(page.locator('#field')).toBeVisible();
