@@ -1,4 +1,7 @@
+import {renderStory} from './careerStory.js';
+import {setLeagueView} from './leagueScreens.js';
 import {renderWeekly} from './careerWeekly.js';
+import {renderRookie} from './careerRookie.js';
 import {resolvedUniform} from '../rendering/uniformVariants.js';
 import {contrastingOpponent} from '../rendering/uniforms.js';
 import {normalizeQuarterback,upgradeOffer,levelThreshold,weeklyGoal,QB_KEYS,assessGoal,developmentProfile,pointsPerLevel} from '../career/development.js';
@@ -51,7 +54,8 @@ function updateTitle(){
  paintMenuPlayer(el('title-player'),team,player?.skin??2);
 }
 function setCareerTab(tab){
- el('career-hub').dataset.view=tab;
+ el('career-hub').dataset.view=tab;el('career-screen').dataset.page=tab;
+ (tab==='player'?document.querySelector('.player-toolbar'):tab==='league'?document.querySelector('.league-screen-toolbar'):tab==='team'?document.querySelector('.team-screen-toolbar'):document.querySelector('.career-header')).append(el('career-menu-open'));
  el('career-page-title').textContent={home:'Career',player:'Player',team:'My Team',league:'League'}[tab];
  if(tab==='player')setPlayerView('upgrades');
  for(const button of document.querySelectorAll('[data-career-tab]')){
@@ -78,15 +82,18 @@ function render(){
  el('career-create').hidden=!!career&&!creating;el('career-hub').hidden=!career||creating;
  if(!career||creating){el('career-season').textContent='New career';el('career-header-name').textContent='My Career';el('career-header-level').textContent='';return;}
  const player=normalizeQuarterback(Career.careerPlayer(career)),team=League.findTeamState(career.league,career.teamId),match=Career.nextMatch(career);
- el('career-header-name').textContent=rosterName(player);el('career-header-level').textContent=`LV ${career.level} · ${career.xp}/${levelThreshold(career.level,career)} XP · ${career.points} ${career.points===1?'point':'points'}`;
+ el('player-screen-name').textContent=rosterName(player);el('career-header-name').textContent=rosterName(player);el('career-header-level').textContent=`LV ${career.level} · ${career.xp}/${levelThreshold(career.level,career)} XP · ${career.points} ${career.points===1?'point':'points'}`;
  el('career-player-name').textContent=rosterName(player);el('career-player-detail').textContent=`#${player.number} QB · ${Career.ARCHETYPES[player.archetype].name} · ${team.city} ${team.name}`;
  el('career-screen').style.setProperty('--career-color',team.colors.primary);
  el('career-jersey-number').textContent=player.number;
  paintMenuPlayer(el('career-player-sprite'),team,player.skin,match?match.homeTeamId===career.teamId:true);
  paintPlayerPortrait(el('career-header-portrait'),team,player);
  paintPlayerPortrait(el('qb-profile-sprite'),team,player);el('qb-profile-name').textContent=rosterName(player);el('qb-profile-detail').textContent=`#${player.number} · QB · LV ${career.level}`;el('qb-profile-xp').value=career.xp;
+ el('qb-profile-team').textContent=`${team.city} ${team.name}`;
+ el('qb-profile-career').innerHTML=`<span><b>${player.rating}</b> OVR</span><span><b>${player.age}</b> AGE</span><span><b>${career.stage==='college'?'COLLEGE':'PRO'}</b> ${career.stage==='college'?'SENIOR':`YEAR ${career.league.season}`}</span>`;
  el('career-user-abbr').textContent=team.abbr;el('career-user-record').textContent=recordLabel(team);
- el('career-open-player').textContent=career.points?`${career.points} upgrade ${career.points===1?'point':'points'}`:'View your player';
+ el('career-open-player').textContent=career.points?`${career.points} ${career.points===1?'point':'points'}`:'Your player';
+ el('career-open-player').setAttribute('aria-label',career.points?`${career.points} upgrade ${career.points===1?'point':'points'}`:'View your player');
  el('career-season').textContent=`Season ${career.league.season} · ${career.postseason?'Playoffs':`Week ${career.league.week}`} · ${recordLabel(team)}`;
  el('career-level').textContent=`Level ${career.level} · ${career.xp}/${levelThreshold(career.level,career)} XP · ${career.points} upgrade ${career.points===1?'point':'points'}`;
  el('career-xp').max=levelThreshold(career.level,career);el('career-xp').value=career.xp;el('qb-profile-xp').max=levelThreshold(career.level,career);
@@ -131,14 +138,17 @@ function render(){
  renderCollegeCareer(career);renderCareerStats(career);renderMyTeam(career);
  const standings=career.stage==='college'?collegeStandings(career,team.conference):League.standings(career.league,team.conference);
  const rank=standings.findIndex(t=>t.id===team.id),start=rank>3?rank-3:0;
+ el('home-season-position').innerHTML=`<strong>${recordLabel(team)}</strong><span> #${rank+1} of ${standings.length} in conference</span>`;
  el('career-home-standings').innerHTML=standings.slice(start,start+4).map((t,i)=>`<div class="career-list-row ${t.id===team.id?'career-selected':''}"><span>${start+i+1}. ${escape(t.abbr)}</span><b>${recordLabel(t)}</b></div>`).join('');
  const objective=weeklyGoal(career);
- if(match){el('career-weekly-goal').textContent=objective.label;el('career-goal-reward').textContent=objective.kind==='teammate'?'+1 CATCHING':`+${objective.xp} XP`;}
+ if(match){el('career-weekly-goal').textContent=objective.label;el('career-goal-reward').textContent=objective.kind==='teammate'?'+1 CATCHING':`+${objective.xp} XP${objective.kind==='challenge'?' · +2 CONF':''}`;}
  renderWeekly(career,match,persist,render);
+ renderRookie(career);
  let journey=el('career-journey');if(!journey){journey=document.createElement('section');journey.id='career-journey';el('career-awards').after(journey);}
- journey.innerHTML=`<h3>Career timeline</h3><p>Next passing milestone: ${Math.max(1000,Math.ceil((career.totals.passingYards+1)/1000)*1000).toLocaleString()} yards</p>${career.proEntry?`<p>${escape(career.proEntry.expectation)} · Coach confidence ${career.coachConfidence??50}%</p>`:''}${career.proEntry?.expectations?.length?`<h3>Rookie season targets</h3><ul>${career.proEntry.expectations.map(e=>`<li>${escape(e.label)}</li>`).join('')}</ul>`:''}${(career.seasonArchive||[]).map(s=>`<p>Season ${s.season} · ${escape(s.team)} · ${s.record.wins}–${s.record.losses} · ${s.stats.passingYards} YDS · ${s.stats.passingTD} TD<br>${escape(s.awards.join(' · '))}</p>`).join('')}${career.collegeArchive?`<p>College: ${escape(career.collegeArchive.awards.map(a=>a.title).join(' · '))}</p>`:''}${career.offseasonNews?.length?`<details><summary>Offseason changes (${career.offseasonNews.length})</summary>${career.offseasonNews.map(n=>`<p>${escape(n)}</p>`).join('')}</details>`:''}`;
+ journey.innerHTML=`<h3>Career timeline</h3><p>Next passing milestone: ${Math.max(1000,Math.ceil((career.totals.passingYards+1)/1000)*1000).toLocaleString()} yards</p>${career.proEntry?`<p>${escape(career.proEntry.expectation)} · Coach confidence ${career.coachConfidence??50}%</p>`:''}${(career.seasonArchive||[]).map(s=>`<p>Season ${s.season} · ${escape(s.team)} · ${s.record.wins}–${s.record.losses} · ${s.stats.passingYards} YDS · ${s.stats.passingTD} TD<br>${escape(s.awards.join(' · '))}</p>`).join('')}${career.collegeArchive?`<p>College: ${escape(career.collegeArchive.awards.map(a=>a.title).join(' · '))}</p>`:''}${career.offseasonNews?.length?`<details><summary>Offseason changes (${career.offseasonNews.length})</summary>${career.offseasonNews.map(n=>`<p>${escape(n)}</p>`).join('')}</details>`:''}`;
 
  el('career-awards').textContent=career.awards.map(a=>`${career.stage==='college'?'College':'Season '+a.season}: ${a.title}`).join(' · ')||'First milestone: finish your first game.';
+ renderStory(career);
 }
 function launch(){
  const match=Career.nextMatch(career);if(!match)return;
@@ -155,10 +165,10 @@ function launch(){
  persist();ensureLoopStarted();
 }
 export function initCareer(){
- el('career-view-standings').onclick=()=>{setCareerTab('league');el('career-league-tab').focus();document.querySelector('[data-league-jump=standings-heading]').click();};
+ el('career-view-standings').onclick=()=>{setCareerTab('league');el('career-league-tab').focus();setLeagueView('standings');};
  initCareerExperience(()=>career,persist,render);initEnrollment();initPortraitPicker();
  el('career-edit-face').onclick=()=>{const player=normalizeQuarterback(Career.careerPlayer(career)),team=League.findTeamState(career.league,career.teamId);openPortraitPicker(player,team,choice=>{Object.assign(player,choice);persist();render();});};
- for(const [open,dialog,close] of [['career-menu-open','career-options','career-options-close'],['league-filters-open','league-filters','league-filters-close'],['scouting-info-open','scouting-info','scouting-info-close']]){
+ for(const [open,dialog,close] of [['career-menu-open','career-options','career-options-close'],['league-info-open','league-info-dialog','league-info-close'],['scouting-info-open','scouting-info','scouting-info-close']]){
   el(open).onclick=()=>el(dialog).showModal();el(close).onclick=()=>el(dialog).close();
  }
  el('career-back').addEventListener('click',()=>el('career-options').close());
@@ -166,6 +176,7 @@ export function initCareer(){
  for(const b of document.querySelectorAll('[data-player-view]'))b.onclick=()=>setPlayerView(b.dataset.playerView);
  el('career-open-progress').onclick=()=>el('career-progress-dialog').showModal();
  el('career-progress-close').onclick=()=>el('career-progress-dialog').close();
+ el('player-awards-close').onclick=()=>el('player-awards-dialog').close();
  const updateSaveIndicator=()=>{
   const text=el('career-quiet-save').textContent;
   const warning=/failed|unavailable|two versions|sign in|newer|changed|connect to/i.test(text);
@@ -189,12 +200,6 @@ export function initCareer(){
    event.preventDefault();setCareerTab(tabs[next].dataset.careerTab);tabs[next].focus();
   });
  }
- for(const button of document.querySelectorAll('[data-league-jump]'))button.onclick=()=>{
-  const panel=el('career-league-panel'),target=el(button.dataset.leagueJump);
-  if(target.tagName==='DETAILS')target.open=true;
-  const offset=target.getBoundingClientRect().top-panel.getBoundingClientRect().top+panel.scrollTop;
-  panel.scrollTop=Math.max(0,offset-panel.querySelector('.league-jumps').offsetHeight-12);
- };
  el('career-open-player').addEventListener('click',()=>{setCareerTab('player');el('career-player-tab').focus();});
  const download=(raw,filename)=>{const url=URL.createObjectURL(new Blob([raw],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
  const openBackups=()=>{

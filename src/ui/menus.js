@@ -1,3 +1,4 @@
+import {initSettingsScreens,setSettingsPage} from './settingsScreens.js';
 import {saveControlPreferences} from '../state/preferences.js';
 import { contrastingOpponent } from '../rendering/uniforms.js';
 import * as League from '../state/league.js';
@@ -187,6 +188,7 @@ document.getElementById('opponent-select').addEventListener('change',event=>{
   try{localStorage.setItem('gridironLegendsOpponentChoice',game.opponentChoice);}catch(e){}
   updateOpponentPreview();
 });
+initSettingsScreens();
 function closeSettings(){
   game.paused=false;
   document.getElementById('pause-overlay').classList.remove('show');
@@ -196,6 +198,7 @@ document.getElementById('btn-pause').addEventListener('click',()=>{
   document.getElementById('checkpoint-help').textContent=game.career&&['live','tackle'].includes(game.phase)?'Leaving now saves your career at the start of this play. Resume will restart this play.':'';
   game.paused=true;
   document.getElementById('pause-overlay').classList.add('show');
+  setSettingsPage(document.getElementById('pause-overlay'));
   document.querySelector('#pause-overlay .card-body').scrollTop=0;
 });
 document.getElementById('btn-resume').addEventListener('click',closeSettings);
@@ -210,6 +213,8 @@ document.getElementById('btn-main-menu').addEventListener('click',()=>{
 });
 
 export function openSetup(settingsOnly=false){
+  const screen=document.getElementById('setup-screen');screen.classList.toggle('compact-settings',settingsOnly);setSettingsPage(screen);
+  screen.querySelector(settingsOnly?'.settings-help':'.audio-settings').append(screen.querySelector('[data-open-guide]'));
   syncSettingsUI();
   document.getElementById('start-screen').classList.remove('show');
   document.getElementById('setup-screen').classList.add('show');

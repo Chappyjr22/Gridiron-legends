@@ -1,4 +1,5 @@
 import {settlePreparation,seasonStakes,stakesResult} from './weekly.js';
+import {updateRookieProgress} from './rookie.js';
 import {seasonReview,evolveLeague} from './offseason.js';
 import {normalizeQuarterback,upgradeOffer,QB_KEYS,assessGoal,DEVELOPMENT,applyDevelopment,awardExperience} from './development.js';
 import {careerStorage} from '../cloud/storage.js';
@@ -53,7 +54,7 @@ export function parseCareer(raw){
   if(!['easy','medium','hard','gridiron'].includes(c.settings.difficulty)||![2,3,4,5].includes(c.settings.quarterMinutes))return null;
   if(c.checkpoint&&(!c.activeMatch||!validCheckpoint(c.checkpoint,c)))return null;
   normalizeQuarterback(p);c.league.careerQuarterMinutes=c.settings.quarterMinutes;League.refreshRatings(c.league);
-  return c;
+  updateRookieProgress(c);return c;
  }catch{return null;}
 }
 export function loadCareer(){try{const bank=readSlots(careerStorage(),parseCareer,CAREER_KEY);return bank.careers[bank.lastId]||null;}catch{return null;}}
@@ -142,10 +143,12 @@ export function completeCareerGame(c,gameId,userScore,cpuScore,matchStats){
  if(c.stage==='college')c.lastResult.draftProjection=draftProjection(c);
  c.lastResult.stakes={before:stakesBefore,after:seasonStakes(c)};
  c.lastResult.stakes.summary=stakesResult(stakesBefore,c.lastResult.stakes.after);
+ updateRookieProgress(c);
  return c.lastResult;
 }
 export function startNextSeason(c){
  if(c.stage==='college'||c.activeMatch||!c.postseason?.champion)return false;
+ updateRookieProgress(c);
  seasonReview(c);
  const old=c.league,next=League.createFranchise(c.teamId,old.season+1);
  // Keep the people and development. Only schedule and standings restart.

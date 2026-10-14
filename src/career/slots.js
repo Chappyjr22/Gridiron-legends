@@ -24,8 +24,9 @@ export function writeSlot(storage,parse,legacyKey,c){
  const bank=readSlots(storage,parse,legacyKey);c.careerId||='legacy-career';
  Object.defineProperty(bank.careers,c.careerId,{value:c,enumerable:true,writable:true,configurable:true});bank.lastId=c.careerId;
  // The same atomic write retains every unreadable original in recovery.
- storage.setItem(SLOTS_KEY,JSON.stringify(bank));
- try{storage.setItem(legacyKey,JSON.stringify(c));}catch{}
+ if(storage.owner&&storage.setItems)storage.setItems({[SLOTS_KEY]:JSON.stringify(bank),[legacyKey]:JSON.stringify(c)});
+ else{storage.setItem(SLOTS_KEY,JSON.stringify(bank));
+ try{storage.setItem(legacyKey,JSON.stringify(c));}catch{}}
  return true;
 }
 

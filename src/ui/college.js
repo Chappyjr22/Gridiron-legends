@@ -64,11 +64,7 @@ export function renderCollegeCareer(c){
   select.value=c.league.teams.some(t=>t.id===valid)?valid:'';select.dataset.kind=college?'college':'pro';
  }
  el('career-standings-note').textContent=college?'Top two in each conference reach its title game. Four conference champions advance to the national playoff.':'Top four teams in each conference reach the playoffs.';
- el('college-schedule').hidden=!college;
- if(college)el('college-schedule').innerHTML='<h3>Senior season schedule</h3>'+[...c.league.schedule,...(c.postseason?.games||[])].filter(g=>g.homeTeamId===c.teamId||g.awayTeamId===c.teamId).map(g=>{
-  const other=League.findTeamState(c.league,g.homeTeamId===c.teamId?g.awayTeamId:g.homeTeamId);
-  return `<div class="career-list-row"><span>W${g.week} · ${g.homeTeamId===c.teamId?'vs':'at'} ${esc(other.abbr)}</span><b>${g.status==='completed'?(g.homeTeamId===c.teamId?g.homeScore:g.awayScore)+'–'+(g.homeTeamId===c.teamId?g.awayScore:g.homeScore):'Upcoming'}</b></div>`;
- }).join('');
+
 }
 export function initCollegeUI(getCareer,persist,render){
  el('career-development').onchange=syncCollegeEnrollment;

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {makeAccountStorage,OWNER_KEY,CACHE_PREFIX,SAVE_KEYS} from '../src/cloud/storage.js';
+import {makeAccountStorage,OWNER_KEY,CACHE_PREFIX,SAVE_KEYS,encodeDeviceSave,decodeDeviceSave,storageErrorMessage} from '../src/cloud/storage.js';
 import {mergePayload} from '../src/cloud/sync.js';
 import {createCareer} from '../src/career/career.js';
 import {handle,validatePayload} from '../server/worker.js';
@@ -52,3 +52,72 @@ const exchanged=await handle(new Request(callback,{headers:{Cookie:'__Secure-neo
 assert.equal(exchanged.status,303);assert.equal(exchanged.headers.get('Location'),host+'/?account=signed-in');assert.equal(exchanged.headers.get('Referrer-Policy'),'no-referrer');assert.match(exchanged.headers.get('Set-Cookie'),/HttpOnly/);assert.equal(await exchanged.text(),'');
 assert.equal((await handle(new Request(host+'/api/cloud',{headers:{'X-Career-Owner':'alice'}}),{},async()=>Response.json({user:{id:'alice',emailVerified:false}}))).status,403);
 console.log('Account checks passed: password/recovery validation, fixed Google redirects, challenge-bound callback, persistent HttpOnly cookies and verified cloud ownership.');
+
+// Storage pressure: migrate old saves losslessly, including recovery and Unicode.
+const quotaDisk=memory();
+const cacheKey=CACHE_PREFIX+'quota-player';
+const original={values:payload,revision:7,dirty:true,mutation:'pending-before-migration'};
+const originalRaw=JSON.stringify(original);
+quotaDisk.setItem(OWNER_KEY,'quota-player');quotaDisk.setItem(cacheKey,originalRaw);
+quotaDisk.setItem(cacheKey+':recovery',originalRaw);
+quotaDisk.setItem('unrelated','keep me');
+let rejectWrites=false;
+const limited={getItem:quotaDisk.getItem,setItem(k,v){
+ if(rejectWrites||String(v).length>originalRaw.length/2)throw new DOMException('The quota has been exceeded.','QuotaExceededError');
+ quotaDisk.setItem(k,v);
+}};
+const compact=makeAccountStorage(limited);
+assert.deepEqual(compact.snapshot(),original);
+assert.ok(quotaDisk.getItem(cacheKey).length<originalRaw.length/2);
+assert.equal(decodeDeviceSave(quotaDisk.getItem(cacheKey+':recovery')),originalRaw);
+assert.equal(quotaDisk.getItem('unrelated'),'keep me');
+assert.equal(compact.getItem(SAVE_KEYS[0]),payload[SAVE_KEYS[0]]);
+compact.backup(compact.snapshot());
+compact.setItem(SAVE_KEYS[1],JSON.stringify({...c,name:'José 🏈 王'}));
+assert.equal(JSON.parse(makeAccountStorage(limited).getItem(SAVE_KEYS[1])).name,'José 🏈 王');
+const beforeFailure=quotaDisk.getItem(cacheKey),snapshot=compact.snapshot();
+rejectWrites=true;
+assert.throws(()=>compact.setItem(SAVE_KEYS[0],'cannot save'),{name:'QuotaExceededError'});
+assert.throws(()=>compact.install({payload:{},revision:8},snapshot),{name:'QuotaExceededError'});
+assert.throws(()=>compact.backup(snapshot),{name:'QuotaExceededError'});
+assert.equal(quotaDisk.getItem(cacheKey),beforeFailure);
+assert.deepEqual(compact.snapshot(),snapshot);
+assert.match(storageErrorMessage(new DOMException('The quota has been exceeded.','QuotaExceededError')),/did not finish/);
+// A blocked migration retains the original raw data and remains readable.
+quotaDisk.setItem(cacheKey,originalRaw);
+assert.deepEqual(makeAccountStorage(limited).snapshot(),original);
+assert.equal(quotaDisk.getItem(cacheKey),originalRaw);
+for(const raw of ['', 'short', '🏈é漢字'.repeat(1000), originalRaw])assert.equal(decodeDeviceSave(encodeDeviceSave(raw)),raw);
+const recovered=structuredClone(payload),bank=JSON.parse(recovered[SAVE_KEYS[0]]);
+bank.recovery=[{id:'broken',raw:'unreadable original',reason:'Keep for recovery'}];
+recovered[SAVE_KEYS[0]]=JSON.stringify(bank);
+let repeated=recovered;for(let i=0;i<3;i++)repeated=mergePayload(repeated,recovered);
+assert.equal(JSON.parse(repeated[SAVE_KEYS[0]]).recovery.length,1);
+console.log(`Storage checks passed: lossless migration, backups, Unicode, atomic quota failures, repeat imports. Account fixture reduced ${Math.round(100*(1-encodeDeviceSave(originalRaw).length/originalRaw.length))}%.`);
+
+// Existing LZ saves remain readable; repeated reads must return isolated snapshots.
+const {default:LZString}=await import('lz-string');
+assert.equal(decodeDeviceSave('gridiron-lz-v1:'+LZString.compressToUTF16(originalRaw)),originalRaw);
+const batchDisk=memory();batchDisk.setItem(OWNER_KEY,'batch');let writes=0,notifications=0,deny=false;
+const batch=makeAccountStorage({getItem:batchDisk.getItem,setItem(k,v){if(deny)throw new DOMException('Full','QuotaExceededError');writes++;batchDisk.setItem(k,v);}},()=>notifications++);
+const {writeSlot}=await import('../src/career/slots.js');
+const {parseCareer,CAREER_KEY}=await import('../src/career/career.js');
+writeSlot(batch,parseCareer,CAREER_KEY,c);
+assert.equal(writes,1);assert.equal(notifications,1);
+assert.equal(JSON.parse(batch.getItem(SAVE_KEYS[0])).careers[c.careerId].name,c.name);
+assert.equal(JSON.parse(batch.getItem(SAVE_KEYS[1])).name,c.name);
+const detached=batch.snapshot();detached.values[SAVE_KEYS[1]]='modified outside storage';
+assert.notEqual(batch.getItem(SAVE_KEYS[1]),detached.values[SAVE_KEYS[1]]);
+const committed=batch.snapshot();deny=true;
+assert.throws(()=>batch.setItems({[SAVE_KEYS[0]]:'bank',[SAVE_KEYS[1]]:'legacy'}),{name:'QuotaExceededError'});
+assert.deepEqual(batch.snapshot(),committed);assert.equal(notifications,1);
+const reopened=makeAccountStorage(batchDisk);assert.deepEqual(reopened.snapshot(),committed);
+console.log('Fast checkpoint checks passed: legacy LZ reads, single atomic bank/legacy write, isolated snapshots, failure retention and reload.');
+
+const smallDisk=memory();smallDisk.setItem(OWNER_KEY,'small');
+const oldSize=('gridiron-lz-v1:'+LZString.compressToUTF16(originalRaw)).length;
+const tight=makeAccountStorage({getItem:smallDisk.getItem,setItem(k,v){if(v.length>oldSize+100)throw new DOMException('Full','QuotaExceededError');smallDisk.setItem(k,v);}});
+assert.ok(tight.install({payload:original.values,revision:original.revision},tight.snapshot()));
+assert.deepEqual(tight.snapshot().values,original.values);
+assert.ok(smallDisk.getItem(CACHE_PREFIX+'small').startsWith('gridiron-lz-v1:'));
+console.log('Storage pressure fallback retains the previous compact format when needed.');

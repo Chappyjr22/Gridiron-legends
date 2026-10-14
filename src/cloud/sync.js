@@ -1,5 +1,5 @@
 import {initAuthControls} from './auth.js';
-import {careerStorage,OWNER_KEY,CACHE_PREFIX,SAVE_KEYS} from './storage.js';
+import {careerStorage,OWNER_KEY,CACHE_PREFIX,SAVE_KEYS,storageErrorMessage} from './storage.js';
 import {parseCareer} from '../career/career.js';
 import {readSlots} from '../career/slots.js';
 export function mergePayload(remote,local){
@@ -10,7 +10,8 @@ export function mergePayload(remote,local){
   if(Object.values(remoteBank.careers).some(saved=>content(saved)===content(c)))continue;
   const copy=structuredClone(c);copy.careerId='restored-'+crypto.randomUUID();remoteBank.careers[copy.careerId]=copy;remoteBank.lastId=copy.careerId;
  }
- remoteBank.recovery.push(...localBank.recovery);
+ const recoverySeen=new Set(remoteBank.recovery.map(item=>JSON.stringify(item)));
+ for(const item of localBank.recovery){const raw=JSON.stringify(item);if(!recoverySeen.has(raw)){remoteBank.recovery.push(item);recoverySeen.add(raw);}}
  const values={[SAVE_KEYS[0]]:JSON.stringify(remoteBank)};
  if(remoteBank.lastId&&remoteBank.careers[remoteBank.lastId])values[SAVE_KEYS[1]]=JSON.stringify(remoteBank.careers[remoteBank.lastId]);
  return values;
@@ -45,7 +46,7 @@ export function initCloud(){
     store.acknowledge(current,result.revision);
    }
    message(store.snapshot().dirty?'Saved on device. Waiting to sync.':'Saved to cloud');
-  }catch(error){if(error.conflict){conflict=true;el('cloud-conflict').hidden=false;}message(error.status===401?'Saved on device. Sign in again to sync.':error.conflict?'Two versions found. Open Account to keep both.':'Saved on device. Sync unavailable. Retry from Account.');}
+  }catch(error){if(error.conflict){conflict=true;el('cloud-conflict').hidden=false;}message(error.name==='QuotaExceededError'?storageErrorMessage(error):error.status===401?'Saved on device. Sign in again to sync.':error.conflict?'Two versions found. Open Account to keep both.':'Saved on device. Sync unavailable. Retry from Account.');}
   finally{busy=false;}
  }
  async function session(){
@@ -82,22 +83,22 @@ export function initCloud(){
    const merged=current.dirty?mergePayload(values,current.values):values;
    if(JSON.stringify(store.snapshot())!==JSON.stringify(current))throw Error('Save changed. Retry.');
    // Keep the old cache for manual recovery before the atomic replacement.
-   localStorage.setItem(CACHE_PREFIX+owner+':recovery',JSON.stringify(current));
+   store.backup(current);
    // Install updates the storage adapter's tab snapshot. Writes mark it dirty atomically.
    if(!store.install({payload:merged,revision:remote.revision},current,true))throw Error('Save changed. Retry.');
    // Mark the merged payload pending without depending on another gameplay action.
 
    conflict=false;el('cloud-conflict').hidden=true;message('Both versions kept. Syncing…');
-  }catch(error){message(error.message);return;}finally{busy=false;}
+  }catch(error){message(storageErrorMessage(error));return;}finally{busy=false;}
   await sync();if(!conflict&&!store.snapshot().dirty)location.reload();
  }
  el('cloud-upload').onclick=()=>void mergeIntoCloud(Object.fromEntries(SAVE_KEYS.map(k=>[k,localStorage.getItem(k)]).filter(([,v])=>v)));
  el('cloud-keep-both').onclick=()=>void mergeIntoCloud(store.snapshot().values);
  el('cloud-history').onclick=async()=>{
   try{const items=await api('/api/cloud/history'),list=el('cloud-history-list');list.replaceChildren();
-   for(const item of items){const b=document.createElement('button');b.className='sports-button blue';b.textContent='Restore copy · '+new Date(item.updatedAt).toLocaleString();b.onclick=async()=>{try{await mergeIntoCloud(await api('/api/cloud/history?revision='+item.revision));}catch(error){message(error.message);}};list.append(b);}
+   for(const item of items){const b=document.createElement('button');b.className='sports-button blue';b.textContent='Restore copy · '+new Date(item.updatedAt).toLocaleString();b.onclick=async()=>{try{await mergeIntoCloud(await api('/api/cloud/history?revision='+item.revision));}catch(error){message(storageErrorMessage(error));}};list.append(b);}
    if(!items.length)list.textContent='Backups appear after your next cloud save.';
-  }catch(error){message(error.message);}
+  }catch(error){message(storageErrorMessage(error));}
  };
  el('cloud-signed-in').hidden=!owner;
  window.addEventListener('career-cloud-dirty',schedule);
@@ -109,7 +110,7 @@ export function initCloud(){
  const accountResult=new URL(location.href).searchParams.get('account');
  if(accountResult){
   history.replaceState(null,'',location.pathname);dialog.showModal();
-  if(accountResult==='signed-in')void finishSignIn().catch(error=>message(error.message));
+  if(accountResult==='signed-in')void finishSignIn().catch(error=>message(storageErrorMessage(error)));
   else void session().then(()=>message('Google sign-in was cancelled or could not finish. Please try again.'));
  }else void session();
 }

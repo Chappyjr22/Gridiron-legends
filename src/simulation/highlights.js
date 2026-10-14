@@ -2,7 +2,7 @@
 import {game,entities} from '../state/gameState.js';
 import {simulationNow} from '../state/clock.js';
 export const highlights={frames:[],lastAt:0,playing:false,start:0};
-const renderKeys=['x','yfield','num','skin','facing','action','actionStart','state','breakSlowUntil','presnapRole','isBlocking','isPursuing','blockedUntil'];
+const renderKeys=['x','yfield','num','skin','facing','action','actionStart','state','breakSlowUntil','presnapRole','isBlocking','isPursuing','blockedUntil','touchdownRunout'];
 function recordPlayer(player){return Object.fromEntries(renderKeys.map(key=>[key,player[key]]));}
 export function resetHighlight(){highlights.frames=[];highlights.lastAt=0;highlights.playing=false;}
 export function captureHighlight(now){

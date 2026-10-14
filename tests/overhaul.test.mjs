@@ -1,3 +1,4 @@
+import './kick-formation.test.mjs';
 import {kickTrajectory,kickOutcome,kickWindow,kickMeter,kickGoalSample,KICK_GOAL} from '../src/simulation/kicking.js';
 import assert from 'node:assert/strict';
 import {slingshotTarget,maxThrowYards} from '../src/input/aim.js';

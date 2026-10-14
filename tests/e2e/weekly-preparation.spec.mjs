@@ -21,7 +21,7 @@ for(const [width,height,kind,schoolId] of [[844,304,'teammate','college-bluegras
   await expect(teammate).toHaveAttribute('aria-expanded','false');
  }
  await picker.tap();await page.keyboard.press('Escape');await expect(picker).toHaveAttribute('aria-expanded','false');
- await picker.tap();await page.locator('#career-page-title').tap();await expect(picker).toHaveAttribute('aria-expanded','false');
+ await picker.tap();await page.locator('#career-header-name').tap();await expect(picker).toHaveAttribute('aria-expanded','false');
  if(kind==='teammate')await expect(page.locator('#career-goal-reward')).toHaveText('+1 CATCHING');
  else await expect(page.locator('#career-preparation')).toContainText('+2 extra coach confidence');
  await page.reload();await resume(page);await expect(page.getByRole('button',{name:'Weekly preparation',exact:true})).toContainText(kind==='teammate'?'Teammate work':'Coach challenge');

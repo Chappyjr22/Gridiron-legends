@@ -1,0 +1,103 @@
+/* Player pages reserve their height for content and fixed touch navigation. */
+#career-screen[data-page=player] .career-header{display:none}
+#career-screen[data-page=player] #career-hub .locker-layout{width:100%;padding:0;gap:0;margin:0;grid-template-rows:minmax(0,1fr)}
+#career-screen[data-page=player] .career-nav{padding-top:0;padding-bottom:env(safe-area-inset-bottom)}
+#career-screen[data-page=player] #career-player-panel{display:flex;flex-direction:column;overflow:hidden;padding:0;border:0;background:#071e40;box-shadow:none;min-height:0}
+#career-screen #career-player-panel .player-toolbar{position:static;flex:none;display:flex;align-items:center;gap:4px;margin:0;padding:0 max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left));min-height:48px;background:#08386f;border-bottom:1px solid #318be3}
+#player-screen-name{font:25px/1 var(--sports-face);text-transform:uppercase;margin-right:auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff}
+#career-screen #career-player-panel .player-toolbar .sports-button{min-height:44px;margin:0;flex:none;font:22px/1 var(--sports-face);padding:6px 14px;color:#bbd3ef}
+#career-screen #career-player-panel .player-toolbar [aria-pressed=true]{color:#ffe000;background:#104981;box-shadow:inset 0 -3px #ffe000}
+#career-screen #career-player-panel>section{min-height:0;flex:1;margin:0;padding:10px max(16px,env(safe-area-inset-right)) 10px max(16px,env(safe-area-inset-left))}
+#career-screen #player-upgrades-view{grid-template-columns:minmax(0,1fr) minmax(0,1.45fr);gap:20px;align-items:stretch}
+#career-screen .qb-passport{display:grid;grid-template-columns:90px minmax(0,1fr);grid-template-rows:auto auto auto 1fr auto auto;align-content:center;align-items:center;justify-items:start;gap:4px 12px;border:1px solid #2a6caf;border-left:3px solid #ffe000;padding:12px;background:#0a2c57}
+#career-screen .profile-face-button{grid-row:1/4;grid-column:1;flex-direction:column;gap:2px;width:90px;margin:0;padding:0;align-self:start;min-height:44px}
+#career-screen #qb-profile-sprite{width:80px;height:80px}
+#career-screen #qb-profile-name{grid-column:2;text-align:left;font:25px/1 var(--sports-face)}
+#career-screen #qb-profile-detail{grid-column:2;font:19px/1 var(--sports-face);color:#bdd3ed}
+#qb-profile-team{grid-column:2;font:17px/1.1 var(--sports-face);color:#bdd3ed}
+#qb-profile-career{grid-column:1/-1;display:flex;align-self:center;justify-content:space-between;gap:12px;width:100%;font:15px/1 var(--sports-face);color:#bdd3ed}
+#qb-profile-career b{display:block;font:26px/1 var(--sports-face);color:#fff;margin-bottom:4px}
+#career-screen #upgrade-status{grid-column:1/-1;font:18px/1 var(--sports-face);color:#ffe000;margin:0}
+#career-screen #qb-profile-xp{grid-column:1/-1;width:100%;height:10px;margin:0}
+#career-screen .qb-attributes{display:flex;flex-direction:column;justify-content:center;min-height:0}
+#career-screen .player-section-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 6px;min-height:24px}
+#career-screen .player-section-heading h3{font:24px/1 var(--sports-face);margin:0}
+#career-screen .player-section-heading .points-badge{font:17px/1 var(--sports-face);text-align:right}
+#career-screen #career-upgrades{display:grid;grid-template-columns:1fr;gap:6px;margin:0;min-height:0}
+#career-screen #career-upgrades button{display:grid;grid-template-columns:minmax(0,1fr) 42px 88px;grid-template-rows:22px 10px;min-height:44px;gap:2px 10px;padding:4px 8px;background:#0a2c57;border:1px solid #2a6caf}
+#career-screen #career-upgrades button>span:first-child{font:21px/1 var(--sports-face)}
+#career-screen #career-upgrades button strong{font:24px/1 var(--sports-face);text-align:right}
+#career-screen #career-upgrades .rating-track{grid-column:1/3;height:8px;align-self:end}
+#career-screen #career-upgrades .upgrade-cost{min-width:0;min-height:36px;font:19px/1 var(--sports-face);padding:0}
+#career-screen #career-upgrades .upgrade-cost small{font:14px/1 var(--sports-face);margin:1px 0 0}
+#career-screen #player-upgrades-view .career-muted{display:none}
+#career-screen #player-stats-view{display:flex;flex-direction:column}
+#career-screen #career-qb-stats{display:flex;flex-direction:column;align-items:stretch;flex:1;gap:8px;min-height:0;overflow:visible;width:100%}
+#career-screen #career-qb-stats .stat-comparison{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+#career-screen #career-qb-stats .stat-comparison>section{display:flex;flex-direction:column;padding:8px 12px;min-width:0;background:#0a2c57;border:1px solid #2a6caf;border-top:3px solid #318be3}
+#career-screen #career-qb-stats .stat-comparison h3{display:flex;justify-content:space-between;align-items:center;font:26px/1 var(--sports-face);text-transform:uppercase;margin:0 0 6px;color:#fff}
+#career-qb-stats .stat-comparison h3 small{font:16px/1 var(--sports-face);text-transform:none;color:#bdd3ed}
+#career-screen #career-qb-stats .stat-tiles{display:flex;flex:1;flex-direction:column;justify-content:space-evenly;margin:0;gap:0}
+#career-screen #career-qb-stats .stat-tiles>div{display:flex;flex-direction:row;justify-content:space-between;align-items:center;padding:0;gap:6px;text-align:left;background:transparent;border:0}
+#career-screen #career-qb-stats .stat-tiles dt{font:20px/1 var(--sports-face);color:#bdd3ed}
+#career-screen #career-qb-stats .stat-tiles dd{font:23px/1 var(--sports-face);color:#fff;margin:0;white-space:nowrap;font-variant-numeric:tabular-nums}
+#career-screen #career-qb-stats .stat-tiles>div:first-child dd{font-size:20px}
+#career-screen .player-stat-footer{display:flex;flex:none;justify-content:space-between;align-items:stretch;gap:12px;min-height:44px}
+#career-screen .player-stat-categories{display:flex;flex-direction:row;gap:6px;margin:0}
+#career-screen .player-stat-categories button{min-width:100px;min-height:44px;font:22px/1 var(--sports-face);padding:4px 12px;box-shadow:none;border-radius:0}
+#career-screen .player-awards-strip{display:flex;flex:1;align-items:center;justify-content:space-around;gap:12px;min-width:0;min-height:44px;padding:4px 8px;background:#0a2c57;color:#c2d7ed;border:1px solid #2a6caf;border-radius:0;box-shadow:none;font:18px/1 var(--sports-face)}
+.player-awards-strip span{white-space:nowrap}.player-awards-strip b{color:#fff;font-size:23px;margin-right:4px}.player-awards-strip i{font:20px/1 var(--sports-face);color:#ffe000;font-style:normal;margin-right:6px}
+#career-screen #player-awards-dialog{background:#071e40;color:#fff}
+#player-awards-dialog header{display:flex;align-items:center;gap:16px;background:#08386f;border-bottom:1px solid #318be3}
+#player-awards-dialog h2{font:26px/1 var(--sports-face);margin:0}
+.player-honors-list{list-style:none;margin:0;padding:0}.player-honors-list li{display:grid;grid-template-columns:24px 1fr auto;gap:12px;align-items:center;padding:12px;border-bottom:1px solid #2a6caf}.player-honors-list span{color:#ffe000}.player-honors-list strong{font:23px/1 var(--sports-face)}.player-honors-list small{color:#bdd3ed}
+@media(orientation:landscape) and (max-height:350px){
+ #career-screen #career-player-panel .player-toolbar{min-height:44px}
+ #career-screen #career-player-panel>section{padding-block:4px}
+ #career-screen .qb-passport{padding:8px;gap:3px 8px;grid-template-columns:68px minmax(0,1fr)}
+ #career-screen .profile-face-button{width:68px}#career-screen #qb-profile-sprite{width:58px;height:58px}
+ #career-screen #qb-profile-name{font-size:22px}#qb-profile-team{font-size:16px}
+ #qb-profile-career b{font-size:24px;margin-bottom:2px}
+ #career-screen .player-section-heading{margin-bottom:2px;min-height:18px}
+ #career-screen .player-section-heading h3{font-size:20px}
+ #career-screen #career-upgrades{gap:2px}
+ #career-screen #career-upgrades button{grid-template-rows:20px 8px;padding-block:3px}
+ #career-screen #career-qb-stats{gap:4px}
+ #career-screen #career-qb-stats .stat-comparison>section{padding:2px 10px;border-top-width:2px}
+ #career-screen #career-qb-stats .stat-comparison h3{font-size:20px;margin-bottom:2px}
+ #career-screen #career-qb-stats .stat-tiles dt,#career-screen #career-qb-stats .stat-tiles dd{font-size:18px}
+ #career-screen #career-qb-stats .stat-tiles>div:first-child dd{font-size:18px}
+}
+@media(max-width:700px){
+ #player-screen-name{font-size:21px}
+ #career-screen #career-player-panel .player-toolbar .sports-button{font-size:20px;padding-inline:10px}
+ #career-screen #player-upgrades-view{gap:12px}
+ #career-screen .qb-passport{grid-template-columns:64px minmax(0,1fr);padding:8px;gap:5px 8px}
+ #career-screen .profile-face-button{width:64px}#career-screen #qb-profile-sprite{width:60px;height:60px}
+ #career-screen #qb-profile-name{font-size:23px}
+ #career-screen #career-qb-stats .stat-comparison{gap:8px}
+ #career-screen #career-qb-stats .stat-comparison>section{padding-inline:8px}
+ #career-screen #career-qb-stats .stat-tiles>div:first-child dd{font-size:18px}
+ #career-screen .player-awards-strip{gap:4px;font-size:16px}.player-awards-strip i{margin-right:3px}
+ #career-screen .player-stat-categories button{min-width:88px}
+}
+@media(orientation:portrait){
+ #career-screen #career-player-panel{overflow-y:auto}
+ #career-screen #career-player-panel .player-toolbar{position:sticky;top:0;flex-wrap:wrap;padding-top:4px}
+ #player-screen-name{flex-basis:100%;text-align:center}
+ #career-screen #career-player-panel .player-toolbar .sports-button{flex:1}
+ #career-screen #player-upgrades-view{grid-template-columns:1fr}
+ #career-screen .qb-passport{min-height:190px}
+ #career-screen #career-upgrades{gap:8px}
+ #career-screen #career-qb-stats .stat-comparison{gap:5px;min-height:270px}
+ #career-screen #career-qb-stats .stat-comparison>section{padding:6px 4px}
+ #career-screen #career-qb-stats .stat-comparison h3{display:block;text-align:center;font-size:23px}
+ #career-qb-stats .stat-comparison h3 small{display:block;margin-top:4px}
+ #career-screen #career-qb-stats .stat-tiles>div{display:block;text-align:center}
+ #career-screen #career-qb-stats .stat-tiles dt{font-size:16px}
+ #career-screen #career-qb-stats .stat-tiles dd{font-size:20px}
+ #career-screen #career-qb-stats .stat-tiles>div:first-child dd{white-space:normal;font-size:17px}
+ #career-screen .player-stat-footer{flex-wrap:wrap}
+ #career-screen .player-awards-strip{flex-basis:100%}
+ #career-screen .player-stat-categories{width:100%}#career-screen .player-stat-categories button{flex:1}
+}

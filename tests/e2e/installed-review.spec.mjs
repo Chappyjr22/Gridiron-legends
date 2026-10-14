@@ -39,7 +39,7 @@ for(const viewport of [{width:844,height:304},{width:932,height:430},{width:390,
   await expect(page.locator('#team-player-dialog')).toBeVisible();
   if(await page.locator('#team-player-dialog').isVisible())await page.locator('#team-player-close').tap();
   await page.getByRole('tab',{name:'League',exact:true}).tap();await shot('league');
-  await page.getByRole('button',{name:'Filters',exact:true}).tap();await shot('filters');await page.locator('#league-filters-close').tap();
+  await page.locator('#league-team-open').tap();await shot('team-picker');await page.locator('#league-team-close').tap();
   await page.getByRole('tab',{name:'Home',exact:true}).tap();await page.getByRole('button',{name:'Play next game',exact:true}).tap();await shot('pregame');
   expect(errors).toEqual([]);await context.close();
  });

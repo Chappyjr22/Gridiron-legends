@@ -111,7 +111,7 @@ export function applyFormation(formationId){
 }
 
 export function initPlay(){
-  resetHighlight();game.autoContinueAt=0;game.drivePresentation=null;game.kick=null;game.fumble=null;game.playFacts={threw:false,receiverId:null,targetId:null};game.playResolved=false;
+  resetHighlight();game.autoContinueAt=0;game.drivePresentation=null;game.touchdownPresentation=null;game.kick=null;game.fumble=null;game.playFacts={threw:false,receiverId:null,targetId:null};game.playResolved=false;
   const los=game.los;
   game.centerYfield=los*XPX;
   entities.breakCooldown=0;
@@ -312,12 +312,32 @@ function simulateExtraPoint(team){
   }
   return good;
 }
+// The score/spot are final at the plane. Only the carrier's presentation
+// continues, so a touchdown cannot freeze a run or dive in mid-motion.
+function startTouchdownRunout(){
+  const runner=entities.ballCarrier;if(!runner)return;
+  const now=simulationNow();
+  const duration=runner.runnerDive?Math.max(100,360-(now-runner.runnerDive.start)):850;
+  game.touchdownPresentation={start:now,duration,fromY:runner.yfield,speed:Math.max(0,runner.velocity?.yfield||0)};
+  runner.touchdownRunout=true;runner.juke=null;
+  interaction.steering=false;interaction.steerAnchor=null;interaction.steerCurrent=null;
+  captureHighlight(now);
+}
+function advanceTouchdownRunout(now){
+  const runout=game.touchdownPresentation,runner=entities.ballCarrier;
+  if(!runout||!runner||highlights.playing)return;
+  const elapsed=clamp(now-runout.start,0,runout.duration)/1000,duration=runout.duration/1000;
+  runner.yfield=Math.min(109*XPX,runout.fromY+runout.speed*(elapsed-elapsed*elapsed/(2*duration)));
+  if(now-runout.start>=runout.duration){runner.touchdownRunout=false;game.touchdownPresentation=null;}
+  captureHighlight(now);
+}
 function handlePlayerTouchdown(){
   feedback('score');
   game.playerScore+=6;
   adjustMomentum(0.35);
   const message='TOUCHDOWN!\n'+(entities.ballCarrier?.slot||'Player')+' · '+Math.round(entities.ballCarrier.yfield/XPX-game.los)+' yards\n'+scoreLine();
   showResult(message,attemptExtraPoint,'Kick extra point');
+  startTouchdownRunout();
   checkpoint({type:'extraPoint',message,buttonLabel:'Kick extra point'});
 }
 export function endPlay(yardGained,label,outOfBounds=false,exactSpot=game.los+yardGained){
@@ -332,6 +352,7 @@ export function endPlay(yardGained,label,outOfBounds=false,exactSpot=game.los+ya
     if(label==='FUMBLE LOST'){showResult('Fumble lost. Protect the ball with a dive or slide.',()=>startPlayerDrive(20),'Next Rep');return;}
     if(newLOS>=100){
       showResult('TOUCHDOWN!\nPractice rep complete.',()=>startPlayerDrive(20),'Next Rep');
+      startTouchdownRunout();
       return;
     }
     if(label==='INTERCEPTED'){
@@ -407,6 +428,7 @@ function attemptExtraPoint(){
  checkpoint({type:'extraPoint',message:'Extra point pending.\n'+scoreLine(),buttonLabel:'Kick extra point'});
 }
 function beginKick(kind){
+  game.touchdownPresentation=null;
  hideAllOverlays();game.phase='kicking';
  document.getElementById('presnap-hint').style.display='none';
  interaction.aiming=false;interaction.steering=false;entities.ball={};
@@ -702,6 +724,7 @@ export function ensureLoopStarted(){
 function updateSimulation(dt,now){
   if(editState.editMode)return;
   if(!game.paused){
+    if(game.phase==='result')advanceTouchdownRunout(now);
     if(game.phase==='result'&&game.drivePresentation){const d=game.drivePresentation;const count=Math.min(d.lines.length,2+Math.floor((now-d.start)/1000));document.getElementById('overlay-msg').textContent=d.lines.slice(0,count).join('\n');}
     advanceLooseBall(entities.ball,dt);
     if(game.phase==='deadball'){
@@ -808,10 +831,6 @@ function updateSimulation(dt,now){
           moveToward(defender,tx,ty,COVER_YPS*XPX*SPEED_SCALE*sMult*(now<(defender.blockedUntil||0)?.25:1)*speedMultiplier(defender,game.difficulty,game.momentum),dt);
         }
       });
-      if(!game.scrambling&&game.blitzer&&t>0.25&&now>=(game.blitzBlockedUntil||0)){
-        const blitzer=entities.players[game.blitzer];
-        moveToward(blitzer,qb.x,qb.yfield,RUSH_SPEED_BLITZ*screenMult*(now<(blitzer.blockedUntil||0)?.25:1)*speedMultiplier(blitzer,game.difficulty,game.momentum),dt);
-      }
     }
 
     if(entities.ball.inFlight&&now>=entities.ball.startTime){
@@ -956,9 +975,15 @@ function updateSimulation(dt,now){
             if(now>=def.dive.until){def.dive=null;def.action='missedTackle';def.actionStart=now;def.missedUntil=now+MISSED_TACKLE_RECOVERY_MS;}
             continue;
           }
+          const pocketBlitzer=entities.ballCarrier===qb&&!game.scrambling&&def===entities.players[game.blitzer];
           const target=pursuitTarget(def,entities.ballCarrier,entities.ballCarrier.velocity||{x:0,yfield:0});
           const blockedMult=now<(def.blockedUntil||0)?0:1;
-          moveToward(def,clamp(target.x,LAT_MIN,LAT_MAX),target.yfield,pursueSpeed*speedMultiplier(def,game.difficulty,game.momentum)*blockedMult,dt);
+          // Blitzers use their own rush speed and delay, not an additional
+          // movement on top of normal pursuit in the same physics step.
+          const speed=pocketBlitzer
+            ?(t>0.25&&now>=(game.blitzBlockedUntil||0)?RUSH_SPEED_BLITZ*screenMult*(blockedMult?1:.25):0)
+            :pursueSpeed*blockedMult;
+          moveToward(def,clamp(target.x,LAT_MIN,LAT_MAX),target.yfield,speed*speedMultiplier(def,game.difficulty,game.momentum),dt);
           if(!entities.ball.inFlight&&(entities.ballCarrier!==qb||game.scrambling)&&blockedMult===1&&entities.breakCooldown<=0)startDive(def,entities.ballCarrier,now,diff);
         }
         if(!entities.ball.inFlight&&entities.breakCooldown<=0){

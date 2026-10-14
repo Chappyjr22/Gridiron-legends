@@ -18,5 +18,9 @@
   "devDependencies": {
     "@playwright/test": "^1.63.0",
     "vite": "^7.1.3"
+  },
+  "dependencies": {
+    "fflate": "^0.8.2",
+    "lz-string": "1.5.0"
   }
 }

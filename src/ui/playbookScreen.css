@@ -1,0 +1,39 @@
+/* A compact callsheet along the lower field, with the scoreboard unobscured. */
+#callsheet-overlay{align-items:flex-end;padding:6px max(10px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));background:linear-gradient(transparent 15%,#06152c55 60%);backdrop-filter:none}
+#callsheet-overlay .card{width:100%;max-width:980px;max-height:calc(100% - 54px);margin:0;padding:8px;background:#0c2346;border:1px solid #4679aa;box-shadow:none;color:#edf3ff}
+#callsheet-overlay .card-header{display:flex;margin:0 0 6px;padding:0 2px 6px;border-bottom:1px solid #4679aa}
+#callsheet-overlay .card-header>div{display:flex;align-items:center;justify-content:space-between;width:100%;gap:12px}
+#callsheet-overlay .card-title{font:20px/1 var(--sports-face);color:#fff;letter-spacing:0}
+#callsheet-overlay .card-subtitle{font:14px/1.1 var(--sports-face);color:#bdd0ec;margin:0;letter-spacing:0;text-align:right}
+#callsheet-overlay .card-body{min-height:0;overflow:auto}
+#callsheet-overlay .callsheet-toolbar{gap:8px;margin:0 0 8px;flex-wrap:nowrap}
+#callsheet-overlay #formation-tabs{display:flex;gap:3px;min-width:0}
+#callsheet-overlay #formation-tabs button{font:20px/1 var(--sports-face);min-width:44px;min-height:44px;padding:5px 8px;background:#173b67;color:#bdd0ec;border:0;border-bottom:3px solid transparent;box-shadow:none;transform:none}
+#callsheet-overlay #formation-tabs button[aria-pressed=true]{color:#ffe04e;background:#204b7e;border-bottom-color:#ffe04e}
+#callsheet-overlay .formation-label{display:none}
+#callsheet-overlay #playbook-field-goal{min-height:44px;font:16px/1 var(--sports-face);padding:5px 8px;border:1px solid #fff0aa;background:#ffe04e;box-shadow:none;transform:none}
+#callsheet-overlay #playbook-field-goal:disabled{border-color:#50769e;background:#193858;color:#93abc8;opacity:1}
+#callsheet-overlay .playbook-pages{gap:4px;margin-left:auto;color:#bdd0ec;font:14px/1 var(--sports-face)}
+#callsheet-overlay .playbook-pages button{min-width:44px;min-height:44px;padding:4px;background:#173b67;color:#fff;border:1px solid #50769e;font-size:18px;box-shadow:none;transform:none}
+#callsheet-overlay .playbook-pages button:disabled{opacity:.4}
+#callsheet-overlay .callsheet-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#callsheet-overlay .play-btn{min-height:0;min-width:0;display:flex;gap:5px;padding:6px;background:#132e53;border:1px solid #4679aa;box-shadow:none;transform:none;border-radius:0}
+#callsheet-overlay .play-btn:hover,#callsheet-overlay .play-btn:focus-visible{background:#204b7e;border-color:#ffe04e}
+#callsheet-overlay .play-card-heading{display:flex;align-items:center;justify-content:space-between;gap:5px;width:100%;min-height:22px}
+#callsheet-overlay .play-name{font:20px/1 var(--sports-face);color:#fff;text-align:left}
+#callsheet-overlay .play-type{position:static;font:12px/1 var(--sports-face);color:#ffe04e;background:transparent;padding:0;flex:none;border:0;letter-spacing:0}
+#callsheet-overlay .play-diagram{width:100%;max-width:none;height:100px;object-fit:contain;background:#173d25;margin:0;border:0}
+@media(orientation:landscape) and (max-height:550px){
+ #callsheet-overlay .play-diagram{height:clamp(54px,19dvh,84px)}
+ #callsheet-overlay .play-name{font-size:18px}
+ #callsheet-overlay .card{padding:6px}
+ #callsheet-overlay .card-title{font-size:18px}
+ #callsheet-overlay .callsheet-toolbar{margin-bottom:6px;gap:6px}
+}
+@media(orientation:portrait){
+ #callsheet-overlay .callsheet-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #callsheet-overlay .callsheet-toolbar{flex-wrap:wrap}
+ #callsheet-overlay #formation-tabs{flex-basis:100%}
+ #callsheet-overlay .play-diagram{height:75px}
+ #callsheet-overlay .play-name{font-size:18px}
+}
