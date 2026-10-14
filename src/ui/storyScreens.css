@@ -32,3 +32,23 @@
  #career-screen #career-progress-dialog>header button{padding-inline:6px}
  #career-progress-dialog .story-goal-grid,#career-progress-dialog .story-record-grid,#career-progress-dialog .rookie-goals{grid-template-columns:1fr}
 }
+#career-progress-dialog #rookie-progress{margin-bottom:0}
+#career-progress-dialog .journey-toolbar{position:sticky;top:0;z-index:1;background:#071e40;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:-4px}
+#career-progress-dialog .journey-toolbar h3{margin:0;font-size:20px}
+#career-progress-dialog .journey-toolbar nav{display:flex;gap:4px;flex:none}
+#career-screen #career-progress-dialog [data-journey-view]{min-width:88px;min-height:44px;padding:4px 12px;border:0;border-radius:0;box-shadow:none;background:#103961;color:#bdd3ed;font:18px/1 var(--sports-face)}
+#career-screen #career-progress-dialog [data-journey-view][aria-pressed=true]{background:#104981;color:#ffe000;box-shadow:inset 0 -3px #ffe000}
+#career-progress-dialog .journey-value{font:23px/1.1 var(--sports-face);color:#fff;margin:5px 0}
+#career-progress-dialog .journey-value small{font:12px/1.2 system-ui,sans-serif;color:#bdd3ed}
+#career-progress-dialog .journey-coach-grid{display:grid;grid-template-columns:1fr 1.15fr 1.15fr;gap:8px;margin-top:4px}
+#career-progress-dialog .journey-coach-grid .story-card{min-width:0;padding:6px 8px}
+#career-progress-dialog .journey-coach-grid h3{font-size:18px;margin:5px 0}
+#career-progress-dialog .journey-coach-grid .board-kicker{font-size:16px}
+#career-progress-dialog .journey-coach-grid .journey-value{font-size:21px}
+#career-progress-dialog .journey-renewal-note{margin:5px 0 0}
+#career-progress-dialog #journey-coach .rookie-review{margin-top:3px}
+#career-progress-dialog #journey-coach .rookie-review summary{font-size:18px;padding-block:12px}
+@media(orientation:portrait){
+ #career-progress-dialog .journey-coach-grid{grid-template-columns:1fr}
+ #career-progress-dialog .journey-toolbar{flex-wrap:wrap}
+}

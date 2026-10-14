@@ -1,5 +1,6 @@
 import {settlePreparation,seasonStakes,stakesResult} from './weekly.js';
 import {updateRookieProgress} from './rookie.js';
+import {confidenceFeedback} from './coach.js';
 import {seasonReview,evolveLeague} from './offseason.js';
 import {normalizeQuarterback,upgradeOffer,QB_KEYS,assessGoal,DEVELOPMENT,applyDevelopment,awardExperience} from './development.js';
 import {careerStorage} from '../cloud/storage.js';
@@ -132,7 +133,8 @@ export function completeCareerGame(c,gameId,userScore,cpuScore,matchStats){
  if(assessment)c.lastResult.collegeAssessment=assessment;
  c.pendingRecapGameId=gameId;c.history.push(c.lastResult);
  if(assessment)c.lastResult.draftProjection=draftProjection(c);
- c.coachConfidence=Math.max(0,Math.min(100,(c.coachConfidence??50)+(userScore>cpuScore?3:-2)+(goal.met?2:0)+(goal.kind==='challenge'&&goal.met?2:0)-Math.min(6,stats.interceptions*2)));
+ c.lastResult.coachFeedback=confidenceFeedback(c.coachConfidence??50,userScore>cpuScore,goal,stats);
+ c.coachConfidence=c.lastResult.coachFeedback.after;
  c.lastResult.coachConfidence=c.coachConfidence;
  for(const [threshold,title,key] of [[1000,'1,000 career passing yards','passingYards'],[10000,'10,000 career passing yards','passingYards'],[100,'100 career passing touchdowns','passingTD'],[100,'100 career rushing yards','rushingYards']])if(c.totals[key]>=threshold&&!c.awards.some(a=>a.title===title))c.awards.push({season:c.league.season,title});
  for(let mark=2000;mark<=c.totals.passingYards;mark+=1000)if(!c.awards.some(a=>a.title===`${mark.toLocaleString('en-US')} career passing yards`))c.awards.push({season:c.league.season,title:`${mark.toLocaleString('en-US')} career passing yards`});
